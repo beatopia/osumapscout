@@ -1,0 +1,1 @@
+"""osumapscout backend application package."""

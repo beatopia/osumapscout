@@ -6,7 +6,24 @@ The project is motivated by two goals: building a useful recommendation experien
 
 ## Current status
 
-The repository currently contains only its documentation foundation. No backend, frontend, database, osu! API integration, or recommendation functionality has been implemented. T0001 is complete; T0002, the FastAPI application skeleton, is expected next.
+The repository contains a minimal FastAPI backend with a `GET /health` endpoint. No frontend, database, osu! API integration, or recommendation functionality has been implemented. Work is complete through T0002; T0003, osu! API authentication and client credentials, is expected next.
+
+## Run the backend locally
+
+Python 3.11 or newer is required. From the repository root, create a virtual environment and install the project dependencies:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python -m pip install .
+```
+
+Start the development server:
+
+```powershell
+.\.venv\Scripts\python -m uvicorn backend.app.main:app --reload
+```
+
+The health endpoint is available at <http://127.0.0.1:8000/health>, and FastAPI's generated API documentation is available at <http://127.0.0.1:8000/docs>.
 
 ## Planned direction
 

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The MVP should grow through small vertical steps that expose real constraints early. This document describes planned work; no application components currently exist.
+The MVP should grow through small vertical steps that expose real constraints early. The initial FastAPI application and health endpoint now exist; the remaining steps below describe planned work.
 
 ## Incremental build strategy
 
