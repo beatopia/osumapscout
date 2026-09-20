@@ -5,9 +5,9 @@ This is a rough, incremental roadmap. Ticket scope and ordering may change when 
 | Ticket | Title | Status |
 | --- | --- | --- |
 | T0001 | Repository/documentation skeleton | Complete |
-| T0002 | FastAPI application skeleton | Current / complete |
-| T0003 | osu! API authentication/client credentials | Planned; expected next |
-| T0004 | Fetch basic osu! user profile | Planned |
+| T0002 | FastAPI application skeleton | Complete |
+| T0003 | osu! API authentication/client credentials | Current / complete |
+| T0004 | Fetch basic osu! user profile | Planned; expected next |
 | T0005 | Fetch user top plays | Planned |
 | T0006 | Expose normalized top-play backend endpoint | Planned |
 | T0007 | React/Vite frontend skeleton | Planned |

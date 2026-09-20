@@ -11,14 +11,18 @@ This file records what exists now, not what the project intends to build later.
 - A minimal FastAPI backend exists in `backend/app/`.
 - The backend can be started locally with the development command documented in `README.md`.
 - `GET /health` returns `{"status": "ok"}` when the backend is running.
+- A dedicated osu! API client boundary can request an application access token using the OAuth 2.0 client-credentials grant.
+- osu! credentials are read from `OSU_CLIENT_ID` and `OSU_CLIENT_SECRET` environment variables.
+- Token acquisition can be checked with the verification command documented in `README.md` without displaying the token.
+- No osu! user-profile fetching exists yet.
+- No osu! top-play fetching exists yet.
 - No frontend application exists yet.
 - No database integration or database configuration exists yet.
-- No osu! API integration or authentication exists yet.
 - No recommendation or similar-player logic exists yet.
 
 ## Ticket position
 
-- Completed through: T0002 — FastAPI application skeleton
-- Expected next ticket: T0003 — osu! API authentication/client credentials
+- Completed through: T0003 — osu! API authentication/client credentials
+- Expected next ticket: T0004 — Fetch basic osu! user profile
 
 Future tickets must update this document when the repository's implemented state changes.

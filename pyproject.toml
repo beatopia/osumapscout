@@ -5,5 +5,6 @@ description = "An osu!standard map recommendation application"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi",
+    "httpx",
     "uvicorn",
 ]
