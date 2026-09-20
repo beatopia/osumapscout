@@ -68,6 +68,25 @@ class OsuUserProfile:
     performance_points: float | None
 
 
+@dataclass(frozen=True)
+class OsuTopPlay:
+    score_id: int | None
+    beatmap_id: int
+    beatmapset_id: int | None
+    artist: str | None
+    title: str | None
+    difficulty_name: str | None
+    performance_points: float | None
+    accuracy: float | None
+    grade: str | None
+    mods: tuple[str, ...]
+    max_combo: int | None
+    played_at: str | None
+    star_rating: float | None
+    approach_rate: float | None
+    bpm: float | None
+
+
 class OsuApiClient:
     """Perform the osu! HTTP communication used by the application."""
 
@@ -219,4 +238,164 @@ class OsuApiClient:
                 if performance_points is not None
                 else None
             ),
+        )
+
+    async def get_top_plays_by_username(
+        self,
+        username: str,
+        limit: int = 100,
+    ) -> list[OsuTopPlay]:
+        """Fetch up to 100 best osu!standard scores for a username."""
+        if (
+            isinstance(limit, bool)
+            or not isinstance(limit, int)
+            or not 1 <= limit <= 100
+        ):
+            raise ValueError("Top-play limit must be an integer from 1 through 100.")
+
+        user = await self.get_user_by_username(username)
+        access_token = await self.request_access_token()
+        scores_url = f"{OSU_API_BASE_URL}/users/{user.user_id}/scores/best"
+
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as http_client:
+                response = await http_client.get(
+                    scores_url,
+                    params={"mode": "osu", "limit": limit},
+                    headers={
+                        "Authorization": f"Bearer {access_token.access_token}",
+                    },
+                )
+        except httpx.RequestError as error:
+            raise OsuNetworkError(
+                "Could not reach osu! to request top plays."
+            ) from error
+
+        if response.status_code in (401, 403):
+            raise OsuAuthenticationError(
+                f"osu! rejected the top-play request with HTTP {response.status_code}."
+            )
+        if response.is_error:
+            raise OsuApiError(
+                f"osu! top-play request failed with HTTP {response.status_code}."
+            )
+
+        try:
+            response_data: Any = response.json()
+        except ValueError as error:
+            raise OsuApiError("osu! returned an invalid top-play response.") from error
+
+        if not isinstance(response_data, list):
+            raise OsuApiError("osu! returned an invalid top-play response.")
+
+        return [
+            self._parse_top_play(raw_play, position)
+            for position, raw_play in enumerate(response_data, start=1)
+        ]
+
+    @staticmethod
+    def _parse_top_play(raw_play: Any, position: int) -> OsuTopPlay:
+        if not isinstance(raw_play, dict):
+            raise OsuApiError(
+                f"osu! returned an invalid top play at position {position}."
+            )
+
+        beatmap = raw_play.get("beatmap") or {}
+        beatmapset = raw_play.get("beatmapset") or {}
+        if not isinstance(beatmap, dict) or not isinstance(beatmapset, dict):
+            raise OsuApiError(
+                f"osu! returned an invalid top play at position {position}."
+            )
+
+        score_id = raw_play.get("id")
+        beatmap_id = raw_play.get("beatmap_id", beatmap.get("id"))
+        beatmapset_id = beatmap.get("beatmapset_id", beatmapset.get("id"))
+        artist = beatmapset.get("artist")
+        title = beatmapset.get("title")
+        difficulty_name = beatmap.get("version")
+        performance_points = raw_play.get("pp")
+        accuracy = raw_play.get("accuracy")
+        grade = raw_play.get("rank")
+        max_combo = raw_play.get("max_combo")
+        played_at = raw_play.get("created_at", raw_play.get("ended_at"))
+        star_rating = beatmap.get("difficulty_rating")
+        approach_rate = beatmap.get("ar")
+        bpm = beatmap.get("bpm")
+
+        integer_fields = (score_id, beatmapset_id, max_combo)
+        number_fields = (
+            performance_points,
+            accuracy,
+            star_rating,
+            approach_rate,
+            bpm,
+        )
+        string_fields = (artist, title, difficulty_name, grade, played_at)
+
+        fields_are_valid = (
+            isinstance(beatmap_id, int)
+            and not isinstance(beatmap_id, bool)
+            and all(
+                value is None
+                or (isinstance(value, int) and not isinstance(value, bool))
+                for value in integer_fields
+            )
+            and all(
+                value is None
+                or (
+                    isinstance(value, (int, float))
+                    and not isinstance(value, bool)
+                )
+                for value in number_fields
+            )
+            and all(value is None or isinstance(value, str) for value in string_fields)
+        )
+        if not fields_are_valid:
+            raise OsuApiError(
+                f"osu! returned an invalid top play at position {position}."
+            )
+
+        raw_mods = raw_play.get("mods") or []
+        if not isinstance(raw_mods, list):
+            raise OsuApiError(
+                f"osu! returned invalid mods for top play at position {position}."
+            )
+
+        mods: list[str] = []
+        for raw_mod in raw_mods:
+            if isinstance(raw_mod, str) and raw_mod:
+                mods.append(raw_mod)
+            elif (
+                isinstance(raw_mod, dict)
+                and isinstance(raw_mod.get("acronym"), str)
+                and raw_mod["acronym"]
+            ):
+                mods.append(raw_mod["acronym"])
+            else:
+                raise OsuApiError(
+                    f"osu! returned invalid mods for top play at position {position}."
+                )
+
+        return OsuTopPlay(
+            score_id=score_id,
+            beatmap_id=beatmap_id,
+            beatmapset_id=beatmapset_id,
+            artist=artist,
+            title=title,
+            difficulty_name=difficulty_name,
+            performance_points=(
+                float(performance_points)
+                if performance_points is not None
+                else None
+            ),
+            accuracy=float(accuracy) if accuracy is not None else None,
+            grade=grade,
+            mods=tuple(mods),
+            max_combo=max_combo,
+            played_at=played_at,
+            star_rating=float(star_rating) if star_rating is not None else None,
+            approach_rate=(
+                float(approach_rate) if approach_rate is not None else None
+            ),
+            bpm=float(bpm) if bpm is not None else None,
         )

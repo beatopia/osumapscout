@@ -6,7 +6,7 @@ The project is motivated by two goals: building a useful recommendation experien
 
 ## Current status
 
-The repository contains a minimal FastAPI backend with a `GET /health` endpoint, osu! API client-credentials authentication, and non-public osu!standard profile lookup by username. Top-play fetching, frontend, database, and recommendation functionality have not been implemented. Work is complete through T0004; T0005, fetching user top plays, is expected next.
+The repository contains a minimal FastAPI backend with a `GET /health` endpoint, osu! API client-credentials authentication, and non-public osu!standard profile and top-play lookup by username. No public top-play endpoint, frontend, database, analysis, or recommendation functionality has been implemented. Work is complete through T0005; T0006, exposing a normalized top-play backend endpoint, is expected next.
 
 ## Run the backend locally
 
@@ -53,6 +53,14 @@ Verify an osu!standard profile lookup with a normal username:
 ```
 
 The command prints only the normalized profile fields used by the application. It is a local verification tool, not a public FastAPI endpoint.
+
+Fetch a concise top-play summary with:
+
+```powershell
+.\.venv\Scripts\python -m backend.app.osu.verify_top_plays peppy --limit 10
+```
+
+The limit must be from 1 to 100. This is also a local verification tool; top plays are not exposed through FastAPI yet.
 
 ## Planned direction
 

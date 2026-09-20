@@ -17,14 +17,18 @@ This file records what exists now, not what the project intends to build later.
 - The osu! API client can fetch a basic osu!standard profile from a normal username.
 - Profile lookup internally uses the current `@username` form and returns a small typed representation.
 - Profile fetching can be checked with the non-public verification command documented in `README.md`.
-- No osu! top-play fetching exists yet.
+- The client can reuse username lookup to retrieve up to 100 best osu!standard scores.
+- Top plays retain a small typed set of score, mod, beatmap, beatmapset, and directly available difficulty fields.
+- Top-play fetching can be checked with the non-public verification command documented in `README.md`.
+- No public normalized top-play FastAPI endpoint exists yet.
 - No frontend application exists yet.
 - No database integration or database configuration exists yet.
+- No player-analysis system exists yet.
 - No recommendation or similar-player logic exists yet.
 
 ## Ticket position
 
-- Completed through: T0004 — Fetch basic osu! user profile
-- Expected next ticket: T0005 — Fetch user top plays
+- Completed through: T0005 — Fetch user top plays
+- Expected next ticket: T0006 — Expose normalized top-play backend endpoint
 
 Future tickets must update this document when the repository's implemented state changes.
