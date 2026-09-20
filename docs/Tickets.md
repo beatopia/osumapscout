@@ -11,9 +11,9 @@ This is a rough, incremental roadmap. Ticket scope and ordering may change when 
 | T0005 | Fetch user top plays | Complete |
 | T0006 | Expose normalized top-play backend endpoint | Complete |
 | T0007 | React/Vite frontend skeleton | Complete |
-| T0008 | Username search flow | Current / complete |
-| T0009 | Display top plays | Planned; expected next |
-| T0010 | PostgreSQL development setup | Planned |
+| T0008 | Username search flow | Complete |
+| T0009 | Display top plays | Current / complete |
+| T0010 | PostgreSQL development setup | Planned; expected next |
 | T0011 | user/beatmap/score data model design | Planned |
 | T0012 | persist fetched top-play data | Planned |
 | T0013 | calculate basic player statistics | Planned |

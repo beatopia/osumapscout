@@ -6,7 +6,7 @@ The project is motivated by two goals: building a useful recommendation experien
 
 ## Current status
 
-The repository contains a FastAPI backend with a normalized top-play endpoint and a React, TypeScript, and Vite frontend. The frontend can submit an osu! username to the backend and show loading, success, and error states; individual top plays are not displayed yet. Database, analysis, and recommendation functionality have not been implemented. Work is complete through T0008; T0009, displaying top plays, is expected next.
+The repository contains a FastAPI backend with a normalized top-play endpoint and a React, TypeScript, and Vite frontend. The frontend can search by osu! username and display returned top plays with basic score and map attributes. Database, persistence, analysis, and recommendation functionality have not been implemented. Work is complete through T0009; T0010, PostgreSQL development setup, is expected next.
 
 ## Run the backend locally
 

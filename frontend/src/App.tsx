@@ -1,23 +1,9 @@
 import { FormEvent, useState } from "react";
 
-interface TopPlaysResponse {
-  username: string;
-  count: number;
-  top_plays: unknown[];
-}
-
-function isTopPlaysResponse(value: unknown): value is TopPlaysResponse {
-  if (typeof value !== "object" || value === null) {
-    return false;
-  }
-
-  const response = value as Record<string, unknown>;
-  return (
-    typeof response.username === "string" &&
-    typeof response.count === "number" &&
-    Array.isArray(response.top_plays)
-  );
-}
+import TopPlayList, {
+  isTopPlaysResponse,
+  TopPlaysResponse,
+} from "./TopPlayList";
 
 async function getErrorMessage(response: Response): Promise<string> {
   try {
@@ -117,9 +103,12 @@ function App() {
       <div className="search-status" aria-live="polite">
         {isLoading && <p>Loading...</p>}
         {result && (
-          <p>
-            Found {result.count} top plays for {result.username}.
-          </p>
+          <>
+            <p>
+              Found {result.count} top plays for {result.username}.
+            </p>
+            <TopPlayList result={result} />
+          </>
         )}
         {errorMessage && <p className="error-message">{errorMessage}</p>}
       </div>

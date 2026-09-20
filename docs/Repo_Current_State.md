@@ -25,14 +25,16 @@ This file records what exists now, not what the project intends to build later.
 - A minimal React, TypeScript, and Vite frontend skeleton exists under `frontend/` and can run locally.
 - The frontend has a username search form that calls the backend through a Vite development proxy.
 - Loading, success, empty-input, and request-error states are implemented.
-- The success state reports the returned username and play count, but individual top plays are not displayed yet.
+- Returned top plays are displayed in backend order with their rank, map identity, mods, PP, accuracy, and available score details.
+- Directly available star rating, AR, and BPM values are displayed without additional enrichment requests.
 - No database integration or database configuration exists yet.
+- No search or top-play persistence exists yet.
 - No player-analysis system exists yet.
 - No recommendation or similar-player logic exists yet.
 
 ## Ticket position
 
-- Completed through: T0008 — Username search flow
-- Expected next ticket: T0009 — Display top plays
+- Completed through: T0009 — Display top plays
+- Expected next ticket: T0010 — PostgreSQL development setup
 
 Future tickets must update this document when the repository's implemented state changes.
