@@ -10,9 +10,9 @@ This is a rough, incremental roadmap. Ticket scope and ordering may change when 
 | T0004 | Fetch basic osu! user profile | Complete |
 | T0005 | Fetch user top plays | Complete |
 | T0006 | Expose normalized top-play backend endpoint | Complete |
-| T0007 | React/Vite frontend skeleton | Current / complete |
-| T0008 | Username search flow | Planned; expected next |
-| T0009 | Display top plays | Planned |
+| T0007 | React/Vite frontend skeleton | Complete |
+| T0008 | Username search flow | Current / complete |
+| T0009 | Display top plays | Planned; expected next |
 | T0010 | PostgreSQL development setup | Planned |
 | T0011 | user/beatmap/score data model design | Planned |
 | T0012 | persist fetched top-play data | Planned |

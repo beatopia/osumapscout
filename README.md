@@ -6,7 +6,7 @@ The project is motivated by two goals: building a useful recommendation experien
 
 ## Current status
 
-The repository contains a FastAPI backend with a normalized top-play endpoint and a minimal React, TypeScript, and Vite frontend skeleton. The frontend runs independently and does not communicate with the backend yet. Username search, database, analysis, and recommendation functionality have not been implemented. Work is complete through T0007; T0008, the username search flow, is expected next.
+The repository contains a FastAPI backend with a normalized top-play endpoint and a React, TypeScript, and Vite frontend. The frontend can submit an osu! username to the backend and show loading, success, and error states; individual top plays are not displayed yet. Database, analysis, and recommendation functionality have not been implemented. Work is complete through T0008; T0009, displaying top plays, is expected next.
 
 ## Run the backend locally
 
@@ -79,13 +79,13 @@ cd frontend
 npm install
 ```
 
-Start the Vite development server:
+Start the Vite development server in a second terminal while the FastAPI backend is running:
 
 ```powershell
-npm run dev
+npm.cmd run dev
 ```
 
-Use the local URL printed by Vite. The frontend currently renders only a static project introduction and makes no backend requests. To verify the production build, run `npm run build` from `frontend/`.
+Use the local URL printed by Vite. During development, Vite forwards relative `/api` requests to FastAPI at `http://127.0.0.1:8000`. To verify the production build, run `npm.cmd run build` from `frontend/`.
 
 ## Planned direction
 

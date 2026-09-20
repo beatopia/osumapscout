@@ -23,15 +23,16 @@ This file records what exists now, not what the project intends to build later.
 - `GET /api/users/{username}/top-plays` exposes normalized top-play data with an optional limit from 1 through 100.
 - The public response contains only explicitly supported application fields and maps expected upstream failures to HTTP responses.
 - A minimal React, TypeScript, and Vite frontend skeleton exists under `frontend/` and can run locally.
-- The frontend currently renders a static project introduction and does not communicate with the backend.
-- No username search or real osu! data display exists in the frontend yet.
+- The frontend has a username search form that calls the backend through a Vite development proxy.
+- Loading, success, empty-input, and request-error states are implemented.
+- The success state reports the returned username and play count, but individual top plays are not displayed yet.
 - No database integration or database configuration exists yet.
 - No player-analysis system exists yet.
 - No recommendation or similar-player logic exists yet.
 
 ## Ticket position
 
-- Completed through: T0007 — React/Vite frontend skeleton
-- Expected next ticket: T0008 — Username search flow
+- Completed through: T0008 — Username search flow
+- Expected next ticket: T0009 — Display top plays
 
 Future tickets must update this document when the repository's implemented state changes.
