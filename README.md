@@ -6,7 +6,7 @@ The project is motivated by two goals: building a useful recommendation experien
 
 ## Current status
 
-The repository contains a minimal FastAPI backend with a `GET /health` endpoint and an osu! API client-credentials authentication boundary. User-profile fetching, top-play fetching, frontend, database, and recommendation functionality have not been implemented. Work is complete through T0003; T0004, fetching a basic osu! user profile, is expected next.
+The repository contains a minimal FastAPI backend with a `GET /health` endpoint, osu! API client-credentials authentication, and non-public osu!standard profile lookup by username. Top-play fetching, frontend, database, and recommendation functionality have not been implemented. Work is complete through T0004; T0005, fetching user top plays, is expected next.
 
 ## Run the backend locally
 
@@ -45,6 +45,14 @@ Verify token acquisition with:
 ```
 
 The command reports only success or a developer-facing error; it never prints the access token. This authenticates the backend application for public API access and does not log an osu! user into `osumapscout`.
+
+Verify an osu!standard profile lookup with a normal username:
+
+```powershell
+.\.venv\Scripts\python -m backend.app.osu.verify_user peppy
+```
+
+The command prints only the normalized profile fields used by the application. It is a local verification tool, not a public FastAPI endpoint.
 
 ## Planned direction
 

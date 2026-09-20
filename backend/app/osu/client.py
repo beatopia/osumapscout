@@ -1,10 +1,12 @@
 import os
 from dataclasses import dataclass
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 
 OSU_TOKEN_URL = "https://osu.ppy.sh/oauth/token"
+OSU_API_BASE_URL = "https://osu.ppy.sh/api/v2"
 
 
 class OsuAuthenticationError(RuntimeError):
@@ -12,7 +14,15 @@ class OsuAuthenticationError(RuntimeError):
 
 
 class OsuNetworkError(RuntimeError):
-    """Raised when the osu! authentication request cannot be completed."""
+    """Raised when an osu! API request cannot be completed."""
+
+
+class OsuApiError(RuntimeError):
+    """Raised when osu! returns an unusable API response."""
+
+
+class OsuUserNotFoundError(OsuApiError):
+    """Raised when osu! cannot find the requested user."""
 
 
 @dataclass(frozen=True)
@@ -48,8 +58,18 @@ class OsuAccessToken:
     expires_in: int
 
 
+@dataclass(frozen=True)
+class OsuUserProfile:
+    user_id: int
+    username: str
+    country_code: str
+    avatar_url: str
+    global_rank: int | None
+    performance_points: float | None
+
+
 class OsuApiClient:
-    """Perform the osu! API HTTP communication needed for authentication."""
+    """Perform the osu! HTTP communication used by the application."""
 
     def __init__(self, credentials: OsuCredentials) -> None:
         self._credentials = credentials
@@ -105,4 +125,98 @@ class OsuApiClient:
             access_token=access_token,
             token_type=token_type,
             expires_in=expires_in,
+        )
+
+    async def get_user_by_username(self, username: str) -> OsuUserProfile:
+        """Fetch a minimal osu!standard profile using a normal username."""
+        normalized_username = username.strip()
+        if not normalized_username:
+            raise ValueError("Username must not be empty.")
+
+        access_token = await self.request_access_token()
+        encoded_username = quote(normalized_username, safe="")
+        user_url = f"{OSU_API_BASE_URL}/users/@{encoded_username}/osu"
+
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as http_client:
+                response = await http_client.get(
+                    user_url,
+                    headers={
+                        "Authorization": f"Bearer {access_token.access_token}",
+                    },
+                )
+        except httpx.RequestError as error:
+            raise OsuNetworkError(
+                "Could not reach osu! to request the user profile."
+            ) from error
+
+        if response.status_code == 404:
+            raise OsuUserNotFoundError(
+                f"osu! user '{normalized_username}' was not found."
+            )
+        if response.status_code in (401, 403):
+            raise OsuAuthenticationError(
+                f"osu! rejected the user-profile request with HTTP {response.status_code}."
+            )
+        if response.is_error:
+            raise OsuApiError(
+                f"osu! user-profile request failed with HTTP {response.status_code}."
+            )
+
+        return self._parse_user_profile(response)
+
+    @staticmethod
+    def _parse_user_profile(response: httpx.Response) -> OsuUserProfile:
+        try:
+            response_data: Any = response.json()
+            user_id = response_data["id"]
+            username = response_data["username"]
+            country_code = response_data["country_code"]
+            avatar_url = response_data["avatar_url"]
+            statistics = response_data.get("statistics") or {}
+            global_rank = statistics.get("global_rank")
+            performance_points = statistics.get("pp")
+        except (AttributeError, KeyError, TypeError, ValueError) as error:
+            raise OsuApiError(
+                "osu! returned an invalid user-profile response."
+            ) from error
+
+        required_fields_are_valid = (
+            isinstance(user_id, int)
+            and not isinstance(user_id, bool)
+            and isinstance(username, str)
+            and bool(username)
+            and isinstance(country_code, str)
+            and bool(country_code)
+            and isinstance(avatar_url, str)
+            and bool(avatar_url)
+        )
+        global_rank_is_valid = global_rank is None or (
+            isinstance(global_rank, int) and not isinstance(global_rank, bool)
+        )
+        performance_points_are_valid = performance_points is None or (
+            isinstance(performance_points, (int, float))
+            and not isinstance(performance_points, bool)
+        )
+
+        if not (
+            required_fields_are_valid
+            and global_rank_is_valid
+            and performance_points_are_valid
+        ):
+            raise OsuApiError(
+                "osu! returned an invalid user-profile response."
+            )
+
+        return OsuUserProfile(
+            user_id=user_id,
+            username=username,
+            country_code=country_code,
+            avatar_url=avatar_url,
+            global_rank=global_rank,
+            performance_points=(
+                float(performance_points)
+                if performance_points is not None
+                else None
+            ),
         )
