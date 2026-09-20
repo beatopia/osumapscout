@@ -6,7 +6,7 @@ The project is motivated by two goals: building a useful recommendation experien
 
 ## Current status
 
-The repository contains a FastAPI backend with health checking, osu! API client-credentials authentication, username-based profile and top-play lookup, and a normalized top-play HTTP endpoint. No frontend, database, analysis, or recommendation functionality has been implemented. Work is complete through T0006; T0007, the React/Vite frontend skeleton, is expected next.
+The repository contains a FastAPI backend with a normalized top-play endpoint and a minimal React, TypeScript, and Vite frontend skeleton. The frontend runs independently and does not communicate with the backend yet. Username search, database, analysis, and recommendation functionality have not been implemented. Work is complete through T0007; T0008, the username search flow, is expected next.
 
 ## Run the backend locally
 
@@ -69,6 +69,23 @@ GET http://127.0.0.1:8000/api/users/USERNAME/top-plays?limit=10
 ```
 
 The endpoint defaults to 10 plays and accepts limits from 1 through 100. It returns the application's supported fields rather than the raw osu! API response.
+
+## Run the frontend locally
+
+From the repository root, install the frontend dependencies:
+
+```powershell
+cd frontend
+npm install
+```
+
+Start the Vite development server:
+
+```powershell
+npm run dev
+```
+
+Use the local URL printed by Vite. The frontend currently renders only a static project introduction and makes no backend requests. To verify the production build, run `npm run build` from `frontend/`.
 
 ## Planned direction
 
