@@ -8,9 +8,9 @@ This is a rough, incremental roadmap. Ticket scope and ordering may change when 
 | T0002 | FastAPI application skeleton | Complete |
 | T0003 | osu! API authentication/client credentials | Complete |
 | T0004 | Fetch basic osu! user profile | Complete |
-| T0005 | Fetch user top plays | Current / complete |
-| T0006 | Expose normalized top-play backend endpoint | Planned; expected next |
-| T0007 | React/Vite frontend skeleton | Planned |
+| T0005 | Fetch user top plays | Complete |
+| T0006 | Expose normalized top-play backend endpoint | Current / complete |
+| T0007 | React/Vite frontend skeleton | Planned; expected next |
 | T0008 | Username search flow | Planned |
 | T0009 | Display top plays | Planned |
 | T0010 | PostgreSQL development setup | Planned |

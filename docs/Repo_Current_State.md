@@ -20,7 +20,8 @@ This file records what exists now, not what the project intends to build later.
 - The client can reuse username lookup to retrieve up to 100 best osu!standard scores.
 - Top plays retain a small typed set of score, mod, beatmap, beatmapset, and directly available difficulty fields.
 - Top-play fetching can be checked with the non-public verification command documented in `README.md`.
-- No public normalized top-play FastAPI endpoint exists yet.
+- `GET /api/users/{username}/top-plays` exposes normalized top-play data with an optional limit from 1 through 100.
+- The public response contains only explicitly supported application fields and maps expected upstream failures to HTTP responses.
 - No frontend application exists yet.
 - No database integration or database configuration exists yet.
 - No player-analysis system exists yet.
@@ -28,7 +29,7 @@ This file records what exists now, not what the project intends to build later.
 
 ## Ticket position
 
-- Completed through: T0005 — Fetch user top plays
-- Expected next ticket: T0006 — Expose normalized top-play backend endpoint
+- Completed through: T0006 — Expose normalized top-play backend endpoint
+- Expected next ticket: T0007 — React/Vite frontend skeleton
 
 Future tickets must update this document when the repository's implemented state changes.

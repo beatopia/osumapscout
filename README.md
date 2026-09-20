@@ -6,7 +6,7 @@ The project is motivated by two goals: building a useful recommendation experien
 
 ## Current status
 
-The repository contains a minimal FastAPI backend with a `GET /health` endpoint, osu! API client-credentials authentication, and non-public osu!standard profile and top-play lookup by username. No public top-play endpoint, frontend, database, analysis, or recommendation functionality has been implemented. Work is complete through T0005; T0006, exposing a normalized top-play backend endpoint, is expected next.
+The repository contains a FastAPI backend with health checking, osu! API client-credentials authentication, username-based profile and top-play lookup, and a normalized top-play HTTP endpoint. No frontend, database, analysis, or recommendation functionality has been implemented. Work is complete through T0006; T0007, the React/Vite frontend skeleton, is expected next.
 
 ## Run the backend locally
 
@@ -60,7 +60,15 @@ Fetch a concise top-play summary with:
 .\.venv\Scripts\python -m backend.app.osu.verify_top_plays peppy --limit 10
 ```
 
-The limit must be from 1 to 100. This is also a local verification tool; top plays are not exposed through FastAPI yet.
+The limit must be from 1 to 100. This remains useful for inspecting the client directly; the application-facing HTTP endpoint is described below.
+
+With the backend running and credentials configured, request normalized top plays at:
+
+```text
+GET http://127.0.0.1:8000/api/users/USERNAME/top-plays?limit=10
+```
+
+The endpoint defaults to 10 plays and accepts limits from 1 through 100. It returns the application's supported fields rather than the raw osu! API response.
 
 ## Planned direction
 
