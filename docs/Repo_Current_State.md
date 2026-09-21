@@ -22,6 +22,7 @@ This file records what exists now, not what the project intends to build later.
 - Top-play fetching can be checked with the non-public verification command documented in `README.md`.
 - `GET /api/users/{username}/top-plays` exposes normalized top-play data with an optional limit from 1 through 100.
 - The public response contains only explicitly supported application fields and maps expected upstream failures to HTTP responses.
+- The backend-to-frontend vertical slice works from username submission through normalized top-play rendering.
 - A minimal React, TypeScript, and Vite frontend skeleton exists under `frontend/` and can run locally.
 - The frontend has a username search form that calls the backend through a Vite development proxy.
 - Loading, success, empty-input, and request-error states are implemented.
@@ -31,10 +32,11 @@ This file records what exists now, not what the project intends to build later.
 - No search or top-play persistence exists yet.
 - No player-analysis system exists yet.
 - No recommendation or similar-player logic exists yet.
+- T0010 documents current data, the conceptual minimum persistence model, recommendation data needs, and unresolved similar-player discovery questions in `docs/Recommendation_Data_Design.md`.
 
 ## Ticket position
 
-- Completed through: T0009 — Display top plays
-- Expected next ticket: T0010 — PostgreSQL development setup
+- Completed through: T0010 — Recommendation data requirements and persistence design
+- Expected next ticket: T0011 — PostgreSQL development setup
 
 Future tickets must update this document when the repository's implemented state changes.

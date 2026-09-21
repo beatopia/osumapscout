@@ -14,7 +14,7 @@ The project is also a learning-oriented backend engineering effort. Its architec
 
 An eventual user should be able to identify an osu! account, see a useful summary of its top plays and preferences, and receive map suggestions. Recommendations should omit maps already represented in the user's own top plays and should support practical filters such as mods, BPM, approach rate, and star rating.
 
-The exact interaction design remains unresolved and should be informed by the initial username lookup and top-play display.
+The initial username lookup and top-play display now provide a working baseline. The eventual recommendation interaction and filtering experience remain unresolved.
 
 ## Major eventual capabilities
 
@@ -26,7 +26,7 @@ The exact interaction design remains unresolved and should be informed by the in
 - Generate map recommendations from those relationships.
 - Exclude already-known top-play maps and apply useful map filters.
 
-These are planned capabilities, not current features.
+User lookup, top-play retrieval, normalization, and basic display now exist. Analysis, persistence, similar-player discovery, recommendations, exclusion behavior, and filters remain planned.
 
 ## High-level architecture
 
@@ -46,29 +46,33 @@ The monolith should remain the default unless observed requirements provide a co
 
 ## Backend responsibilities
 
-The planned FastAPI backend will handle HTTP requests, validate inputs, coordinate application services, normalize external data, and expose stable responses to the frontend. Route handlers should remain thin enough that API transport concerns do not absorb business logic.
+The current FastAPI backend handles health checks and normalized top-play requests while the dedicated osu! client owns external communication. As the backend grows, it should continue validating inputs, coordinating application logic, and exposing stable responses to the frontend. Route handlers should remain thin enough that API transport concerns do not absorb business logic.
 
-Exact endpoints, module layout, caching behavior, and error contracts are intentionally not settled here.
+The normalized top-play endpoint is implemented. Future endpoints, expanded module layout, caching behavior, and additional error contracts are intentionally not settled here.
 
 ## Frontend responsibilities
 
-The planned React and TypeScript frontend will provide username lookup, loading and error feedback, top-play presentation, player analysis, and later recommendation controls. It should depend on the application's normalized API rather than osu! API response shapes directly.
+The current React and TypeScript frontend provides username lookup, loading and error feedback, and top-play presentation. Player analysis and recommendation controls remain planned. The frontend depends on the application's normalized API rather than osu! API response shapes directly.
 
 Detailed component architecture and visual design remain tentative.
 
 ## Persistence responsibilities
 
-PostgreSQL is the planned database once the initial live API-to-UI path is understood. Persistence may eventually retain users, beatmaps, scores, fetch metadata, and derived analysis needed by the product. The data model should be designed from observed osu! API payloads and actual queries; no detailed schema is established yet.
+The initial live API-to-UI path is now understood, and PostgreSQL remains the planned database. The evidence-based conceptual minimum is users, beatmaps, and current user-to-top-play relationships with fetch timestamps. Similarity scores, aggregate preferences, recommendation results, and explanations should initially be computed rather than stored.
+
+The detailed rationale, current field inventory, missing-data classifications, and unresolved identity questions are recorded in [Recommendation Data and Persistence Design](Recommendation_Data_Design.md). That document is still conceptual; no database implementation or final schema exists.
 
 ## External osu! API boundary
 
-osu! API v2 access should eventually live behind a dedicated client or service boundary. That boundary should own authentication, request construction, external response handling, and translation of external failures. Route handlers and frontend code should not make scattered direct osu! API calls.
+osu! API v2 access lives behind a dedicated client boundary. That boundary owns authentication, request construction, external response handling, and translation of external failures. Route handlers and frontend code should not make scattered direct osu! API calls.
 
 Credential handling, rate-limit behavior, retries, and caching will be specified when tickets encounter those needs.
 
 ## Recommendation-system direction
 
 Candidate approaches include shared top plays, Jaccard similarity, cosine similarity, and weighted collaborative filtering. These are possibilities rather than selected algorithms. The project should first inspect real user, score, mod, and beatmap data; then it can define similarity, weighting, evaluation, and cold-start behavior with evidence.
+
+The most important unresolved prerequisite is similar-player candidate discovery. The current application can inspect known users but does not yet have a verified mechanism for discovering a useful population of other users.
 
 ## Possible future infrastructure
 
