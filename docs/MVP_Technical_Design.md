@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The MVP grows through small vertical steps that expose real constraints early. The live backend-to-frontend top-play flow now exists through T0009, and T0010 documents the evidence-based persistence requirements before database implementation begins.
+The MVP grows through small vertical steps that expose real constraints early. The live backend-to-frontend top-play flow exists through T0009, T0010 documents the evidence-based persistence requirements, and T0011 adds the PostgreSQL development connection boundary without creating a schema.
 
 ## Incremental build strategy
 
@@ -15,8 +15,9 @@ The MVP grows through small vertical steps that expose real constraints early. T
 7. Build a username lookup flow against the normalized backend API.
 8. Display the returned top plays with appropriate loading, empty, and failure states.
 9. Document recommendation data requirements and the minimum persistence design from the working vertical slice.
-10. Introduce PostgreSQL development setup, then implement the minimal user, beatmap, and current top-play persistence model in separate tickets.
-11. After persistence behavior is understood, calculate basic player statistics and expose them through an analysis endpoint and UI follow-up.
+10. Introduce synchronous SQLAlchemy and Psycopg 3 configuration for a local PostgreSQL database, independently of HTTP application startup.
+11. Implement the minimal user, beatmap, and current top-play schema with versioned migrations, then add ingestion in a separate ticket.
+12. After persistence behavior is understood, calculate basic player statistics and expose them through an analysis endpoint and UI follow-up.
 
 Each step should remain independently understandable and manually verifiable. Later tickets may revise this ordering when implementation findings justify it.
 
@@ -30,7 +31,7 @@ The frontend is expected to accept a username, call the application backend, and
 
 ## Persistence timing
 
-PostgreSQL did not block learning from the first live vertical flow. The next implementation phase may now introduce it, guided by `Recommendation_Data_Design.md`. Database setup, schema/migrations, and ingestion remain separate incremental tickets.
+PostgreSQL did not block learning from the first live vertical flow. T0011 now provides lazy synchronous engine and session-factory configuration through `DATABASE_URL`, plus a connection verifier. The schema/migration work and ingestion remain separate incremental tickets guided by `Recommendation_Data_Design.md`.
 
 ## Deferred recommendation design
 

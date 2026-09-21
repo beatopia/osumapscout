@@ -28,7 +28,11 @@ This file records what exists now, not what the project intends to build later.
 - Loading, success, empty-input, and request-error states are implemented.
 - Returned top plays are displayed in backend order with their rank, map identity, mods, PP, accuracy, and available score details.
 - Directly available star rating, AR, and BPM values are displayed without additional enrichment requests.
-- No database integration or database configuration exists yet.
+- PostgreSQL is the development database, configured through the single `DATABASE_URL` environment variable.
+- The backend has a lazy, synchronous SQLAlchemy 2.x engine and session-factory foundation using Psycopg 3.
+- A non-public verification command can connect to PostgreSQL and execute `SELECT 1` without creating tables.
+- FastAPI application import and `GET /health` remain independent of database configuration and connectivity.
+- No application tables, ORM application models, schema migrations, or automatic schema creation exist yet.
 - No search or top-play persistence exists yet.
 - No player-analysis system exists yet.
 - No recommendation or similar-player logic exists yet.
@@ -36,7 +40,7 @@ This file records what exists now, not what the project intends to build later.
 
 ## Ticket position
 
-- Completed through: T0010 — Recommendation data requirements and persistence design
-- Expected next ticket: T0011 — PostgreSQL development setup
+- Completed through: T0011 — PostgreSQL development setup
+- Expected next ticket: T0012 — Minimal persistence schema and migrations
 
 Future tickets must update this document when the repository's implemented state changes.

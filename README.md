@@ -6,7 +6,7 @@ The project is motivated by two goals: building a useful recommendation experien
 
 ## Current status
 
-The repository contains a FastAPI backend with a normalized top-play endpoint and a React, TypeScript, and Vite frontend. The frontend can search by osu! username and display returned top plays with basic score and map attributes. Database, persistence, analysis, and recommendation functionality have not been implemented. Work is complete through T0009; T0010, PostgreSQL development setup, is expected next.
+The repository contains a FastAPI backend with a normalized top-play endpoint and a React, TypeScript, and Vite frontend. The frontend can search by osu! username and display returned top plays with basic score and map attributes. A PostgreSQL development connection foundation exists, but no application schema or persistence behavior has been implemented. Work is complete through T0011; T0012, minimal persistence schema and migrations, is expected next.
 
 ## Run the backend locally
 
@@ -70,6 +70,24 @@ GET http://127.0.0.1:8000/api/users/USERNAME/top-plays?limit=10
 
 The endpoint defaults to 10 plays and accepts limits from 1 through 100. It returns the application's supported fields rather than the raw osu! API response.
 
+## Configure PostgreSQL for development
+
+The backend uses PostgreSQL through synchronous SQLAlchemy and the Psycopg 3 driver. Install and run PostgreSQL locally, create an `osumapscout` development database, and use a local database user that can connect to it. PostgreSQL installation and user administration are external to this repository; Docker is not required.
+
+Set the connection URL in the current PowerShell session, replacing the example credentials with your local values:
+
+```powershell
+$env:DATABASE_URL = "postgresql+psycopg://USER:PASSWORD@localhost:5432/osumapscout"
+```
+
+The backend reads `DATABASE_URL` from the operating-system environment and does not load `.env` automatically. Verify the complete Python-to-PostgreSQL connection with:
+
+```powershell
+.\.venv\Scripts\python -m backend.app.database.verify
+```
+
+The command executes `SELECT 1` and creates no tables. Database setup does not affect `/health`, and the current osu! endpoints do not read from or write to PostgreSQL.
+
 ## Run the frontend locally
 
 From the repository root, install the frontend dependencies:
@@ -93,7 +111,7 @@ The tentative stack is:
 
 - Python and FastAPI for the backend
 - React, TypeScript, and Vite for the frontend
-- PostgreSQL for persistence, introduced after the first API-to-UI flow works
+- PostgreSQL for persistence; its development connection is configured, while schema and persistence work remain planned
 
 The intended architecture is a conventional monolithic web application: a React client calls a FastAPI REST API, application services hold business logic, and PostgreSQL provides persistence. Future osu! API access should be isolated behind a dedicated client or service boundary.
 
