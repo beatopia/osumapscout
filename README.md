@@ -6,7 +6,7 @@ The project is motivated by two goals: building a useful recommendation experien
 
 ## Current status
 
-The repository contains a FastAPI backend with a normalized top-play endpoint and a React, TypeScript, and Vite frontend. The frontend can search by osu! username and display returned top plays with basic score and map attributes. PostgreSQL stores explicitly persisted current top-play state, and a developer command can derive basic descriptive player statistics from it. HTTP analysis endpoints, analysis UI, and recommendations are not implemented. Work is complete through T0014; T0015, a player-analysis endpoint, is expected next.
+The repository contains a FastAPI backend with normalized top-play and persisted-player analysis endpoints plus a React, TypeScript, and Vite frontend. The frontend can search by osu! username and display returned top plays with basic score and map attributes. PostgreSQL stores explicitly persisted current top-play state, from which basic descriptive statistics are calculated on demand. Analysis UI and recommendations are not implemented. Work is complete through T0015; T0016, player analysis UI, is expected next.
 
 ## Run the backend locally
 
@@ -117,6 +117,14 @@ After a user has been persisted, calculate their current descriptive statistics 
 ```
 
 This command does not contact osu!, refresh data, or modify the database. It reports null-aware averages and deterministic exact-combination and individual-mod counts. Accuracy remains a `0`–`1` ratio in application results and is formatted as a percentage only by the command.
+
+With FastAPI running, request the same persisted statistics as JSON at:
+
+```text
+GET http://127.0.0.1:8000/api/users/YOUR_USERNAME/analysis
+```
+
+The username must already have been persisted. This read-only endpoint requires database configuration but no osu! credentials, and requesting it does not fetch or refresh upstream data. API accuracy remains on the `0`–`1` scale.
 
 ## Run the frontend locally
 

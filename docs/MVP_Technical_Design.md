@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The MVP grows through small vertical steps that expose real constraints early. The live backend-to-frontend top-play flow exists through T0009, T0010 documents persistence requirements, T0011–T0013 establish PostgreSQL and explicit current-state ingestion, and T0014 derives basic player statistics from that persisted evidence.
+The MVP grows through small vertical steps that expose real constraints early. The live backend-to-frontend top-play flow exists through T0009, T0010 documents persistence requirements, T0011–T0013 establish PostgreSQL and explicit current-state ingestion, T0014 derives basic statistics, and T0015 exposes them through a read-only API.
 
 ## Incremental build strategy
 
@@ -19,7 +19,8 @@ The MVP grows through small vertical steps that expose real constraints early. T
 11. Implement the minimal user, beatmap, and current top-play schema with a versioned migration.
 12. Add an explicit transactional workflow that fetches and replaces one user's complete current top-play state without changing GET behavior.
 13. Calculate null-aware basic player statistics on demand from persisted current top plays.
-14. Expose reusable statistics through a later analysis endpoint and UI follow-up.
+14. Expose reusable statistics through a database-only player-analysis endpoint.
+15. Present that API through a later analysis UI.
 
 Each step should remain independently understandable and manually verifiable. Later tickets may revise this ordering when implementation findings justify it.
 
@@ -33,7 +34,7 @@ The frontend is expected to accept a username, call the application backend, and
 
 ## Persistence timing
 
-PostgreSQL did not block learning from the first live vertical flow. T0011 provides the connection foundation, T0012 adds typed ORM models and migrations, and T0013 transactionally replaces one user's complete current state. T0014 reads those rows with a fixed number of queries and computes descriptive averages and mod counts in Python. Statistics are neither fetched from osu! nor persisted. HTTP exposure remains a separate step.
+PostgreSQL did not block learning from the first live vertical flow. T0011 provides the connection foundation, T0012 adds typed ORM models and migrations, and T0013 transactionally replaces one user's complete current state. T0014 computes descriptive statistics from those rows, and T0015 exposes the same reusable result through a thin read-only HTTP route. Statistics are neither fetched from osu! nor persisted.
 
 ## Deferred recommendation design
 
