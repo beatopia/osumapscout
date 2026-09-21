@@ -6,7 +6,7 @@ The project is motivated by two goals: building a useful recommendation experien
 
 ## Current status
 
-The repository contains a FastAPI backend with a normalized top-play endpoint and a React, TypeScript, and Vite frontend. The frontend can search by osu! username and display returned top plays with basic score and map attributes. PostgreSQL ORM models and an explicit Alembic migration define the initial schema, but no osu! data is persisted yet. Work is complete through T0012; T0013, persisting fetched users and top plays, is expected next.
+The repository contains a FastAPI backend with a normalized top-play endpoint and a React, TypeScript, and Vite frontend. The frontend can search by osu! username and display returned top plays with basic score and map attributes. PostgreSQL ORM models, migrations, and an explicit developer workflow can persist a user's complete current top-play state. Player statistics and recommendations are not implemented. Work is complete through T0013; T0014, basic player statistics, is expected next.
 
 ## Run the backend locally
 
@@ -102,6 +102,14 @@ For development verification, remove all application tables created by the migra
 
 Run `upgrade head` again afterward to restore the schema. FastAPI never runs migrations or creates tables automatically.
 
+With `OSU_CLIENT_ID`, `OSU_CLIENT_SECRET`, and `DATABASE_URL` configured, explicitly fetch and persist one user's profile and complete available top-play set with:
+
+```powershell
+.\.venv\Scripts\python -m backend.app.database.persist_user YOUR_USERNAME
+```
+
+The command requests up to 100 plays and transactionally replaces only that user's current persisted top plays. It updates shared beatmap metadata without duplicating beatmaps. Normal GET requests still fetch live osu! data and do not write to PostgreSQL.
+
 ## Run the frontend locally
 
 From the repository root, install the frontend dependencies:
@@ -125,7 +133,7 @@ The tentative stack is:
 
 - Python and FastAPI for the backend
 - React, TypeScript, and Vite for the frontend
-- PostgreSQL for persistence; the initial schema and migration exist, while ingestion remains planned
+- PostgreSQL for persistence; the initial schema, migration, and explicit current-state ingestion workflow exist
 
 The intended architecture is a conventional monolithic web application: a React client calls a FastAPI REST API, application services hold business logic, and PostgreSQL provides persistence. Future osu! API access should be isolated behind a dedicated client or service boundary.
 

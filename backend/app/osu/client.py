@@ -246,16 +246,22 @@ class OsuApiClient:
         limit: int = 100,
     ) -> list[OsuTopPlay]:
         """Fetch up to 100 best osu!standard scores for a username."""
-        if (
-            isinstance(limit, bool)
-            or not isinstance(limit, int)
-            or not 1 <= limit <= 100
-        ):
-            raise ValueError("Top-play limit must be an integer from 1 through 100.")
-
+        self._validate_top_play_limit(limit)
         user = await self.get_user_by_username(username)
+        return await self.get_top_plays_by_user_id(user.user_id, limit)
+
+    async def get_top_plays_by_user_id(
+        self,
+        user_id: int,
+        limit: int = 100,
+    ) -> list[OsuTopPlay]:
+        """Fetch up to 100 best osu!standard scores for a numeric user ID."""
+        if isinstance(user_id, bool) or not isinstance(user_id, int) or user_id <= 0:
+            raise ValueError("User ID must be a positive integer.")
+        self._validate_top_play_limit(limit)
+
         access_token = await self.request_access_token()
-        scores_url = f"{OSU_API_BASE_URL}/users/{user.user_id}/scores/best"
+        scores_url = f"{OSU_API_BASE_URL}/users/{user_id}/scores/best"
 
         try:
             async with httpx.AsyncClient(timeout=10.0) as http_client:
@@ -292,6 +298,16 @@ class OsuApiClient:
             self._parse_top_play(raw_play, position)
             for position, raw_play in enumerate(response_data, start=1)
         ]
+
+    @staticmethod
+    def _validate_top_play_limit(limit: int) -> None:
+        """Validate the shared top-play request limit."""
+        if (
+            isinstance(limit, bool)
+            or not isinstance(limit, int)
+            or not 1 <= limit <= 100
+        ):
+            raise ValueError("Top-play limit must be an integer from 1 through 100.")
 
     @staticmethod
     def _parse_top_play(raw_play: Any, position: int) -> OsuTopPlay:

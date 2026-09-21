@@ -15,9 +15,9 @@ This is a rough, incremental roadmap. Ticket scope and ordering may change when 
 | T0009 | Display top plays | Complete |
 | T0010 | Recommendation data requirements and persistence design | Complete |
 | T0011 | PostgreSQL development setup | Complete |
-| T0012 | Minimal persistence schema and migrations | Current / complete |
-| T0013 | Persist fetched users and top plays | Planned; expected next |
-| T0014 | Basic player statistics | Planned |
+| T0012 | Minimal persistence schema and migrations | Complete |
+| T0013 | Persist fetched users and top plays | Current / complete |
+| T0014 | Basic player statistics | Planned; expected next |
 | T0015 | Player-analysis endpoint/UI follow-up | Planned |
 
 No detailed tickets beyond T0015 are defined yet. Similar-player discovery and recommendation implementation remain unassigned until the candidate-user discovery mechanism has been researched.

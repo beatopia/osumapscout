@@ -35,14 +35,16 @@ This file records what exists now, not what the project intends to build later.
 - SQLAlchemy 2.x ORM models define `users`, `beatmaps`, and `user_top_plays` with explicit relationships and current-state constraints.
 - Alembic is configured to read the same `DATABASE_URL`; its initial migration can create and remove the application schema explicitly.
 - No schema is created or migrated automatically during FastAPI startup or requests.
-- No search or top-play persistence exists yet.
+- A non-public command can fetch a profile and up to 100 top plays, then transactionally persist the user's complete current state.
+- User and beatmap rows are updated by stable osu! IDs, shared beatmaps are reused, and stale top-play relationships for only the refreshed user are removed.
+- Existing GET requests still fetch live osu! data and do not automatically read from or write to PostgreSQL.
 - No player-analysis system exists yet.
 - No recommendation or similar-player logic exists yet.
 - T0010 documents current data, the conceptual minimum persistence model, recommendation data needs, and unresolved similar-player discovery questions in `docs/Recommendation_Data_Design.md`.
 
 ## Ticket position
 
-- Completed through: T0012 — Minimal persistence schema and migrations
-- Expected next ticket: T0013 — Persist fetched users and top plays
+- Completed through: T0013 — Persist fetched users and top plays
+- Expected next ticket: T0014 — Basic player statistics
 
 Future tickets must update this document when the repository's implemented state changes.

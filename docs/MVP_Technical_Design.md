@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The MVP grows through small vertical steps that expose real constraints early. The live backend-to-frontend top-play flow exists through T0009, T0010 documents the evidence-based persistence requirements, T0011 adds the PostgreSQL connection boundary, and T0012 defines the minimal schema through an explicit Alembic migration.
+The MVP grows through small vertical steps that expose real constraints early. The live backend-to-frontend top-play flow exists through T0009, T0010 documents the evidence-based persistence requirements, T0011 adds the PostgreSQL connection boundary, T0012 defines the minimal schema, and T0013 adds explicit transactional ingestion of complete current user state.
 
 ## Incremental build strategy
 
@@ -16,8 +16,9 @@ The MVP grows through small vertical steps that expose real constraints early. T
 8. Display the returned top plays with appropriate loading, empty, and failure states.
 9. Document recommendation data requirements and the minimum persistence design from the working vertical slice.
 10. Introduce synchronous SQLAlchemy and Psycopg 3 configuration for a local PostgreSQL database, independently of HTTP application startup.
-11. Implement the minimal user, beatmap, and current top-play schema with a versioned migration, then add ingestion in a separate ticket.
-12. After persistence behavior is understood, calculate basic player statistics and expose them through an analysis endpoint and UI follow-up.
+11. Implement the minimal user, beatmap, and current top-play schema with a versioned migration.
+12. Add an explicit transactional workflow that fetches and replaces one user's complete current top-play state without changing GET behavior.
+13. After persistence behavior is understood, calculate basic player statistics and expose them through an analysis endpoint and UI follow-up.
 
 Each step should remain independently understandable and manually verifiable. Later tickets may revise this ordering when implementation findings justify it.
 
@@ -31,7 +32,7 @@ The frontend is expected to accept a username, call the application backend, and
 
 ## Persistence timing
 
-PostgreSQL did not block learning from the first live vertical flow. T0011 provides lazy synchronous engine and session-factory configuration through `DATABASE_URL`, and T0012 adds typed ORM models plus an explicit Alembic migration. No HTTP path persists data; ingestion remains a separate ticket guided by `Recommendation_Data_Design.md`.
+PostgreSQL did not block learning from the first live vertical flow. T0011 provides the connection foundation, T0012 adds typed ORM models and migrations, and T0013 provides an explicit command that transactionally replaces one user's complete current state. HTTP GET paths still fetch live data and never trigger persistence. Player statistics remain the next separate step.
 
 ## Deferred recommendation design
 
