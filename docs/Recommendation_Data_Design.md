@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-This document records the evidence and persistence direction established by T0010. T0012 implements the minimum relational schema and migration described here; ingestion, analysis, and recommendation behavior do not exist yet.
+This document records the evidence and persistence direction established by T0010. T0012 implements the minimum relational schema, T0013 adds explicit current-state ingestion, and T0014 computes basic descriptive statistics on demand. Recommendation behavior does not exist yet.
 
 The design is intentionally minimal. It should guide the next persistence tickets without locking the project into an untested recommendation formula or an unverified osu! API capability.
 

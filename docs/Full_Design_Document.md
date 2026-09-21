@@ -60,7 +60,7 @@ Detailed component architecture and visual design remain tentative.
 
 The initial live API-to-UI path is now understood, and PostgreSQL remains the planned database. The evidence-based conceptual minimum is users, beatmaps, and current user-to-top-play relationships with fetch timestamps. Similarity scores, aggregate preferences, recommendation results, and explanations should initially be computed rather than stored.
 
-The detailed rationale, current field inventory, missing-data classifications, and remaining open questions are recorded in [Recommendation Data and Persistence Design](Recommendation_Data_Design.md). Its minimum current-state model is now represented by SQLAlchemy ORM models and an Alembic migration; ingestion and recommendation behavior remain unimplemented.
+The detailed rationale, current field inventory, missing-data classifications, and remaining open questions are recorded in [Recommendation Data and Persistence Design](Recommendation_Data_Design.md). Its minimum current-state model, explicit ingestion workflow, and basic on-demand statistics now exist; recommendation behavior remains unimplemented.
 
 ## External osu! API boundary
 

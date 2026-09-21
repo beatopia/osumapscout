@@ -6,7 +6,7 @@ The project is motivated by two goals: building a useful recommendation experien
 
 ## Current status
 
-The repository contains a FastAPI backend with a normalized top-play endpoint and a React, TypeScript, and Vite frontend. The frontend can search by osu! username and display returned top plays with basic score and map attributes. PostgreSQL ORM models, migrations, and an explicit developer workflow can persist a user's complete current top-play state. Player statistics and recommendations are not implemented. Work is complete through T0013; T0014, basic player statistics, is expected next.
+The repository contains a FastAPI backend with a normalized top-play endpoint and a React, TypeScript, and Vite frontend. The frontend can search by osu! username and display returned top plays with basic score and map attributes. PostgreSQL stores explicitly persisted current top-play state, and a developer command can derive basic descriptive player statistics from it. HTTP analysis endpoints, analysis UI, and recommendations are not implemented. Work is complete through T0014; T0015, a player-analysis endpoint, is expected next.
 
 ## Run the backend locally
 
@@ -109,6 +109,14 @@ With `OSU_CLIENT_ID`, `OSU_CLIENT_SECRET`, and `DATABASE_URL` configured, explic
 ```
 
 The command requests up to 100 plays and transactionally replaces only that user's current persisted top plays. It updates shared beatmap metadata without duplicating beatmaps. Normal GET requests still fetch live osu! data and do not write to PostgreSQL.
+
+After a user has been persisted, calculate their current descriptive statistics from PostgreSQL with:
+
+```powershell
+.\.venv\Scripts\python -m backend.app.analysis.player_stats YOUR_USERNAME
+```
+
+This command does not contact osu!, refresh data, or modify the database. It reports null-aware averages and deterministic exact-combination and individual-mod counts. Accuracy remains a `0`–`1` ratio in application results and is formatted as a percentage only by the command.
 
 ## Run the frontend locally
 
