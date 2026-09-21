@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-This document records the evidence and tentative persistence direction established by T0010. It describes data requirements; no database, schema, migration, analysis, or recommendation implementation exists yet.
+This document records the evidence and persistence direction established by T0010. T0012 implements the minimum relational schema and migration described here; ingestion, analysis, and recommendation behavior do not exist yet.
 
 The design is intentionally minimal. It should guide the next persistence tickets without locking the project into an untested recommendation formula or an unverified osu! API capability.
 
@@ -150,7 +150,7 @@ This is conceptual and is not SQL or an ORM specification.
 - **Important fields:** explicit top-play position, nullable score ID, PP, accuracy, grade, mods, max combo, played time, and fetched time.
 - **Relationships:** belongs to one user and one beatmap.
 
-The exact database constraint needs validation during schema implementation. Score ID cannot be the only key because it is nullable. User ID plus position describes the ordered slot but changes on refresh. User ID plus beatmap ID is the clearest current relationship identity, provided real data confirms one current best entry per beatmap in this context.
+The implemented current-state schema uses user ID plus beatmap ID as the composite primary key. Score ID cannot be the key because it is nullable, and user ID plus position changes as rankings refresh. A separate unique constraint on user ID plus position ensures one current entry occupies each rank slot.
 
 Do not create `Recommendation`, `SimilarUser`, `UserPreferenceVector`, `CachedAnalysis`, `ModStatistic`, or `RecommendationExplanation` tables initially.
 
@@ -215,7 +215,6 @@ This requires stable user and beatmap IDs, current ordered top-play relationship
 ## Unresolved questions
 
 - How should similar-user candidates be discovered efficiently and within verified API capabilities?
-- Is user ID plus beatmap ID a reliable uniqueness constraint for current best scores?
 - How much beatmap enrichment is necessary for the first useful recommendation?
 - Should top-play position be persisted directly during ordered ingestion? The current recommendation is yes, but real persistence behavior must validate it.
 - When, if ever, do historical snapshots become necessary?

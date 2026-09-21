@@ -32,7 +32,9 @@ This file records what exists now, not what the project intends to build later.
 - The backend has a lazy, synchronous SQLAlchemy 2.x engine and session-factory foundation using Psycopg 3.
 - A non-public verification command can connect to PostgreSQL and execute `SELECT 1` without creating tables.
 - FastAPI application import and `GET /health` remain independent of database configuration and connectivity.
-- No application tables, ORM application models, schema migrations, or automatic schema creation exist yet.
+- SQLAlchemy 2.x ORM models define `users`, `beatmaps`, and `user_top_plays` with explicit relationships and current-state constraints.
+- Alembic is configured to read the same `DATABASE_URL`; its initial migration can create and remove the application schema explicitly.
+- No schema is created or migrated automatically during FastAPI startup or requests.
 - No search or top-play persistence exists yet.
 - No player-analysis system exists yet.
 - No recommendation or similar-player logic exists yet.
@@ -40,7 +42,7 @@ This file records what exists now, not what the project intends to build later.
 
 ## Ticket position
 
-- Completed through: T0011 — PostgreSQL development setup
-- Expected next ticket: T0012 — Minimal persistence schema and migrations
+- Completed through: T0012 — Minimal persistence schema and migrations
+- Expected next ticket: T0013 — Persist fetched users and top plays
 
 Future tickets must update this document when the repository's implemented state changes.

@@ -6,7 +6,7 @@ The project is motivated by two goals: building a useful recommendation experien
 
 ## Current status
 
-The repository contains a FastAPI backend with a normalized top-play endpoint and a React, TypeScript, and Vite frontend. The frontend can search by osu! username and display returned top plays with basic score and map attributes. A PostgreSQL development connection foundation exists, but no application schema or persistence behavior has been implemented. Work is complete through T0011; T0012, minimal persistence schema and migrations, is expected next.
+The repository contains a FastAPI backend with a normalized top-play endpoint and a React, TypeScript, and Vite frontend. The frontend can search by osu! username and display returned top plays with basic score and map attributes. PostgreSQL ORM models and an explicit Alembic migration define the initial schema, but no osu! data is persisted yet. Work is complete through T0012; T0013, persisting fetched users and top plays, is expected next.
 
 ## Run the backend locally
 
@@ -88,6 +88,20 @@ The backend reads `DATABASE_URL` from the operating-system environment and does 
 
 The command executes `SELECT 1` and creates no tables. Database setup does not affect `/health`, and the current osu! endpoints do not read from or write to PostgreSQL.
 
+Apply the application schema explicitly after configuring `DATABASE_URL`:
+
+```powershell
+.\.venv\Scripts\python -m alembic upgrade head
+```
+
+For development verification, remove all application tables created by the migration with:
+
+```powershell
+.\.venv\Scripts\python -m alembic downgrade base
+```
+
+Run `upgrade head` again afterward to restore the schema. FastAPI never runs migrations or creates tables automatically.
+
 ## Run the frontend locally
 
 From the repository root, install the frontend dependencies:
@@ -111,7 +125,7 @@ The tentative stack is:
 
 - Python and FastAPI for the backend
 - React, TypeScript, and Vite for the frontend
-- PostgreSQL for persistence; its development connection is configured, while schema and persistence work remain planned
+- PostgreSQL for persistence; the initial schema and migration exist, while ingestion remains planned
 
 The intended architecture is a conventional monolithic web application: a React client calls a FastAPI REST API, application services hold business logic, and PostgreSQL provides persistence. Future osu! API access should be isolated behind a dedicated client or service boundary.
 

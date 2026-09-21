@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "An osu!standard map recommendation application"
 requires-python = ">=3.11"
 dependencies = [
+    "alembic>=1.14,<2",
     "fastapi",
     "httpx",
     "psycopg[binary]>=3.2,<4",
