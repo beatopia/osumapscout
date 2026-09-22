@@ -21,6 +21,8 @@ The MVP grows through small vertical steps that expose real constraints early. T
 13. Calculate null-aware basic player statistics on demand from persisted current top plays.
 14. Expose reusable statistics through a database-only player-analysis endpoint.
 15. Present that API through an analysis UI that remains distinct from live top-play search.
+16. Research documented candidate-user sources, API cost, sampling bias, cold start, and dataset constraints before implementing discovery.
+17. Prototype a bounded candidate pool from persisted users plus a capped official performance-ranking sample, without fetching candidate top plays or calculating similarity.
 
 Each step should remain independently understandable and manually verifiable. Later tickets may revise this ordering when implementation findings justify it.
 
@@ -40,8 +42,8 @@ The frontend now keeps two explicit flows behind one username input: live top-pl
 
 ## Deferred recommendation design
 
-Similar-player discovery and map recommendation implementation remain deferred. T0010 identifies their data needs, but candidate-user discovery is still an unresolved research problem and no similarity formula has been selected.
+T0017 resolved the first research direction but did not implement it. No documented reverse lookup maps a beatmap to all users who hold it in their best-score list. The next proposed step is a bounded local-plus-ranking candidate acquisition prototype; its ranking cursor assumptions must be verified in practice. Candidate top-play hydration, similarity formulas, and recommendations remain deferred.
 
 ## MVP boundaries
 
-This design does not specify future HTTP endpoints, a database schema, authentication for application users, recommendation algorithms, deployment architecture, caching, background processing, or production infrastructure.
+This design does not specify future HTTP endpoints beyond those already implemented, application-user authentication, recommendation algorithms, deployment architecture, caching, background processing, or production infrastructure. The implemented minimum persistence schema remains documented in `Recommendation_Data_Design.md` and its migration rather than expanded speculatively here.

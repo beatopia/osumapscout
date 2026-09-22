@@ -46,10 +46,12 @@ This file records what exists now, not what the project intends to build later.
 - Live top-play search and persisted analysis share the username input but remain separate requests with separate results and errors.
 - No recommendation or similar-player logic exists yet.
 - T0010 documents current data, the conceptual minimum persistence model, recommendation data needs, and unresolved similar-player discovery questions in `docs/Recommendation_Data_Design.md`.
+- T0017 documents official candidate-user sources, their costs and biases, the missing reverse-top-play lookup, and a bounded hybrid recommendation in `docs/Similar_Player_Discovery_Research.md`.
+- No candidate-user discovery, similarity metric, crawler, dataset import, or recommendation behavior was implemented by T0017.
 
 ## Ticket position
 
-- Completed through: T0016 — Player analysis UI
-- Expected next ticket: T0017 — Similar-player discovery feasibility research
+- Completed through: T0017 — Similar-player discovery feasibility research
+- Expected next ticket: T0018 — Bounded candidate-user discovery prototype
 
 Future tickets must update this document when the repository's implemented state changes.

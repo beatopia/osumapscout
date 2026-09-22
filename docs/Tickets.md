@@ -19,7 +19,8 @@ This is a rough, incremental roadmap. Ticket scope and ordering may change when 
 | T0013 | Persist fetched users and top plays | Complete |
 | T0014 | Basic player statistics | Complete |
 | T0015 | Player analysis endpoint | Complete |
-| T0016 | Player analysis UI | Current / complete |
-| T0017 | Similar-player discovery feasibility research | Planned; expected next |
+| T0016 | Player analysis UI | Complete |
+| T0017 | Similar-player discovery feasibility research | Current / complete |
+| T0018 | Bounded candidate-user discovery prototype | Planned; expected next |
 
-No detailed tickets beyond T0017 are defined yet. Recommendation implementation remains unassigned until the candidate-user discovery mechanism has been researched.
+No detailed tickets beyond T0018 are defined yet. T0018 is limited to proving bounded candidate acquisition; top-play hydration, similarity, and recommendation implementation remain unassigned.

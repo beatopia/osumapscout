@@ -26,7 +26,7 @@ The initial username lookup and top-play display now provide a working baseline.
 - Generate map recommendations from those relationships.
 - Exclude already-known top-play maps and apply useful map filters.
 
-User lookup, top-play retrieval, normalization, and basic display now exist. Analysis, persistence, similar-player discovery, recommendations, exclusion behavior, and filters remain planned.
+User lookup, top-play retrieval, normalization, display, current-state persistence, and basic persisted-player analysis now exist. Similar-player discovery, recommendations, exclusion behavior, and filters remain planned.
 
 ## High-level architecture
 
@@ -72,7 +72,7 @@ Credential handling, rate-limit behavior, retries, and caching will be specified
 
 Candidate approaches include shared top plays, Jaccard similarity, cosine similarity, and weighted collaborative filtering. These are possibilities rather than selected algorithms. The project should first inspect real user, score, mod, and beatmap data; then it can define similarity, weighting, evaluation, and cold-start behavior with evidence.
 
-The most important unresolved prerequisite is similar-player candidate discovery. The current application can inspect known users but does not yet have a verified mechanism for discovering a useful population of other users.
+T0017 found no documented reverse lookup for users whose best-score lists contain a beatmap. The recommended next experiment is a bounded candidate pool using persisted users first and the official osu!standard performance ranking for cold-start fill. Rank is only a coarse prior, and no discovery implementation or similarity formula exists yet. The evidence and deferred alternatives are in [Similar-Player Discovery Research](Similar_Player_Discovery_Research.md).
 
 ## Possible future infrastructure
 

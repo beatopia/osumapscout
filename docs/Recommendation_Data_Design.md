@@ -177,9 +177,9 @@ Data should be added only when a ticket verifies its source, meaning, nullabilit
 
 ## Similar-player discovery feasibility
 
-The largest unresolved system question is how to obtain a useful candidate pool of other users. The current implementation can fetch a known username and that user's top plays; it does not discover users from a beatmap or maintain a population dataset.
+T0017 found no documented osu! API v2 reverse lookup from a beatmap to every user who has that map in their best-score list. Candidate users must therefore come from a separate population source before their top plays can be compared.
 
-Possible directions to research include leaderboard users on shared beatmaps, an externally seeded set of users, or a progressively built local dataset. Another osu! API-supported path may exist, but none is claimed here without verification. This deserves a dedicated research ticket before similarity implementation or scale assumptions are made.
+The recommended first prototype is a bounded hybrid: use already-persisted users first, then fill a capped pool from the official osu!standard performance ranking. Rank proximity is only a coarse prior, and cursor behavior must be verified rather than assuming arbitrary rank-range access. Beatmap leaderboards, the global score feed, crawling, and public datasets remain deferred alternatives with important bias, operational, or licensing concerns. See [Similar-Player Discovery Research](Similar_Player_Discovery_Research.md) for sources and tradeoffs.
 
 ## Later experimental metrics
 
@@ -215,6 +215,7 @@ This requires stable user and beatmap IDs, current ordered top-play relationship
 ## Unresolved questions
 
 - How should similar-user candidates be discovered efficiently and within verified API capabilities?
+- Can a small ranking-request budget reach a useful neighborhood around an arbitrary target rank?
 - How much beatmap enrichment is necessary for the first useful recommendation?
 - Should top-play position be persisted directly during ordered ingestion? The current recommendation is yes, but real persistence behavior must validate it.
 - When, if ever, do historical snapshots become necessary?
