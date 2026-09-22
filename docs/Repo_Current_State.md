@@ -47,11 +47,17 @@ This file records what exists now, not what the project intends to build later.
 - No recommendation or similar-player logic exists yet.
 - T0010 documents current data, the conceptual minimum persistence model, recommendation data needs, and unresolved similar-player discovery questions in `docs/Recommendation_Data_Design.md`.
 - T0017 documents official candidate-user sources, their costs and biases, the missing reverse-top-play lookup, and a bounded hybrid recommendation in `docs/Similar_Player_Discovery_Research.md`.
-- No candidate-user discovery, similarity metric, crawler, dataset import, or recommendation behavior was implemented by T0017.
+- A focused, non-public candidate-discovery service requires a persisted target and returns up to 100 unique candidate identities.
+- Other persisted users are read in ascending numeric user-ID order before any external request. If they fill the requested capacity, osu! credentials are not needed.
+- When local users are insufficient, the service follows returned osu!standard performance-ranking cursors for at most three ranking requests.
+- Candidates are deduplicated by numeric osu! user ID. Their deterministic order and `local`/`ranking` provenance are retained, including merged provenance for duplicates.
+- Ranking request count is included in the result, and a developer CLI exposes the result for manual verification.
+- Candidate discovery is read-only. Ranking candidates are not persisted, and their profiles or top plays are not fetched.
+- No candidate top-play hydration, similarity metric, crawler, dataset import, or recommendation behavior exists.
 
 ## Ticket position
 
-- Completed through: T0017 — Similar-player discovery feasibility research
-- Expected next ticket: T0018 — Bounded candidate-user discovery prototype
+- Completed through: T0018 — Bounded candidate-user discovery prototype
+- Expected next ticket: T0019 — Candidate top-play hydration prototype
 
 Future tickets must update this document when the repository's implemented state changes.

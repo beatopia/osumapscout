@@ -87,6 +87,22 @@ class OsuTopPlay:
     bpm: float | None
 
 
+@dataclass(frozen=True)
+class OsuRankingUser:
+    """Minimal user identity exposed by an osu! ranking entry."""
+
+    user_id: int
+    username: str | None
+
+
+@dataclass(frozen=True)
+class OsuRankingPage:
+    """One normalized performance-ranking page and its returned cursor."""
+
+    users: tuple[OsuRankingUser, ...]
+    cursor: tuple[tuple[str, str], ...] | None
+
+
 class OsuApiClient:
     """Perform the osu! HTTP communication used by the application."""
 
@@ -249,6 +265,113 @@ class OsuApiClient:
         self._validate_top_play_limit(limit)
         user = await self.get_user_by_username(username)
         return await self.get_top_plays_by_user_id(user.user_id, limit)
+
+    async def get_osu_performance_ranking(
+        self,
+        cursor: tuple[tuple[str, str], ...] | None = None,
+    ) -> OsuRankingPage:
+        """Fetch one osu!standard performance-ranking page."""
+        access_token = await self.request_access_token()
+        ranking_url = f"{OSU_API_BASE_URL}/rankings/osu/performance"
+        params = (
+            [(f"cursor[{key}]", value) for key, value in cursor]
+            if cursor is not None
+            else None
+        )
+
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as http_client:
+                response = await http_client.get(
+                    ranking_url,
+                    params=params,
+                    headers={
+                        "Authorization": f"Bearer {access_token.access_token}",
+                    },
+                )
+        except httpx.RequestError as error:
+            raise OsuNetworkError(
+                "Could not reach osu! to request the performance ranking."
+            ) from error
+
+        if response.status_code in (401, 403):
+            raise OsuAuthenticationError(
+                "osu! rejected the performance-ranking request with "
+                f"HTTP {response.status_code}."
+            )
+        if response.is_error:
+            raise OsuApiError(
+                "osu! performance-ranking request failed with "
+                f"HTTP {response.status_code}."
+            )
+
+        return self._parse_ranking_page(response)
+
+    @staticmethod
+    def _parse_ranking_page(response: httpx.Response) -> OsuRankingPage:
+        try:
+            response_data: Any = response.json()
+            raw_ranking = response_data["ranking"]
+            raw_cursor = response_data.get("cursor")
+        except (AttributeError, KeyError, TypeError, ValueError) as error:
+            raise OsuApiError(
+                "osu! returned an invalid performance-ranking response."
+            ) from error
+
+        if not isinstance(raw_ranking, list):
+            raise OsuApiError(
+                "osu! returned an invalid performance-ranking response."
+            )
+
+        users: list[OsuRankingUser] = []
+        for position, raw_entry in enumerate(raw_ranking, start=1):
+            if not isinstance(raw_entry, dict):
+                raise OsuApiError(
+                    "osu! returned an invalid performance-ranking entry at "
+                    f"position {position}."
+                )
+            raw_user = raw_entry.get("user")
+            if not isinstance(raw_user, dict):
+                raise OsuApiError(
+                    "osu! returned an invalid performance-ranking entry at "
+                    f"position {position}."
+                )
+            user_id = raw_user.get("id")
+            username = raw_user.get("username")
+            if (
+                isinstance(user_id, bool)
+                or not isinstance(user_id, int)
+                or user_id <= 0
+                or (username is not None and not isinstance(username, str))
+            ):
+                raise OsuApiError(
+                    "osu! returned an invalid performance-ranking entry at "
+                    f"position {position}."
+                )
+            users.append(OsuRankingUser(user_id=user_id, username=username))
+
+        cursor = OsuApiClient._parse_ranking_cursor(raw_cursor)
+        return OsuRankingPage(users=tuple(users), cursor=cursor)
+
+    @staticmethod
+    def _parse_ranking_cursor(
+        raw_cursor: Any,
+    ) -> tuple[tuple[str, str], ...] | None:
+        if raw_cursor is None:
+            return None
+        if not isinstance(raw_cursor, dict):
+            raise OsuApiError(
+                "osu! returned an invalid performance-ranking cursor."
+            )
+
+        cursor: list[tuple[str, str]] = []
+        for key, value in raw_cursor.items():
+            if not isinstance(key, str) or not isinstance(value, (str, int)):
+                raise OsuApiError(
+                    "osu! returned an invalid performance-ranking cursor."
+                )
+            cursor.append((key, str(value)))
+
+        return tuple(cursor) or None
 
     async def get_top_plays_by_user_id(
         self,

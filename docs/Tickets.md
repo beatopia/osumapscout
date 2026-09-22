@@ -20,7 +20,8 @@ This is a rough, incremental roadmap. Ticket scope and ordering may change when 
 | T0014 | Basic player statistics | Complete |
 | T0015 | Player analysis endpoint | Complete |
 | T0016 | Player analysis UI | Complete |
-| T0017 | Similar-player discovery feasibility research | Current / complete |
-| T0018 | Bounded candidate-user discovery prototype | Planned; expected next |
+| T0017 | Similar-player discovery feasibility research | Complete |
+| T0018 | Bounded candidate-user discovery prototype | Current / complete |
+| T0019 | Candidate top-play hydration prototype | Planned; expected next |
 
-No detailed tickets beyond T0018 are defined yet. T0018 is limited to proving bounded candidate acquisition; top-play hydration, similarity, and recommendation implementation remain unassigned.
+No detailed tickets beyond T0019 are defined yet. T0019 should investigate bounded top-play hydration separately; similarity and recommendation implementation remain unassigned.

@@ -6,7 +6,7 @@ The project is motivated by two goals: building a useful recommendation experien
 
 ## Current status
 
-The repository contains a FastAPI backend with normalized top-play and persisted-player analysis endpoints plus a React, TypeScript, and Vite frontend. The frontend has separate actions for live top-play search and displaying persisted descriptive analysis. PostgreSQL stores explicitly persisted current top-play state, from which statistics are calculated on demand. Similar-player discovery and recommendations are not implemented. Work is complete through T0016; T0017, similar-player discovery feasibility research, is expected next.
+The repository contains a FastAPI backend with normalized top-play and persisted-player analysis endpoints plus a React, TypeScript, and Vite frontend. The frontend has separate actions for live top-play search and displaying persisted descriptive analysis. PostgreSQL stores explicitly persisted current top-play state, from which statistics are calculated on demand. A non-public backend prototype can discover bounded candidate identities from local users and osu! performance rankings; it does not calculate similarity or recommendations. Work is complete through T0018.
 
 ## Run the backend locally
 
@@ -125,6 +125,14 @@ GET http://127.0.0.1:8000/api/users/YOUR_USERNAME/analysis
 ```
 
 The username must already have been persisted. This read-only endpoint requires database configuration but no osu! credentials, and requesting it does not fetch or refresh upstream data. API accuracy remains on the `0`–`1` scale.
+
+Discover up to 100 candidate user identities for a persisted target with:
+
+```powershell
+.\.venv\Scripts\python -m backend.app.candidates.verify YOUR_USERNAME --limit 20
+```
+
+Persisted users are returned first in ascending numeric user-ID order. If they do not fill the requested capacity, the command follows at most three osu!standard performance-ranking responses. It excludes the target, deduplicates candidates by numeric user ID, shows `local` and `ranking` provenance, and reports the ranking request count. Ranking candidates remain ephemeral: this command does not fetch their top plays, persist them, calculate similarity, or recommend maps. A request satisfied entirely by local users does not require osu! credentials.
 
 ## Run the frontend locally
 
