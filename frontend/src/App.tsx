@@ -1,5 +1,9 @@
 import { FormEvent, useState } from "react";
 
+import PlayerAnalysis, {
+  isPlayerAnalysisResponse,
+  PlayerAnalysisResponse,
+} from "./PlayerAnalysis";
 import TopPlayList, {
   isTopPlaysResponse,
   TopPlaysResponse,
@@ -29,27 +33,33 @@ async function getErrorMessage(response: Response): Promise<string> {
 
 function App() {
   const [username, setUsername] = useState("");
-  const [result, setResult] = useState<TopPlaysResponse | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [topPlaysResult, setTopPlaysResult] =
+    useState<TopPlaysResponse | null>(null);
+  const [topPlaysError, setTopPlaysError] = useState<string | null>(null);
+  const [isTopPlaysLoading, setIsTopPlaysLoading] = useState(false);
+  const [analysisResult, setAnalysisResult] =
+    useState<PlayerAnalysisResponse | null>(null);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [isAnalysisLoading, setIsAnalysisLoading] = useState(false);
+  const isAnyRequestLoading = isTopPlaysLoading || isAnalysisLoading;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (isLoading) {
+    if (isAnyRequestLoading) {
       return;
     }
 
     const submittedUsername = username.trim();
-    setResult(null);
-    setErrorMessage(null);
+    setTopPlaysResult(null);
+    setTopPlaysError(null);
 
     if (!submittedUsername) {
-      setErrorMessage("Enter an osu! username.");
+      setTopPlaysError("Enter an osu! username.");
       return;
     }
 
-    setIsLoading(true);
+    setIsTopPlaysLoading(true);
     try {
       const response = await fetch(
         `/api/users/${encodeURIComponent(submittedUsername)}/top-plays`,
@@ -63,9 +73,9 @@ function App() {
         throw new Error("The backend returned an unexpected response.");
       }
 
-      setResult(body);
+      setTopPlaysResult(body);
     } catch (error) {
-      setErrorMessage(
+      setTopPlaysError(
         error instanceof TypeError
           ? "The backend is unavailable. Try again after it is running."
           : error instanceof Error
@@ -73,7 +83,52 @@ function App() {
             : "The search failed unexpectedly.",
       );
     } finally {
-      setIsLoading(false);
+      setIsTopPlaysLoading(false);
+    }
+  }
+
+  async function handleAnalysisRequest() {
+    if (isAnyRequestLoading) {
+      return;
+    }
+
+    const submittedUsername = username.trim();
+    setAnalysisResult(null);
+    setAnalysisError(null);
+
+    if (!submittedUsername) {
+      setAnalysisError("Enter an osu! username.");
+      return;
+    }
+
+    setIsAnalysisLoading(true);
+    try {
+      const response = await fetch(
+        `/api/users/${encodeURIComponent(submittedUsername)}/analysis`,
+      );
+      if (response.status === 404) {
+        throw new Error("No persisted analysis found for this user.");
+      }
+      if (!response.ok) {
+        throw new Error("The backend could not load persisted analysis.");
+      }
+
+      const body: unknown = await response.json();
+      if (!isPlayerAnalysisResponse(body)) {
+        throw new Error("The backend returned an unexpected analysis response.");
+      }
+
+      setAnalysisResult(body);
+    } catch (error) {
+      setAnalysisError(
+        error instanceof TypeError
+          ? "The backend is unavailable. Try again after it is running."
+          : error instanceof Error
+            ? error.message
+            : "The analysis request failed unexpectedly.",
+      );
+    } finally {
+      setIsAnalysisLoading(false);
     }
   }
 
@@ -91,26 +146,40 @@ function App() {
             type="text"
             value={username}
             onChange={(event) => setUsername(event.target.value)}
-            disabled={isLoading}
+            disabled={isAnyRequestLoading}
             autoComplete="off"
           />
-          <button type="submit" disabled={isLoading}>
-            {isLoading ? "Searching..." : "Search"}
+          <button type="submit" disabled={isAnyRequestLoading}>
+            {isTopPlaysLoading ? "Searching..." : "Search live top plays"}
+          </button>
+          <button
+            className="secondary-button"
+            type="button"
+            disabled={isAnyRequestLoading}
+            onClick={handleAnalysisRequest}
+          >
+            {isAnalysisLoading ? "Loading analysis..." : "View persisted analysis"}
           </button>
         </div>
       </form>
 
       <div className="search-status" aria-live="polite">
-        {isLoading && <p>Loading...</p>}
-        {result && (
+        {isTopPlaysLoading && <p>Loading live top plays...</p>}
+        {topPlaysResult && (
           <>
             <p>
-              Found {result.count} top plays for {result.username}.
+              Found {topPlaysResult.count} top plays for {topPlaysResult.username}.
             </p>
-            <TopPlayList result={result} />
+            <TopPlayList result={topPlaysResult} />
           </>
         )}
-        {errorMessage && <p className="error-message">{errorMessage}</p>}
+        {topPlaysError && <p className="error-message">{topPlaysError}</p>}
+      </div>
+
+      <div className="analysis-status" aria-live="polite">
+        {isAnalysisLoading && <p>Loading persisted analysis...</p>}
+        {analysisResult && <PlayerAnalysis analysis={analysisResult} />}
+        {analysisError && <p className="error-message">{analysisError}</p>}
       </div>
     </main>
   );

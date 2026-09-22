@@ -42,13 +42,14 @@ This file records what exists now, not what the project intends to build later.
 - Player statistics are computed on demand from persisted rows; they are not persisted and do not contact osu!.
 - `GET /api/users/{username}/analysis` exposes the persisted user's statistics through an explicit JSON response model.
 - The analysis endpoint reads PostgreSQL only; it does not call osu!, refresh the user, or write persistence data.
-- No analysis frontend exists yet.
+- The frontend can display persisted summary averages, exact mod combinations, and individual mod usage through a dedicated analysis action.
+- Live top-play search and persisted analysis share the username input but remain separate requests with separate results and errors.
 - No recommendation or similar-player logic exists yet.
 - T0010 documents current data, the conceptual minimum persistence model, recommendation data needs, and unresolved similar-player discovery questions in `docs/Recommendation_Data_Design.md`.
 
 ## Ticket position
 
-- Completed through: T0015 — Player analysis endpoint
-- Expected next ticket: T0016 — Player analysis UI
+- Completed through: T0016 — Player analysis UI
+- Expected next ticket: T0017 — Similar-player discovery feasibility research
 
 Future tickets must update this document when the repository's implemented state changes.

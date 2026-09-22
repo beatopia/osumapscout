@@ -6,7 +6,7 @@ The project is motivated by two goals: building a useful recommendation experien
 
 ## Current status
 
-The repository contains a FastAPI backend with normalized top-play and persisted-player analysis endpoints plus a React, TypeScript, and Vite frontend. The frontend can search by osu! username and display returned top plays with basic score and map attributes. PostgreSQL stores explicitly persisted current top-play state, from which basic descriptive statistics are calculated on demand. Analysis UI and recommendations are not implemented. Work is complete through T0015; T0016, player analysis UI, is expected next.
+The repository contains a FastAPI backend with normalized top-play and persisted-player analysis endpoints plus a React, TypeScript, and Vite frontend. The frontend has separate actions for live top-play search and displaying persisted descriptive analysis. PostgreSQL stores explicitly persisted current top-play state, from which statistics are calculated on demand. Similar-player discovery and recommendations are not implemented. Work is complete through T0016; T0017, similar-player discovery feasibility research, is expected next.
 
 ## Run the backend locally
 
@@ -142,6 +142,13 @@ npm.cmd run dev
 ```
 
 Use the local URL printed by Vite. During development, Vite forwards relative `/api` requests to FastAPI at `http://127.0.0.1:8000`. To verify the production build, run `npm.cmd run build` from `frontend/`.
+
+The shared username field provides two independent actions:
+
+- **Search live top plays** calls the existing live osu! API-backed flow.
+- **View persisted analysis** reads previously persisted statistics from PostgreSQL.
+
+The analysis action does not fetch, persist, or refresh osu! data. Persist the username explicitly with the backend command before requesting its analysis.
 
 ## Planned direction
 
