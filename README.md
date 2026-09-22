@@ -6,7 +6,7 @@ The project is motivated by two goals: building a useful recommendation experien
 
 ## Current status
 
-The repository contains a FastAPI backend with normalized top-play and persisted-player analysis endpoints plus a React, TypeScript, and Vite frontend. The frontend has separate actions for live top-play search and displaying persisted descriptive analysis. PostgreSQL stores explicitly persisted current top-play state, from which statistics are calculated on demand. Non-public backend prototypes can discover bounded candidate identities and hydrate a small candidate prefix with ephemeral live top-play evidence. They do not calculate similarity or recommendations. Work is complete through T0019.
+The repository contains a FastAPI backend with normalized top-play and persisted-player analysis endpoints plus a React, TypeScript, and Vite frontend. The frontend has separate actions for live top-play search and displaying persisted descriptive analysis. PostgreSQL stores explicitly persisted current top-play state, from which statistics are calculated on demand. Non-public backend experiments can discover candidates, hydrate a small candidate prefix, and compare exact top-play beatmap overlap. No recommendations are generated. Work is complete through T0020.
 
 ## Run the backend locally
 
@@ -141,6 +141,14 @@ Fetch ephemeral top-play evidence for a small prefix of that candidate pool with
 ```
 
 Hydration preserves discovery order and provenance, uses numeric user IDs directly, and performs one sequential best-score request per hydrated candidate. It accepts candidate-pool limits from 1 to 100, hydration limits from 1 to 10, and top-play depths from 1 to 100. Local candidates are fetched live through the same osu! API path as ranking candidates so evidence has one consistent source. Results remain ephemeral: no candidate profiles or plays are persisted, no public HTTP endpoint exists, and no similarity or recommendation is calculated.
+
+Run the first ephemeral top-play overlap experiment with:
+
+```powershell
+.\.venv\Scripts\python -m backend.app.similarity.verify YOUR_USERNAME --candidate-limit 20 --hydrate-limit 5 --top-plays 100
+```
+
+The command reads the target's persisted plays, reuses bounded candidate hydration, and reports unique shared beatmap count, Jaccard similarity, and target coverage. Results are ordered by shared count, Jaccard, target coverage, and numeric user ID. This is an inspectable experiment rather than a final quality judgment: it adds no weights, thresholds, persistence, public endpoint, or map recommendations.
 
 ## Run the frontend locally
 

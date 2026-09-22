@@ -44,7 +44,7 @@ This file records what exists now, not what the project intends to build later.
 - The analysis endpoint reads PostgreSQL only; it does not call osu!, refresh the user, or write persistence data.
 - The frontend can display persisted summary averages, exact mod combinations, and individual mod usage through a dedicated analysis action.
 - Live top-play search and persisted analysis share the username input but remain separate requests with separate results and errors.
-- No recommendation or similar-player logic exists yet.
+- No recommendation behavior exists. Similar-player work is currently limited to a non-public exact-map-overlap experiment.
 - T0010 documents current data, the conceptual minimum persistence model, recommendation data needs, and unresolved similar-player discovery questions in `docs/Recommendation_Data_Design.md`.
 - T0017 documents official candidate-user sources, their costs and biases, the missing reverse-top-play lookup, and a bounded hybrid recommendation in `docs/Similar_Player_Discovery_Research.md`.
 - A focused, non-public candidate-discovery service requires a persisted target and returns up to 100 unique candidate identities.
@@ -58,11 +58,16 @@ This file records what exists now, not what the project intends to build later.
 - Local and ranking candidates use the same live top-play source during hydration. Candidate provenance and both ranking/top-play request counts remain observable.
 - Hydrated candidate play sets are ephemeral: no users, beatmaps, plays, or timestamps are persisted or updated.
 - No public hydration endpoint or frontend integration exists.
-- No similarity metric, crawler, dataset import, or recommendation behavior exists.
+- A non-public similarity experiment reads the target's persisted top plays and reuses ephemeral candidate hydration at one shared comparison depth from 1 through 100.
+- The experiment uses unique beatmap IDs only and reports shared count, Jaccard similarity, and target coverage without weights or thresholds.
+- Candidate results retain acquisition provenance and upstream request counts. They are ordered by shared count, Jaccard, target coverage, then numeric user ID.
+- Zero-overlap candidates remain visible, while a target with no persisted plays fails before hydration.
+- Similarity results are not persisted, and no public similarity endpoint or frontend integration exists.
+- No candidate-map extraction, crawler, dataset import, or recommendation behavior exists.
 
 ## Ticket position
 
-- Completed through: T0019 — Candidate top-play hydration prototype
-- Expected next ticket: T0020 — Top-play overlap similarity experiment
+- Completed through: T0020 — Top-play overlap similarity experiment
+- Expected next ticket: T0021 — Similarity quality evaluation
 
 Future tickets must update this document when the repository's implemented state changes.
