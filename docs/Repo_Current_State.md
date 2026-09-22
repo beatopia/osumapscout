@@ -53,11 +53,16 @@ This file records what exists now, not what the project intends to build later.
 - Candidates are deduplicated by numeric osu! user ID. Their deterministic order and `local`/`ranking` provenance are retained, including merged provenance for duplicates.
 - Ranking request count is included in the result, and a developer CLI exposes the result for manual verification.
 - Candidate discovery is read-only. Ranking candidates are not persisted, and their profiles or top plays are not fetched.
-- No candidate top-play hydration, similarity metric, crawler, dataset import, or recommendation behavior exists.
+- A separate non-public hydration service reuses candidate discovery and fetches live osu!standard top plays for only the first bounded candidates in discovery order.
+- Hydration accepts at most 10 candidates and at most 100 top plays per candidate. Requests are sequential and use numeric osu! user IDs without per-candidate profile lookup.
+- Local and ranking candidates use the same live top-play source during hydration. Candidate provenance and both ranking/top-play request counts remain observable.
+- Hydrated candidate play sets are ephemeral: no users, beatmaps, plays, or timestamps are persisted or updated.
+- No public hydration endpoint or frontend integration exists.
+- No similarity metric, crawler, dataset import, or recommendation behavior exists.
 
 ## Ticket position
 
-- Completed through: T0018 — Bounded candidate-user discovery prototype
-- Expected next ticket: T0019 — Candidate top-play hydration prototype
+- Completed through: T0019 — Candidate top-play hydration prototype
+- Expected next ticket: T0020 — Top-play overlap similarity experiment
 
 Future tickets must update this document when the repository's implemented state changes.

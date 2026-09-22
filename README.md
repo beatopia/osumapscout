@@ -6,7 +6,7 @@ The project is motivated by two goals: building a useful recommendation experien
 
 ## Current status
 
-The repository contains a FastAPI backend with normalized top-play and persisted-player analysis endpoints plus a React, TypeScript, and Vite frontend. The frontend has separate actions for live top-play search and displaying persisted descriptive analysis. PostgreSQL stores explicitly persisted current top-play state, from which statistics are calculated on demand. A non-public backend prototype can discover bounded candidate identities from local users and osu! performance rankings; it does not calculate similarity or recommendations. Work is complete through T0018.
+The repository contains a FastAPI backend with normalized top-play and persisted-player analysis endpoints plus a React, TypeScript, and Vite frontend. The frontend has separate actions for live top-play search and displaying persisted descriptive analysis. PostgreSQL stores explicitly persisted current top-play state, from which statistics are calculated on demand. Non-public backend prototypes can discover bounded candidate identities and hydrate a small candidate prefix with ephemeral live top-play evidence. They do not calculate similarity or recommendations. Work is complete through T0019.
 
 ## Run the backend locally
 
@@ -133,6 +133,14 @@ Discover up to 100 candidate user identities for a persisted target with:
 ```
 
 Persisted users are returned first in ascending numeric user-ID order. If they do not fill the requested capacity, the command follows at most three osu!standard performance-ranking responses. It excludes the target, deduplicates candidates by numeric user ID, shows `local` and `ranking` provenance, and reports the ranking request count. Ranking candidates remain ephemeral: this command does not fetch their top plays, persist them, calculate similarity, or recommend maps. A request satisfied entirely by local users does not require osu! credentials.
+
+Fetch ephemeral top-play evidence for a small prefix of that candidate pool with:
+
+```powershell
+.\.venv\Scripts\python -m backend.app.candidates.verify_hydration YOUR_USERNAME --candidate-limit 10 --hydrate-limit 3 --top-plays 10
+```
+
+Hydration preserves discovery order and provenance, uses numeric user IDs directly, and performs one sequential best-score request per hydrated candidate. It accepts candidate-pool limits from 1 to 100, hydration limits from 1 to 10, and top-play depths from 1 to 100. Local candidates are fetched live through the same osu! API path as ranking candidates so evidence has one consistent source. Results remain ephemeral: no candidate profiles or plays are persisted, no public HTTP endpoint exists, and no similarity or recommendation is calculated.
 
 ## Run the frontend locally
 
