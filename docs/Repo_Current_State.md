@@ -63,11 +63,16 @@ This file records what exists now, not what the project intends to build later.
 - Candidate results retain acquisition provenance and upstream request counts. They are ordered by shared count, Jaccard, target coverage, then numeric user ID.
 - Zero-overlap candidates remain visible, while a target with no persisted plays fails before hydration.
 - Similarity results are not persisted, and no public similarity endpoint or frontend integration exists.
+- A real T0020 run for `molerat` hydrated ten candidates from the original local-plus-ranking source and found zero exact shared top-play beatmaps for all ten; nine candidates came from the global-ranking fallback.
+- A separate T0021 experiment selects up to ten deterministic, approximately evenly spaced target top-play seeds and fetches one osu!standard beatmap leaderboard per seed.
+- Target-map candidates are deduplicated by numeric user ID, exclude the target, and retain every seed beatmap that discovered them. Candidates are ordered by seed-hit count and first discovery order before output truncation.
+- The target-map experiment reports total unique candidates, the full seed-hit distribution, selected positions, and leaderboard request count.
+- T0021 does not replace the original T0018 local-plus-ranking discovery behavior. Leaderboard candidates and their seed provenance remain ephemeral and are not hydrated or passed into T0020 similarity yet.
 - No candidate-map extraction, crawler, dataset import, or recommendation behavior exists.
 
 ## Ticket position
 
-- Completed through: T0020 — Top-play overlap similarity experiment
-- Expected next ticket: T0021 — Similarity quality evaluation
+- Completed through: T0021 — Target-map leaderboard candidate source experiment
+- Expected next ticket: T0022 — Evaluate target-map candidates with top-play overlap
 
 Future tickets must update this document when the repository's implemented state changes.

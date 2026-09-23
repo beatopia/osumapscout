@@ -150,6 +150,14 @@ Run the first ephemeral top-play overlap experiment with:
 
 The command reads the target's persisted plays, reuses bounded candidate hydration, and reports unique shared beatmap count, Jaccard similarity, and target coverage. Results are ordered by shared count, Jaccard, target coverage, and numeric user ID. This is an inspectable experiment rather than a final quality judgment: it adds no weights, thresholds, persistence, public endpoint, or map recommendations.
 
+Experiment with a separate candidate source based on selected target-map leaderboards:
+
+```powershell
+.\.venv\Scripts\python -m backend.app.candidates.verify_target_maps YOUR_USERNAME --seed-count 5 --candidate-limit 30
+```
+
+The command deterministically spreads up to ten seed maps across the target's persisted top-play positions, makes one osu!standard leaderboard request per selected seed, and records which seeds discovered each unique user. It processes every seed before sorting and truncating candidates. This does not replace the existing ranking source, hydrate candidates, calculate similarity, persist results, or expose a public endpoint.
+
 ## Run the frontend locally
 
 From the repository root, install the frontend dependencies:

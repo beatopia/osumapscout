@@ -23,7 +23,8 @@ This is a rough, incremental roadmap. Ticket scope and ordering may change when 
 | T0017 | Similar-player discovery feasibility research | Complete |
 | T0018 | Bounded candidate-user discovery prototype | Complete |
 | T0019 | Candidate top-play hydration prototype | Complete |
-| T0020 | Top-play overlap similarity experiment | Current / complete |
-| T0021 | Similarity quality evaluation | Planned; expected next |
+| T0020 | Top-play overlap similarity experiment | Complete |
+| T0021 | Target-map leaderboard candidate source experiment | Current / complete |
+| T0022 | Evaluate target-map candidates with top-play overlap | Planned; expected next |
 
-No detailed tickets beyond T0021 are defined yet. T0021 should evaluate real overlap distributions and acquisition-source quality before weights, candidate-map extraction, or recommendations are selected.
+No detailed tickets beyond T0022 are defined yet. T0022 should hydrate a bounded subset of target-map candidates and reuse the existing overlap experiment; recommendations remain unassigned.
