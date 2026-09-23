@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, patch
 from backend.app.candidates.hydration import CandidateHydrationError
 from backend.app.candidates.target_maps import (
     TargetMapCandidate,
-    TargetMapCandidateExperiment,
+    TargetMapCandidatePool,
     TargetMapSeed,
 )
 from backend.app.osu.client import OsuApiError, OsuTopPlay
@@ -91,6 +91,41 @@ class OneHitSelectionTests(unittest.TestCase):
         result = select_stratified_one_hit_candidates(candidates, self.seeds, 5)
 
         self.assertEqual([item.user_id for item in result], [1, 2])
+
+    def test_balanced_five_seed_sample_selects_three_per_seed(self) -> None:
+        seeds = tuple(TargetMapSeed(index, index) for index in range(1, 6))
+        candidates = tuple(
+            self._candidate(seed.beatmap_id * 100 + offset, seed.beatmap_id)
+            for seed in seeds
+            for offset in range(4)
+        )
+
+        result = select_stratified_one_hit_candidates(candidates, seeds, 15)
+
+        self.assertEqual(len(result), 15)
+        self.assertEqual(
+            [
+                sum(item.seed_beatmap_ids == (seed.beatmap_id,) for item in result)
+                for seed in seeds
+            ],
+            [3, 3, 3, 3, 3],
+        )
+
+    def test_uneven_bucket_exhaustion_continues_round_robin(self) -> None:
+        candidates = (
+            self._candidate(1, 101),
+            self._candidate(2, 202),
+            self._candidate(3, 202),
+            self._candidate(4, 202),
+            self._candidate(5, 303),
+            self._candidate(6, 303),
+            self._candidate(7, 303),
+        )
+
+        result = select_stratified_one_hit_candidates(candidates, self.seeds, 6)
+
+        self.assertEqual([item.user_id for item in result], [1, 2, 5, 3, 6, 4])
+        self.assertEqual(len({item.user_id for item in result}), 6)
 
     @staticmethod
     def _candidate(user_id: int, seed_id: int) -> TargetMapCandidate:
@@ -183,7 +218,6 @@ class OneHitBaselineWorkflowTests(unittest.IsolatedAsyncioTestCase):
         acquisition.assert_awaited_once_with(
             "target",
             seed_count=5,
-            candidate_limit=100,
             osu_client=client,
         )
         self.assertEqual(metrics.call_count, 3)
@@ -216,7 +250,52 @@ class OneHitBaselineWorkflowTests(unittest.IsolatedAsyncioTestCase):
             [10, 20, 30],
         )
         self.assertEqual(result.top_play_requests_made, 3)
+        self.assertEqual(result.recurring_candidate_count, 1)
+        self.assertEqual(result.one_hit_candidate_count, 3)
+        self.assertEqual(
+            [count for _, count in result.one_hit_available_by_seed],
+            [2, 1],
+        )
+        self.assertEqual(
+            [count for _, count in result.one_hit_sample_by_seed],
+            [1, 1],
+        )
         client.get_user_by_username.assert_not_awaited()
+
+    async def test_full_pool_sampling_reaches_later_seed_buckets(self) -> None:
+        session = FakeBaselineSession([1, 2, 3, 4, 5, 6])
+        seeds = tuple(TargetMapSeed(index, index) for index in range(1, 6))
+        candidates = [
+            TargetMapCandidate(100 + index, f"A{index}", (1,))
+            for index in range(12)
+        ]
+        candidates.extend(
+            TargetMapCandidate(200 + index, f"Later{index}", (index,))
+            for index in range(2, 6)
+        )
+        acquisition = AsyncMock(
+            return_value=self._acquisition(candidates, seeds)
+        )
+        client = SimpleNamespace(get_top_plays_by_user_id=AsyncMock(return_value=[]))
+
+        result = await evaluate_one_hit_baseline(
+            "target",
+            recurring_limit=1,
+            one_hit_limit=5,
+            top_plays=6,
+            session_factory=lambda: session,
+            acquisition_function=acquisition,
+            osu_client=client,
+        )
+
+        self.assertEqual(
+            [item.user_id for item in result.one_hit_candidates],
+            [100, 202, 203, 204, 205],
+        )
+        self.assertEqual(
+            [count for _, count in result.one_hit_sample_by_seed],
+            [1, 1, 1, 1, 1],
+        )
 
     async def test_missing_group_is_allowed_but_both_empty_fail(self) -> None:
         session = FakeBaselineSession([1, 2])
@@ -271,7 +350,6 @@ class OneHitBaselineWorkflowTests(unittest.IsolatedAsyncioTestCase):
         acquisition = AsyncMock()
         for keyword, value in (
             ("seed_count", 0),
-            ("candidate_limit", 101),
             ("recurring_limit", 21),
             ("one_hit_limit", 0),
             ("top_plays", 101),
@@ -345,13 +423,12 @@ class OneHitBaselineWorkflowTests(unittest.IsolatedAsyncioTestCase):
     def _acquisition(
         candidates: list[TargetMapCandidate],
         seeds: tuple[TargetMapSeed, ...],
-    ) -> TargetMapCandidateExperiment:
-        return TargetMapCandidateExperiment(
+    ) -> TargetMapCandidatePool:
+        return TargetMapCandidatePool(
             target_user_id=42,
             target_username="Target",
             selected_seeds=seeds,
             candidates=tuple(candidates),
-            unique_candidate_count=len(candidates),
             seed_hit_distribution=(),
             leaderboard_requests_made=len(seeds),
         )

@@ -78,11 +78,15 @@ This file records what exists now, not what the project intends to build later.
 - The baseline hydrates the recurring group first and the one-hit group second, sequentially by numeric user ID, then reuses the unchanged T0022 raw and seed-excluded overlap calculation.
 - Each group remains separate and has its own zero, 1+, 2+, and 5+ thresholds plus total, mean, median, and maximum independent shared counts. The experiment produces no combined score or automated verdict.
 - T0023 is a non-public, read-only CLI experiment. Its candidate evidence and summaries are ephemeral; it adds no recommendations, persistence, schema changes, HTTP route, or frontend behavior.
+- The first live T0023 run for `molerat` found recurring mean/median independent overlap of 7.82/6 and one-hit mean/median overlap of 10.27/11. That comparison is inconclusive because pre-sampling truncation left the 15 one-hit users drawn from only the first two of five seed buckets.
+- T0024 exposes the complete, deterministically ordered candidate pool already accumulated from all selected leaderboard responses. The existing T0021 function now applies its unchanged display limit to that pool, so its CLI behavior and request count remain bounded and backward compatible.
+- The T0023 baseline now samples recurring and one-hit groups from the complete pre-truncation pool. Its CLI reports total recurring/one-hit availability plus one-hit availability and evaluated counts for each selected seed.
+- The baseline CLI no longer accepts `--candidate-limit`; only the evaluated group limits bound hydration. Full-pool exposure adds no pagination or leaderboard requests.
 - No candidate-map extraction, crawler, dataset import, or recommendation behavior exists.
 
 ## Ticket position
 
-- Completed through: T0023 — One-hit candidate overlap baseline
-- Expected next ticket: not yet selected; T0024 depends on the manually reviewed live T0023 baseline
+- Completed through: T0024 — Full-pool stratified candidate baseline
+- Expected next ticket: not yet selected; T0025 depends on the manually reviewed corrected T0024 live baseline
 
 Future tickets must update this document when the repository's implemented state changes.

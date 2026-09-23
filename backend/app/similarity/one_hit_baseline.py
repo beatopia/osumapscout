@@ -10,9 +10,9 @@ from sqlalchemy.orm import Session, sessionmaker
 from backend.app.candidates.hydration import CandidateHydrationError
 from backend.app.candidates.target_maps import (
     TargetMapCandidate,
-    TargetMapCandidateExperiment,
+    TargetMapCandidatePool,
     TargetMapSeed,
-    discover_target_map_candidates,
+    discover_full_target_map_candidate_pool,
 )
 from backend.app.database.connection import get_session_factory
 from backend.app.database.models import User, UserTopPlay
@@ -33,7 +33,7 @@ from backend.app.similarity.target_map_overlap import (
     calculate_raw_and_seed_excluded_overlap,
 )
 
-AcquisitionFunction = Callable[..., Awaitable[TargetMapCandidateExperiment]]
+AcquisitionFunction = Callable[..., Awaitable[TargetMapCandidatePool]]
 
 
 class BaselineCandidatesEmptyError(RuntimeError):
@@ -64,6 +64,10 @@ class OneHitBaselineResult:
     target_play_count: int
     selected_seeds: tuple[TargetMapSeed, ...]
     discovered_candidate_count: int
+    recurring_candidate_count: int
+    one_hit_candidate_count: int
+    one_hit_available_by_seed: tuple[tuple[TargetMapSeed, int], ...]
+    one_hit_sample_by_seed: tuple[tuple[TargetMapSeed, int], ...]
     recurring_candidates: tuple[TargetMapCandidateOverlap, ...]
     one_hit_candidates: tuple[TargetMapCandidateOverlap, ...]
     recurring_summary: OverlapGroupSummary
@@ -134,12 +138,11 @@ async def evaluate_one_hit_baseline(
     username: str,
     *,
     seed_count: int = 5,
-    candidate_limit: int = 100,
     recurring_limit: int = 20,
     one_hit_limit: int = 15,
     top_plays: int = 100,
     session_factory: Callable[[], Session] | sessionmaker[Session] | None = None,
-    acquisition_function: AcquisitionFunction = discover_target_map_candidates,
+    acquisition_function: AcquisitionFunction = discover_full_target_map_candidate_pool,
     osu_client: OsuApiClient | None = None,
 ) -> OneHitBaselineResult:
     """Evaluate recurring and stratified one-hit candidates separately."""
@@ -147,7 +150,6 @@ async def evaluate_one_hit_baseline(
     if not requested_username:
         raise ValueError("Username must not be empty.")
     _validate_bound(seed_count, 1, 10, "Seed count")
-    _validate_bound(candidate_limit, 1, 100, "Candidate limit")
     _validate_bound(recurring_limit, 1, 20, "Recurring limit")
     _validate_bound(one_hit_limit, 1, 20, "One-hit limit")
     _validate_bound(top_plays, 1, 100, "Top-play limit")
@@ -176,10 +178,7 @@ async def evaluate_one_hit_baseline(
             "The persisted target has no top plays to compare."
         )
 
-    acquisition_arguments: dict[str, object] = {
-        "seed_count": seed_count,
-        "candidate_limit": candidate_limit,
-    }
+    acquisition_arguments: dict[str, object] = {"seed_count": seed_count}
     if osu_client is not None:
         acquisition_arguments["osu_client"] = osu_client
     acquisition = await acquisition_function(
@@ -192,13 +191,19 @@ async def evaluate_one_hit_baseline(
             "Removing selected seed maps leaves no target top plays to compare."
         )
 
-    recurring = tuple(
+    recurring_pool = tuple(
         candidate
         for candidate in acquisition.candidates
         if candidate.seed_hit_count >= 2
-    )[:recurring_limit]
+    )
+    one_hit_pool = tuple(
+        candidate
+        for candidate in acquisition.candidates
+        if candidate.seed_hit_count == 1
+    )
+    recurring = recurring_pool[:recurring_limit]
     one_hit = select_stratified_one_hit_candidates(
-        acquisition.candidates,
+        one_hit_pool,
         acquisition.selected_seeds,
         one_hit_limit,
     )
@@ -221,6 +226,16 @@ async def evaluate_one_hit_baseline(
         target_play_count=len(frozenset(target_ids)),
         selected_seeds=acquisition.selected_seeds,
         discovered_candidate_count=acquisition.unique_candidate_count,
+        recurring_candidate_count=len(recurring_pool),
+        one_hit_candidate_count=len(one_hit_pool),
+        one_hit_available_by_seed=_count_one_hit_candidates_by_seed(
+            one_hit_pool,
+            acquisition.selected_seeds,
+        ),
+        one_hit_sample_by_seed=_count_one_hit_candidates_by_seed(
+            one_hit,
+            acquisition.selected_seeds,
+        ),
         recurring_candidates=recurring_results,
         one_hit_candidates=one_hit_results,
         recurring_summary=summarize_independent_overlap(recurring_results),
@@ -274,6 +289,19 @@ async def _hydrate_group(
             )
         )
     return tuple(results)
+
+
+def _count_one_hit_candidates_by_seed(
+    candidates: Sequence[TargetMapCandidate],
+    selected_seeds: Sequence[TargetMapSeed],
+) -> tuple[tuple[TargetMapSeed, int], ...]:
+    counts = {seed.beatmap_id: 0 for seed in selected_seeds}
+    for candidate in candidates:
+        if candidate.seed_hit_count == 1:
+            seed_id = candidate.seed_beatmap_ids[0]
+            if seed_id in counts:
+                counts[seed_id] += 1
+    return tuple((seed, counts[seed.beatmap_id]) for seed in selected_seeds)
 
 
 def _validate_bound(value: int, minimum: int, maximum: int, label: str) -> None:

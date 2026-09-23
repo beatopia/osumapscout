@@ -10,6 +10,7 @@ from backend.app.candidates.hydration import CandidateHydrationError
 from backend.app.candidates.target_maps import (
     TargetMapCandidateTargetNotFoundError,
     TargetMapEvidenceEmptyError,
+    TargetMapSeed,
 )
 from backend.app.osu.client import (
     OsuApiError,
@@ -35,11 +36,19 @@ from backend.app.similarity.target_map_overlap import (
 def print_result(result: OneHitBaselineResult) -> None:
     print(f"Target: {result.target_username} ({result.target_user_id})")
     print(f"Target maps compared: {result.target_play_count}")
-    print(f"Target-map candidates discovered: {result.discovered_candidate_count}")
+    print(f"Unique candidates discovered: {result.discovered_candidate_count}")
+    print(f"Recurring candidates available: {result.recurring_candidate_count}")
+    print(f"One-hit candidates available: {result.one_hit_candidate_count}")
     print(f"Recurring evaluated: {len(result.recurring_candidates)}")
     print(f"One-hit evaluated: {len(result.one_hit_candidates)}")
     print(f"Leaderboard requests: {result.leaderboard_requests_made}")
     print(f"Top-play requests: {result.top_play_requests_made}")
+
+    _print_seed_counts(
+        "One-hit candidates available by seed",
+        result.one_hit_available_by_seed,
+    )
+    _print_seed_counts("One-hit sample by seed", result.one_hit_sample_by_seed)
 
     _print_group("Recurring candidates", result.recurring_candidates)
     _print_group("One-hit baseline", result.one_hit_candidates)
@@ -90,12 +99,20 @@ def _print_summary(label: str, summary: OverlapGroupSummary) -> None:
     print(f"Maximum shared: {summary.maximum_shared_count}")
 
 
+def _print_seed_counts(
+    label: str,
+    counts: tuple[tuple[TargetMapSeed, int], ...],
+) -> None:
+    print(f"\n{label}:")
+    for seed, count in counts:
+        print(f"position #{seed.position} (beatmap {seed.beatmap_id}): {count}")
+
+
 async def _run(arguments: argparse.Namespace) -> int:
     try:
         result = await evaluate_one_hit_baseline(
             arguments.username,
             seed_count=arguments.seed_count,
-            candidate_limit=arguments.candidate_limit,
             recurring_limit=arguments.recurring_limit,
             one_hit_limit=arguments.one_hit_limit,
             top_plays=arguments.top_plays,
@@ -136,7 +153,6 @@ def main() -> int:
     )
     parser.add_argument("username", help="persisted target osu! username")
     parser.add_argument("--seed-count", type=int, default=5)
-    parser.add_argument("--candidate-limit", type=int, default=100)
     parser.add_argument("--recurring-limit", type=int, default=20)
     parser.add_argument("--one-hit-limit", type=int, default=15)
     parser.add_argument("--top-plays", type=int, default=100)

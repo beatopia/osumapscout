@@ -11,6 +11,7 @@ from backend.app.candidates.target_maps import (
     TargetMapCandidateTargetNotFoundError,
     TargetMapEvidenceEmptyError,
     TargetMapSeed,
+    discover_full_target_map_candidate_pool,
     discover_target_map_candidates,
     select_evenly_spaced_seeds,
 )
@@ -164,6 +165,43 @@ class BeatmapLeaderboardClientTests(unittest.IsolatedAsyncioTestCase):
 
 
 class TargetMapCandidateExperimentTests(unittest.IsolatedAsyncioTestCase):
+    async def test_full_pool_exposes_all_candidates_with_provenance(self) -> None:
+        session = self._session([(1, 101), (2, 102), (3, 103)])
+        client = SimpleNamespace(
+            get_beatmap_leaderboard_users=AsyncMock(
+                side_effect=[
+                    (
+                        OsuLeaderboardUser(42, "Target"),
+                        OsuLeaderboardUser(10, "Ten"),
+                        OsuLeaderboardUser(20, "Twenty"),
+                    ),
+                    (OsuLeaderboardUser(30, "Thirty"),),
+                    (
+                        OsuLeaderboardUser(20, "Twenty"),
+                        OsuLeaderboardUser(40, "Forty"),
+                    ),
+                ]
+            )
+        )
+
+        result = await discover_full_target_map_candidate_pool(
+            "target",
+            seed_count=3,
+            session_factory=lambda: session,
+            osu_client=client,
+        )
+
+        self.assertEqual(client.get_beatmap_leaderboard_users.await_count, 3)
+        self.assertEqual(result.leaderboard_requests_made, 3)
+        self.assertEqual(result.unique_candidate_count, 4)
+        self.assertEqual(
+            [candidate.user_id for candidate in result.candidates],
+            [20, 10, 30, 40],
+        )
+        self.assertEqual(result.candidates[0].seed_beatmap_ids, (101, 103))
+        self.assertEqual(result.seed_hit_distribution, ((2, 1), (1, 3)))
+        self.assertNotIn(42, [candidate.user_id for candidate in result.candidates])
+
     async def test_requires_persisted_target_and_skips_api(self) -> None:
         session = FakeTargetMapSession(None, [])
         client = SimpleNamespace(get_beatmap_leaderboard_users=AsyncMock())
@@ -244,6 +282,43 @@ class TargetMapCandidateExperimentTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.unique_candidate_count, 199)
         self.assertEqual(len(result.candidates), 100)
         self.assertTrue(all(candidate.seed_hit_count == 5 for candidate in result.candidates))
+
+    async def test_bounded_view_is_first_thirty_of_full_two_hundred_pool(self) -> None:
+        rows = [(index, 100 + index) for index in range(1, 6)]
+        responses = [
+            tuple(
+                OsuLeaderboardUser(seed * 1000 + index, f"User{seed}-{index}")
+                for index in range(40)
+            )
+            for seed in range(1, 6)
+        ]
+        full_client = SimpleNamespace(
+            get_beatmap_leaderboard_users=AsyncMock(side_effect=responses)
+        )
+        bounded_client = SimpleNamespace(
+            get_beatmap_leaderboard_users=AsyncMock(side_effect=responses)
+        )
+
+        full = await discover_full_target_map_candidate_pool(
+            "target",
+            seed_count=5,
+            session_factory=lambda: self._session(rows),
+            osu_client=full_client,
+        )
+        bounded = await discover_target_map_candidates(
+            "target",
+            seed_count=5,
+            candidate_limit=30,
+            session_factory=lambda: self._session(rows),
+            osu_client=bounded_client,
+        )
+
+        self.assertEqual(full.unique_candidate_count, 200)
+        self.assertEqual(len(bounded.candidates), 30)
+        self.assertEqual(bounded.candidates, full.candidates[:30])
+        self.assertEqual(bounded.seed_hit_distribution, full.seed_hit_distribution)
+        self.assertEqual(full_client.get_beatmap_leaderboard_users.await_count, 5)
+        self.assertEqual(bounded_client.get_beatmap_leaderboard_users.await_count, 5)
 
     async def test_upstream_failure_returns_no_partial_result(self) -> None:
         session = self._session([(1, 101), (2, 102)])

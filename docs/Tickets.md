@@ -26,6 +26,7 @@ This is a rough, incremental roadmap. Ticket scope and ordering may change when 
 | T0020 | Top-play overlap similarity experiment | Complete |
 | T0021 | Target-map leaderboard candidate source experiment | Complete |
 | T0022 | Evaluate target-map candidates with top-play overlap | Complete |
-| T0023 | One-hit candidate overlap baseline | Current / complete |
+| T0023 | One-hit candidate overlap baseline | Complete |
+| T0024 | Full-pool stratified candidate baseline | Current / complete |
 
-No detailed tickets beyond T0023 are defined yet. T0024 must be chosen only after manually reviewing the live recurring-versus-one-hit baseline; unit-test results do not establish which candidate strategy is better. Recommendations remain unassigned.
+No detailed tickets beyond T0024 are defined yet. T0025 must be chosen only after manually reviewing the corrected full-pool recurring-versus-one-hit baseline; unit-test results do not establish which candidate strategy is better. Recommendations remain unassigned.

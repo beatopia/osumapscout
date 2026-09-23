@@ -56,6 +56,22 @@ class TargetMapCandidateExperiment:
     leaderboard_requests_made: int
 
 
+@dataclass(frozen=True)
+class TargetMapCandidatePool:
+    """Complete ordered pool from the selected leaderboard responses."""
+
+    target_user_id: int
+    target_username: str
+    selected_seeds: tuple[TargetMapSeed, ...]
+    candidates: tuple[TargetMapCandidate, ...]
+    seed_hit_distribution: tuple[tuple[int, int], ...]
+    leaderboard_requests_made: int
+
+    @property
+    def unique_candidate_count(self) -> int:
+        return len(self.candidates)
+
+
 @dataclass
 class _CandidateAccumulator:
     user_id: int
@@ -93,12 +109,42 @@ async def discover_target_map_candidates(
     session_factory: Callable[[], Session] | sessionmaker[Session] | None = None,
     osu_client: OsuApiClient | None = None,
 ) -> TargetMapCandidateExperiment:
-    """Acquire candidates from every selected target-map leaderboard."""
+    """Return the existing bounded view of target-map candidates."""
     requested_username = username.strip()
     if not requested_username:
         raise ValueError("Username must not be empty.")
     _validate_bound(seed_count, 1, 10, "Seed count")
     _validate_bound(candidate_limit, 1, 100, "Candidate limit")
+
+    pool = await discover_full_target_map_candidate_pool(
+        requested_username,
+        seed_count=seed_count,
+        session_factory=session_factory,
+        osu_client=osu_client,
+    )
+    return TargetMapCandidateExperiment(
+        target_user_id=pool.target_user_id,
+        target_username=pool.target_username,
+        selected_seeds=pool.selected_seeds,
+        candidates=pool.candidates[:candidate_limit],
+        unique_candidate_count=pool.unique_candidate_count,
+        seed_hit_distribution=pool.seed_hit_distribution,
+        leaderboard_requests_made=pool.leaderboard_requests_made,
+    )
+
+
+async def discover_full_target_map_candidate_pool(
+    username: str,
+    *,
+    seed_count: int = DEFAULT_SEED_COUNT,
+    session_factory: Callable[[], Session] | sessionmaker[Session] | None = None,
+    osu_client: OsuApiClient | None = None,
+) -> TargetMapCandidatePool:
+    """Acquire every unique candidate returned by the selected leaderboards."""
+    requested_username = username.strip()
+    if not requested_username:
+        raise ValueError("Username must not be empty.")
+    _validate_bound(seed_count, 1, 10, "Seed count")
 
     create_session = session_factory or get_session_factory()
     with create_session() as session:
@@ -175,19 +221,18 @@ async def discover_target_map_candidates(
             username=candidate.username,
             seed_beatmap_ids=tuple(candidate.seed_beatmap_ids),
         )
-        for candidate in ordered_candidates[:candidate_limit]
+        for candidate in ordered_candidates
     )
     hit_counts: dict[int, int] = {}
     for candidate in ordered_candidates:
         hits = len(candidate.seed_beatmap_ids)
         hit_counts[hits] = hit_counts.get(hits, 0) + 1
 
-    return TargetMapCandidateExperiment(
+    return TargetMapCandidatePool(
         target_user_id=target.user_id,
         target_username=target.username,
         selected_seeds=selected_seeds,
         candidates=candidates,
-        unique_candidate_count=len(accumulated),
         seed_hit_distribution=tuple(
             sorted(hit_counts.items(), reverse=True)
         ),

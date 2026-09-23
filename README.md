@@ -6,7 +6,7 @@ The project is motivated by two goals: building a useful recommendation experien
 
 ## Current status
 
-The repository contains a FastAPI backend with normalized top-play and persisted-player analysis endpoints plus a React, TypeScript, and Vite frontend. The frontend has separate actions for live top-play search and displaying persisted descriptive analysis. PostgreSQL stores explicitly persisted current top-play state, from which statistics are calculated on demand. Non-public backend experiments can discover candidates, hydrate bounded candidate groups, and compare exact top-play beatmap overlap. No recommendations are generated. Work is complete through T0023.
+The repository contains a FastAPI backend with normalized top-play and persisted-player analysis endpoints plus a React, TypeScript, and Vite frontend. The frontend has separate actions for live top-play search and displaying persisted descriptive analysis. PostgreSQL stores explicitly persisted current top-play state, from which statistics are calculated on demand. Non-public backend experiments can discover candidates, hydrate bounded candidate groups, and compare exact top-play beatmap overlap. No recommendations are generated. Work is complete through T0024.
 
 ## Run the backend locally
 
@@ -169,10 +169,10 @@ This command reuses target-map acquisition, fetches candidate top plays sequenti
 Compare recurring target-map candidates with a deterministic, seed-stratified sample of one-hit candidates:
 
 ```powershell
-.\.venv\Scripts\python -m backend.app.similarity.verify_one_hit_baseline YOUR_USERNAME --seed-count 5 --candidate-limit 100 --recurring-limit 20 --one-hit-limit 15 --top-plays 100
+.\.venv\Scripts\python -m backend.app.similarity.verify_one_hit_baseline YOUR_USERNAME --seed-count 5 --recurring-limit 20 --one-hit-limit 15 --top-plays 100
 ```
 
-This developer experiment runs target-map acquisition once, hydrates both groups sequentially by numeric user ID, and reports their raw and seed-excluded overlap separately. The summaries contain counts, thresholds, totals, means, medians, and maxima only; they do not combine the evidence into a score or make a quality verdict. The result remains ephemeral and does not recommend maps.
+This developer experiment runs full target-map acquisition once, samples its complete pre-truncation candidate pool, hydrates both bounded groups sequentially by numeric user ID, and reports their raw and seed-excluded overlap separately. It also reports full-pool availability and one-hit availability/sample counts for every selected seed. The summaries contain counts, thresholds, totals, means, medians, and maxima only; they do not combine the evidence into a score or make a quality verdict. The result remains ephemeral and does not recommend maps. Unlike the bounded T0021 display command, this baseline intentionally has no `--candidate-limit` option because display truncation must not bias its sampling population.
 
 ## Run the frontend locally
 
