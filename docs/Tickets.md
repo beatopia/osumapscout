@@ -25,7 +25,7 @@ This is a rough, incremental roadmap. Ticket scope and ordering may change when 
 | T0019 | Candidate top-play hydration prototype | Complete |
 | T0020 | Top-play overlap similarity experiment | Complete |
 | T0021 | Target-map leaderboard candidate source experiment | Complete |
-| T0022 | Evaluate target-map candidates with top-play overlap | Current / complete |
-| T0023 | Target-map overlap quality evaluation | Planned; expected next |
+| T0022 | Evaluate target-map candidates with top-play overlap | Complete |
+| T0023 | One-hit candidate overlap baseline | Current / complete |
 
-No detailed tickets beyond T0023 are defined yet. T0023 should review live raw versus seed-excluded results before choosing combined scoring, broader similarity research, or candidate-map work. Recommendations remain unassigned.
+No detailed tickets beyond T0023 are defined yet. T0024 must be chosen only after manually reviewing the live recurring-versus-one-hit baseline; unit-test results do not establish which candidate strategy is better. Recommendations remain unassigned.

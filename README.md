@@ -6,7 +6,7 @@ The project is motivated by two goals: building a useful recommendation experien
 
 ## Current status
 
-The repository contains a FastAPI backend with normalized top-play and persisted-player analysis endpoints plus a React, TypeScript, and Vite frontend. The frontend has separate actions for live top-play search and displaying persisted descriptive analysis. PostgreSQL stores explicitly persisted current top-play state, from which statistics are calculated on demand. Non-public backend experiments can discover candidates, hydrate a small candidate prefix, and compare exact top-play beatmap overlap. No recommendations are generated. Work is complete through T0020.
+The repository contains a FastAPI backend with normalized top-play and persisted-player analysis endpoints plus a React, TypeScript, and Vite frontend. The frontend has separate actions for live top-play search and displaying persisted descriptive analysis. PostgreSQL stores explicitly persisted current top-play state, from which statistics are calculated on demand. Non-public backend experiments can discover candidates, hydrate bounded candidate groups, and compare exact top-play beatmap overlap. No recommendations are generated. Work is complete through T0023.
 
 ## Run the backend locally
 
@@ -165,6 +165,14 @@ Evaluate a bounded prefix of those target-map candidates with both raw and seed-
 ```
 
 This command reuses target-map acquisition, fetches candidate top plays sequentially by numeric user ID, and reuses the existing shared-count, Jaccard, and target-coverage calculations. Seed-excluded metrics remove only the selected discovery seed maps from both users before comparison, exposing overlap beyond the acquisition evidence. Results and candidate plays remain ephemeral; no recommendation, persistence, endpoint, or frontend behavior is added.
+
+Compare recurring target-map candidates with a deterministic, seed-stratified sample of one-hit candidates:
+
+```powershell
+.\.venv\Scripts\python -m backend.app.similarity.verify_one_hit_baseline YOUR_USERNAME --seed-count 5 --candidate-limit 100 --recurring-limit 20 --one-hit-limit 15 --top-plays 100
+```
+
+This developer experiment runs target-map acquisition once, hydrates both groups sequentially by numeric user ID, and reports their raw and seed-excluded overlap separately. The summaries contain counts, thresholds, totals, means, medians, and maxima only; they do not combine the evidence into a score or make a quality verdict. The result remains ephemeral and does not recommend maps.
 
 ## Run the frontend locally
 

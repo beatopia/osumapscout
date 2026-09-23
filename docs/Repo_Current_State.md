@@ -72,12 +72,17 @@ This file records what exists now, not what the project intends to build later.
 - A separate T0022 evaluation reads the target's persisted evidence, reuses T0021 acquisition, and sequentially hydrates at most 20 candidates by numeric user ID.
 - T0022 reuses T0020's exact overlap helper for two views: raw overlap and seed-excluded overlap. The latter removes only selected discovery seed maps from both sets to expose independent shared maps.
 - Evaluation results preserve candidate seed provenance and leaderboard/top-play request counts, retain zero-overlap candidates, and order display by seed-excluded shared count, seed-excluded Jaccard, seed-hit count, then numeric user ID.
+- A real T0022 run for `molerat` evaluated all 11 recurring candidates. Ten had at least one independent shared map, nine had at least two, six had at least five, and the maximum independent shared count was 22.
 - Candidate evidence and overlap results remain ephemeral. No public endpoint or frontend integration exists, and the original T0018, T0020, and T0021 behaviors remain available unchanged.
+- A separate T0023 baseline reuses T0021 acquisition once and compares recurring candidates (`seed_hit_count >= 2`) with a deterministic round-robin sample of one-hit candidates (`seed_hit_count == 1`) across the selected seed maps.
+- The baseline hydrates the recurring group first and the one-hit group second, sequentially by numeric user ID, then reuses the unchanged T0022 raw and seed-excluded overlap calculation.
+- Each group remains separate and has its own zero, 1+, 2+, and 5+ thresholds plus total, mean, median, and maximum independent shared counts. The experiment produces no combined score or automated verdict.
+- T0023 is a non-public, read-only CLI experiment. Its candidate evidence and summaries are ephemeral; it adds no recommendations, persistence, schema changes, HTTP route, or frontend behavior.
 - No candidate-map extraction, crawler, dataset import, or recommendation behavior exists.
 
 ## Ticket position
 
-- Completed through: T0022 — Evaluate target-map candidates with top-play overlap
-- Expected next ticket: T0023 — Target-map overlap quality evaluation
+- Completed through: T0023 — One-hit candidate overlap baseline
+- Expected next ticket: not yet selected; T0024 depends on the manually reviewed live T0023 baseline
 
 Future tickets must update this document when the repository's implemented state changes.
