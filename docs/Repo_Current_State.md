@@ -82,11 +82,15 @@ This file records what exists now, not what the project intends to build later.
 - T0024 exposes the complete, deterministically ordered candidate pool already accumulated from all selected leaderboard responses. The existing T0021 function now applies its unchanged display limit to that pool, so its CLI behavior and request count remain bounded and backward compatible.
 - The T0023 baseline now samples recurring and one-hit groups from the complete pre-truncation pool. Its CLI reports total recurring/one-hit availability plus one-hit availability and evaluated counts for each selected seed.
 - The baseline CLI no longer accepts `--candidate-limit`; only the evaluated group limits bound hydration. Full-pool exposure adds no pagination or leaderboard requests.
+- The corrected live T0024 run for `molerat` found recurring independent-overlap mean/median/maximum values of 7.82/6/22 and balanced one-hit values of 4.47/3/16. This is evidence for one target only, not validation across the osu! population.
+- T0025 adds a non-public ranking experiment with one hydration budget from 1 through 50. It selects recurring candidates first in deterministic acquisition order and fills unused capacity with the existing full-pool, seed-stratified one-hit sampler.
+- After sequential numeric-ID hydration, T0025 ranks candidates by seed-excluded shared count, Jaccard, target coverage, and numeric user ID. Seed-hit count is acquisition priority and explanatory provenance only; it is not part of similarity ordering.
+- T0025 reports request counts, per-seed one-hit selection, overlap thresholds, median and maximum overlap, and recurring/one-hit composition of the top five and top ten. Rankings and candidate plays remain ephemeral.
 - No candidate-map extraction, crawler, dataset import, or recommendation behavior exists.
 
 ## Ticket position
 
-- Completed through: T0024 — Full-pool stratified candidate baseline
-- Expected next ticket: not yet selected; T0025 depends on the manually reviewed corrected T0024 live baseline
+- Completed through: T0025 — Budgeted similar-player candidate ranking experiment
+- Expected next ticket: not yet selected; a possible T0026 candidate-map extraction experiment depends on manually reviewing the live T0025 ranking
 
 Future tickets must update this document when the repository's implemented state changes.

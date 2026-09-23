@@ -82,7 +82,7 @@ def select_stratified_one_hit_candidates(
     limit: int,
 ) -> tuple[TargetMapCandidate, ...]:
     """Round-robin one-hit users across seed buckets in seed order."""
-    _validate_bound(limit, 1, 20, "One-hit limit")
+    _validate_bound(limit, 1, 50, "One-hit limit")
     buckets: dict[int, list[TargetMapCandidate]] = {
         seed.beatmap_id: [] for seed in selected_seeds
     }

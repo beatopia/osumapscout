@@ -27,6 +27,7 @@ This is a rough, incremental roadmap. Ticket scope and ordering may change when 
 | T0021 | Target-map leaderboard candidate source experiment | Complete |
 | T0022 | Evaluate target-map candidates with top-play overlap | Complete |
 | T0023 | One-hit candidate overlap baseline | Complete |
-| T0024 | Full-pool stratified candidate baseline | Current / complete |
+| T0024 | Full-pool stratified candidate baseline | Complete |
+| T0025 | Budgeted similar-player candidate ranking experiment | Current / complete |
 
-No detailed tickets beyond T0024 are defined yet. T0025 must be chosen only after manually reviewing the corrected full-pool recurring-versus-one-hit baseline; unit-test results do not establish which candidate strategy is better. Recommendations remain unassigned.
+No detailed tickets beyond T0025 are defined yet. If the live T0025 ranking is sensible, a possible T0026 is a similar-player candidate-map extraction experiment. T0026 is not yet implemented, and recommendations remain unassigned.

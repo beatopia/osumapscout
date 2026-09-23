@@ -6,7 +6,7 @@ The project is motivated by two goals: building a useful recommendation experien
 
 ## Current status
 
-The repository contains a FastAPI backend with normalized top-play and persisted-player analysis endpoints plus a React, TypeScript, and Vite frontend. The frontend has separate actions for live top-play search and displaying persisted descriptive analysis. PostgreSQL stores explicitly persisted current top-play state, from which statistics are calculated on demand. Non-public backend experiments can discover candidates, hydrate bounded candidate groups, and compare exact top-play beatmap overlap. No recommendations are generated. Work is complete through T0024.
+The repository contains a FastAPI backend with normalized top-play and persisted-player analysis endpoints plus a React, TypeScript, and Vite frontend. The frontend has separate actions for live top-play search and displaying persisted descriptive analysis. PostgreSQL stores explicitly persisted current top-play state, from which statistics are calculated on demand. Non-public backend experiments can discover candidates, hydrate bounded candidate groups, and rank them by exact top-play beatmap overlap. No recommendations are generated. Work is complete through T0025.
 
 ## Run the backend locally
 
@@ -173,6 +173,14 @@ Compare recurring target-map candidates with a deterministic, seed-stratified sa
 ```
 
 This developer experiment runs full target-map acquisition once, samples its complete pre-truncation candidate pool, hydrates both bounded groups sequentially by numeric user ID, and reports their raw and seed-excluded overlap separately. It also reports full-pool availability and one-hit availability/sample counts for every selected seed. The summaries contain counts, thresholds, totals, means, medians, and maxima only; they do not combine the evidence into a score or make a quality verdict. The result remains ephemeral and does not recommend maps. Unlike the bounded T0021 display command, this baseline intentionally has no `--candidate-limit` option because display truncation must not bias its sampling population.
+
+Run the budgeted similar-player ranking experiment with:
+
+```powershell
+.\.venv\Scripts\python -m backend.app.similarity.verify_ranked_candidates YOUR_USERNAME --seed-count 5 --hydration-budget 25 --top-plays 100
+```
+
+This command spends its bounded hydration budget on recurring candidates first, then fills remaining capacity with the existing seed-stratified one-hit sampler. After hydration it ranks every evaluated user only by seed-excluded shared count, Jaccard, target coverage, and numeric user ID. Seed recurrence remains visible acquisition provenance but contributes no similarity points. Results remain ephemeral and are not map recommendations.
 
 ## Run the frontend locally
 
