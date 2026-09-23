@@ -103,6 +103,14 @@ class OsuRankingPage:
     cursor: tuple[tuple[str, str], ...] | None
 
 
+@dataclass(frozen=True)
+class OsuLeaderboardUser:
+    """Minimal user identity returned with a beatmap leaderboard score."""
+
+    user_id: int
+    username: str | None
+
+
 class OsuApiClient:
     """Perform the osu! HTTP communication used by the application."""
 
@@ -305,6 +313,93 @@ class OsuApiClient:
             )
 
         return self._parse_ranking_page(response)
+
+    async def get_beatmap_leaderboard_users(
+        self,
+        beatmap_id: int,
+    ) -> tuple[OsuLeaderboardUser, ...]:
+        """Fetch user identities from one osu!standard beatmap leaderboard."""
+        if (
+            isinstance(beatmap_id, bool)
+            or not isinstance(beatmap_id, int)
+            or beatmap_id <= 0
+        ):
+            raise ValueError("Beatmap ID must be a positive integer.")
+
+        access_token = await self.request_access_token()
+        scores_url = f"{OSU_API_BASE_URL}/beatmaps/{beatmap_id}/scores"
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as http_client:
+                response = await http_client.get(
+                    scores_url,
+                    params={"mode": "osu"},
+                    headers={
+                        "Authorization": f"Bearer {access_token.access_token}",
+                    },
+                )
+        except httpx.RequestError as error:
+            raise OsuNetworkError(
+                "Could not reach osu! to request beatmap leaderboard scores."
+            ) from error
+
+        if response.status_code in (401, 403):
+            raise OsuAuthenticationError(
+                "osu! rejected the beatmap-leaderboard request with "
+                f"HTTP {response.status_code}."
+            )
+        if response.is_error:
+            raise OsuApiError(
+                "osu! beatmap-leaderboard request failed with "
+                f"HTTP {response.status_code}."
+            )
+
+        return self._parse_beatmap_leaderboard(response)
+
+    @staticmethod
+    def _parse_beatmap_leaderboard(
+        response: httpx.Response,
+    ) -> tuple[OsuLeaderboardUser, ...]:
+        try:
+            response_data: Any = response.json()
+            raw_scores = response_data["scores"]
+        except (AttributeError, KeyError, TypeError, ValueError) as error:
+            raise OsuApiError(
+                "osu! returned an invalid beatmap-leaderboard response."
+            ) from error
+
+        if not isinstance(raw_scores, list):
+            raise OsuApiError(
+                "osu! returned an invalid beatmap-leaderboard response."
+            )
+
+        users: list[OsuLeaderboardUser] = []
+        for position, raw_score in enumerate(raw_scores, start=1):
+            if not isinstance(raw_score, dict):
+                raise OsuApiError(
+                    "osu! returned an invalid beatmap-leaderboard score at "
+                    f"position {position}."
+                )
+            raw_user = raw_score.get("user")
+            if not isinstance(raw_user, dict):
+                raise OsuApiError(
+                    "osu! returned an invalid beatmap-leaderboard score at "
+                    f"position {position}."
+                )
+            user_id = raw_user.get("id")
+            username = raw_user.get("username")
+            if (
+                isinstance(user_id, bool)
+                or not isinstance(user_id, int)
+                or user_id <= 0
+                or (username is not None and not isinstance(username, str))
+            ):
+                raise OsuApiError(
+                    "osu! returned an invalid beatmap-leaderboard score at "
+                    f"position {position}."
+                )
+            users.append(OsuLeaderboardUser(user_id, username))
+
+        return tuple(users)
 
     @staticmethod
     def _parse_ranking_page(response: httpx.Response) -> OsuRankingPage:
