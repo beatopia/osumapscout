@@ -158,6 +158,14 @@ Experiment with a separate candidate source based on selected target-map leaderb
 
 The command deterministically spreads up to ten seed maps across the target's persisted top-play positions, makes one osu!standard leaderboard request per selected seed, and records which seeds discovered each unique user. It processes every seed before sorting and truncating candidates. This does not replace the existing ranking source, hydrate candidates, calculate similarity, persist results, or expose a public endpoint.
 
+Evaluate a bounded prefix of those target-map candidates with both raw and seed-excluded overlap:
+
+```powershell
+.\.venv\Scripts\python -m backend.app.similarity.verify_target_maps YOUR_USERNAME --seed-count 5 --candidate-limit 30 --hydrate-limit 10 --top-plays 100
+```
+
+This command reuses target-map acquisition, fetches candidate top plays sequentially by numeric user ID, and reuses the existing shared-count, Jaccard, and target-coverage calculations. Seed-excluded metrics remove only the selected discovery seed maps from both users before comparison, exposing overlap beyond the acquisition evidence. Results and candidate plays remain ephemeral; no recommendation, persistence, endpoint, or frontend behavior is added.
+
 ## Run the frontend locally
 
 From the repository root, install the frontend dependencies:

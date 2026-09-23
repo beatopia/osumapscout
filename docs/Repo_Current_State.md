@@ -67,12 +67,17 @@ This file records what exists now, not what the project intends to build later.
 - A separate T0021 experiment selects up to ten deterministic, approximately evenly spaced target top-play seeds and fetches one osu!standard beatmap leaderboard per seed.
 - Target-map candidates are deduplicated by numeric user ID, exclude the target, and retain every seed beatmap that discovered them. Candidates are ordered by seed-hit count and first discovery order before output truncation.
 - The target-map experiment reports total unique candidates, the full seed-hit distribution, selected positions, and leaderboard request count.
-- T0021 does not replace the original T0018 local-plus-ranking discovery behavior. Leaderboard candidates and their seed provenance remain ephemeral and are not hydrated or passed into T0020 similarity yet.
+- A real T0021 run for `molerat` found 237 unique candidates from five requests: one candidate appeared on three seeds, ten appeared on two seeds, and 226 appeared on one seed.
+- T0021 does not replace the original T0018 local-plus-ranking discovery behavior. Leaderboard candidates and their seed provenance remain ephemeral.
+- A separate T0022 evaluation reads the target's persisted evidence, reuses T0021 acquisition, and sequentially hydrates at most 20 candidates by numeric user ID.
+- T0022 reuses T0020's exact overlap helper for two views: raw overlap and seed-excluded overlap. The latter removes only selected discovery seed maps from both sets to expose independent shared maps.
+- Evaluation results preserve candidate seed provenance and leaderboard/top-play request counts, retain zero-overlap candidates, and order display by seed-excluded shared count, seed-excluded Jaccard, seed-hit count, then numeric user ID.
+- Candidate evidence and overlap results remain ephemeral. No public endpoint or frontend integration exists, and the original T0018, T0020, and T0021 behaviors remain available unchanged.
 - No candidate-map extraction, crawler, dataset import, or recommendation behavior exists.
 
 ## Ticket position
 
-- Completed through: T0021 — Target-map leaderboard candidate source experiment
-- Expected next ticket: T0022 — Evaluate target-map candidates with top-play overlap
+- Completed through: T0022 — Evaluate target-map candidates with top-play overlap
+- Expected next ticket: T0023 — Target-map overlap quality evaluation
 
 Future tickets must update this document when the repository's implemented state changes.
