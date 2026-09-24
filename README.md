@@ -6,7 +6,7 @@ The project is motivated by two goals: building a useful recommendation experien
 
 ## Current status
 
-The repository contains a FastAPI backend with normalized top-play and persisted-player analysis endpoints plus a React, TypeScript, and Vite frontend. The frontend has separate actions for live top-play search and displaying persisted descriptive analysis. PostgreSQL stores explicitly persisted current top-play state, from which statistics are calculated on demand. Non-public backend experiments can discover candidates, compare collaborative and preference-aware candidate-map orderings, evaluate known-positive recovery, diagnose acquisition failures, and measure sensitivity to bounded hydration and selection budgets. No recommendations are generated. Work is complete through T0033.
+The repository contains a FastAPI backend with normalized top-play and persisted-player analysis endpoints plus a React, TypeScript, and Vite frontend. The frontend has separate actions for live top-play search and displaying persisted descriptive analysis. PostgreSQL stores explicitly persisted current top-play state, from which statistics are calculated on demand. Non-public backend experiments can discover candidates, compare collaborative and preference-aware candidate-map orderings, evaluate known-positive recovery, diagnose acquisition failures, measure bounded acquisition budgets, and analyze rank effects from expanding the selected-player prefix. No recommendations are generated. Work is complete through T0034.
 
 ## Run the backend locally
 
@@ -44,7 +44,7 @@ Verify token acquisition with:
 .\.venv\Scripts\python -m backend.app.osu.verify
 ```
 
-The command reports only success or a developer-facing error; it never prints the access token. This authenticates the backend application for public API access and does not log an osu! user into `osumapscout`.
+The command reports only success or a developer-facing error; it never prints the access token. This authenticates the backend application for public API access and does not log an osu! user into `osumapscout`. An API client reuses its unexpired token in memory with a 30-second expiry margin; tokens are not persisted across processes.
 
 Verify an osu!standard profile lookup with a normal username:
 
@@ -223,6 +223,14 @@ Compare the fixed `25/10`, `25/15`, and `40/15` hydration/selection configuratio
 ```
 
 This developer command runs three explicit experiments sequentially and reports their separate request costs, coverage stages, preference-aware recovery metrics, and per-map transitions. It does not optimize budgets or change acquisition or ranking behavior.
+
+Analyze top-10 versus top-15 selected-player evidence from one shared 25-user hydration pass:
+
+```powershell
+.\.venv\Scripts\python -m backend.app.recommendation.verify_selection_expansion YOUR_USERNAME --split-index 0
+```
+
+This developer diagnostic makes one 5-leaderboard plus 25-top-play acquisition pass, then constructs both candidate-map pools in memory. It reports pool growth, new-map provenance, support inflation, top-N stability, rank displacement, and held-out gains or regressions without changing any ranking definition.
 
 Compare the evidence-aware order with the experimental preference-aware order:
 

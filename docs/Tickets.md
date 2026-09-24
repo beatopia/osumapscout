@@ -36,6 +36,7 @@ This is a rough, incremental roadmap. Ticket scope and ordering may change when 
 | T0030 | Multi-split held-out recovery evaluation | Complete |
 | T0031 | Preference-aware candidate-map ranking experiment | Complete |
 | T0032 | Candidate acquisition coverage analysis | Complete |
-| T0033 | Acquisition budget sensitivity experiment | Current / complete |
+| T0033 | Acquisition budget sensitivity experiment | Complete |
+| T0034 | Selected-player expansion rank-impact analysis | Current / complete |
 
-No detailed tickets beyond T0033 are defined yet. T0034 must be chosen only after reviewing the request-cost and recovery changes across all five budget experiments. No production recommendation ranking has been selected.
+No detailed tickets beyond T0034 are defined yet. T0035 must be chosen only after reviewing why the selected-player expansion changes coverage and ranking placement. No production recommendation ranking has been selected.

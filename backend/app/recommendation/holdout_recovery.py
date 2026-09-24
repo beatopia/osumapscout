@@ -32,6 +32,7 @@ from backend.app.recommendation.candidate_map_ranking import (
 )
 from backend.app.recommendation.candidate_maps import CandidateMap, extract_candidate_maps
 from backend.app.recommendation.preference_evidence import (
+    TargetPreferenceProfile,
     annotate_candidate_evidence,
     build_target_preference_profile,
 )
@@ -216,6 +217,8 @@ class HoldoutRecoveryExperimentResult:
     split_diagnostics: SplitPositionDiagnostics
     acquisition_diagnostics: tuple[HeldOutAcquisitionDiagnostic, ...]
     acquisition_summary: AcquisitionDiagnosticSummary
+    ranking_result: RankedCandidateExperimentResult | None = None
+    target_preference_profile: TargetPreferenceProfile | None = None
 
 
 @dataclass(frozen=True)
@@ -650,6 +653,8 @@ async def evaluate_holdout_recovery(
         acquisition_summary=summarize_acquisition_diagnostics(
             acquisition_diagnostics
         ),
+        ranking_result=ranking_result,
+        target_preference_profile=training_profile,
     )
 
 

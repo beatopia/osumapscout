@@ -11,7 +11,7 @@ This file records what exists now, not what the project intends to build later.
 - A minimal FastAPI backend exists in `backend/app/`.
 - The backend can be started locally with the development command documented in `README.md`.
 - `GET /health` returns `{"status": "ok"}` when the backend is running.
-- A dedicated osu! API client boundary can request an application access token using the OAuth 2.0 client-credentials grant.
+- A dedicated osu! API client boundary can request an application access token using the OAuth 2.0 client-credentials grant. The client reuses an unexpired token in memory with a 30-second expiry margin; before T0033 verification it unnecessarily authenticated once per data request. Tokens are not persisted across processes.
 - osu! credentials are read from `OSU_CLIENT_ID` and `OSU_CLIENT_SECRET` environment variables.
 - Token acquisition can be checked with the verification command documented in `README.md` without displaying the token.
 - The osu! API client can fetch a basic osu!standard profile from a normal username.
@@ -122,11 +122,15 @@ This file records what exists now, not what the project intends to build later.
 - All four T0032 nonselected-only observations had a best containing candidate similarity rank of 13 or 14. These findings describe the current `molerat` experiment only.
 - T0033 runs three fixed, independent acquisition-budget configurations—25 hydrated/10 selected, 25/15, and 40/15—while holding the candidate source, seeds, split, hydration depth per user, and all rankings constant.
 - T0033 reports coverage transitions, preference-aware recovery metrics, and explicit request deltas. It does not select an optimal budget, persist results, or change application behavior.
+- Across five live T0033 splits, 25/10 recovered 25/50 observations for 150 data requests, 25/15 recovered 29/50 for the same 150 requests, and 40/15 recovered 31/50 for 225 requests. The 25/15 configuration added four recoveries at no data-request cost, but its preference-aware ranking metrics became substantially worse. The additional 75 top-play requests at 40/15 produced only two net recoveries over 25/15.
+- T0033's three configurations share one osu! client. This combines with in-memory token reuse to avoid authenticating per data request while retaining expiry refresh behavior.
+- T0034 adds a non-public rank-impact diagnostic for 25 hydrated users. It acquires and hydrates once, then compares selected-player limits 10 and 15 in memory using the existing extraction, collaborative-evidence, preference-evidence, and ranking definitions.
+- T0034 measures candidate-pool growth, new-map provenance, support changes and tiers, deterministic rank-pressure categories, top-N stability, rank displacement, and held-out gains or regressions. It performs 30 data requests per split and persists nothing.
 - No crawler or dataset import behavior exists.
 
 ## Ticket position
 
-- Completed through: T0033 — Acquisition budget sensitivity experiment
-- Expected next ticket: not yet selected; T0034 depends on reviewing T0033's five-split cost and coverage results
+- Completed through: T0034 — Selected-player expansion rank-impact analysis
+- Expected next ticket: not yet selected; T0035 depends on reviewing T0034's rank-impact findings
 
 Future tickets must update this document when the repository's implemented state changes.
