@@ -113,11 +113,17 @@ This file records what exists now, not what the project intends to build later.
 - The two collaborative orderings remain close across those three splits; neither is established as superior.
 - T0031 adds a separate preference-aware ordering: support count descending, attributes within the target IQR descending, total independent shared count descending, best supporting-player rank ascending, then beatmap ID ascending.
 - Preference-aware ranking reuses T0028's star-rating, AR, and BPM profile semantics. It uses no weights, mods, median distances, filtering, persistence, or extra requests. Held-out experiments build this profile only from training plays and now report all three orderings.
+- Across five T0031 splits, all three orderings recovered 25 of 50 held-out observations. Support-only mean Recall@10/@30/@50/@100 was 4%/18%/26%/32%, with mean per-split median rank 63.30 and mean recovered rank 80.05.
+- Evidence-aware mean Recall@10/@30/@50/@100 was 4%/22%/26%/36%, with mean per-split median rank 61.70 and mean recovered rank 77.84. Preference-aware values were 6%/24%/26%/36%, 52.30, and 70.41, respectively.
+- Preference-aware primarily changed placement rather than overall coverage. These measurements are for one target and do not validate the ordering generally; 25 of 50 held-out observations remained absent from the candidate-map pool.
+- T0032 classifies each held-out map at the earliest failed acquisition stage using already-hydrated candidate evidence, selected-player evidence, and the existing candidate-map pool. It retains no data, changes no ranking, and makes no additional requests.
+- Across five live T0032 splits, 25 of 50 held-out observations were recovered, 21 were absent from all 25 hydrated candidate users, four appeared only in hydrated users outside the selected top 10, and zero reached selected-player evidence but failed extraction.
+- Of the 25 unrecovered observations, 84% were absent from hydrated evidence and 16% were lost at similar-player selection. For recovered observations, hydrated supporter count had min/median/mean/max 1/4/4.12/12; selected supporter and candidate support count had 1/4/3.36/8.
 - No crawler or dataset import behavior exists.
 
 ## Ticket position
 
-- Completed through: T0031 — Preference-aware candidate-map ranking experiment
-- Expected next ticket: not yet selected; T0032 depends on manually reviewing preference-aware recovery across the same splits
+- Completed through: T0032 — Candidate acquisition coverage analysis
+- Expected next ticket: not yet selected; T0033 depends on reviewing T0032's five-split acquisition diagnostics
 
 Future tickets must update this document when the repository's implemented state changes.

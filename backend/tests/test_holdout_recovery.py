@@ -3,19 +3,26 @@
 import unittest
 
 from backend.app.candidates.target_maps import TargetMapSeed, select_evenly_spaced_seeds
+from backend.app.osu.client import OsuTopPlay
+from backend.app.recommendation.candidate_maps import CandidateMap
 from backend.app.recommendation.holdout_recovery import (
+    AcquisitionDiagnosticSummary,
     HoldoutRecoveryExperimentResult,
     OrderingRecoverySummary,
     RecoveredRankSummary,
     SplitPositionDiagnostics,
     TargetPlayEvidence,
+    aggregate_acquisition_diagnostics,
     aggregate_split_summaries,
     calculate_split_position_sets,
+    diagnose_held_out_acquisition,
     split_target_evidence,
+    summarize_acquisition_diagnostics,
     summarize_recovery,
 )
 from backend.app.recommendation.verify_holdout_recovery import format_split_summary
 from backend.app.similarity.target_map_overlap import calculate_raw_and_seed_excluded_overlap
+from backend.app.similarity.ranked_candidates import RankedSimilarPlayer
 
 
 class HoldoutSelectionTests(unittest.TestCase):
@@ -132,6 +139,86 @@ class AntiLeakageMetricTests(unittest.TestCase):
         self.assertNotIn(2, candidate_ids)
 
 
+class AcquisitionDiagnosticTests(unittest.TestCase):
+    def test_classifies_all_stages_and_counts_distinct_supporters(self) -> None:
+        held_out = tuple(HoldoutSelectionTests._play(value) for value in range(1, 5))
+        selected = self._candidate(10, (3, 3, 4), "recurring")
+        nonselected = self._candidate(20, (2,), "one_hit")
+        duplicate_user = self._candidate(20, (2,), "one_hit")
+        candidate_map = CandidateMap(3, None, None, None, None, None, None, ())
+
+        diagnostics = diagnose_held_out_acquisition(
+            held_out,
+            (selected, nonselected, duplicate_user),
+            (selected,),
+            (candidate_map,),
+            (),
+        )
+
+        self.assertEqual(
+            [item.failure_stage for item in diagnostics],
+            [
+                "not_present_in_hydrated_candidates",
+                "present_only_in_nonselected_candidates",
+                "recovered",
+                "extraction_or_exclusion_failure",
+            ],
+        )
+        self.assertEqual(diagnostics[1].hydrated_supporter_count, 1)
+        self.assertEqual(diagnostics[2].selected_supporter_count, 1)
+        self.assertEqual(diagnostics[2].candidate_pool_rank, 1)
+        self.assertTrue(diagnostics[1].seen_only_among_one_hit_candidates)
+        self.assertTrue(diagnostics[2].seen_among_recurring_candidates)
+
+        summary = summarize_acquisition_diagnostics(diagnostics)
+        self.assertEqual(summary.held_out_total, 4)
+        self.assertEqual(summary.recovered, 1)
+        self.assertEqual(summary.not_present_in_hydrated_candidates, 1)
+        self.assertEqual(summary.present_only_in_nonselected_candidates, 1)
+        self.assertEqual(summary.extraction_or_exclusion_failures, 1)
+
+    def test_aggregate_is_pure_addition(self) -> None:
+        first = AcquisitionDiagnosticSummary(10, 5, 4, 1, 0, 4, 2)
+        second = AcquisitionDiagnosticSummary(10, 4, 3, 2, 1, 5, 1)
+
+        aggregate = aggregate_acquisition_diagnostics((first, second))
+
+        self.assertEqual(aggregate.split_count, 2)
+        self.assertEqual(aggregate.held_out_total, 20)
+        self.assertEqual(aggregate.recovered, 9)
+        self.assertEqual(aggregate.not_present_in_hydrated_candidates, 7)
+        self.assertEqual(aggregate.present_only_in_nonselected_candidates, 3)
+        self.assertEqual(aggregate.extraction_or_exclusion_failures, 1)
+
+    @staticmethod
+    def _candidate(
+        user_id: int,
+        beatmap_ids: tuple[int, ...],
+        group: str,
+    ) -> RankedSimilarPlayer:
+        plays = tuple(
+            OsuTopPlay(
+                None, beatmap_id, None, None, None, None, None, None, None,
+                (), None, None, None, None, None,
+            )
+            for beatmap_id in beatmap_ids
+        )
+        return RankedSimilarPlayer(
+            user_id=user_id,
+            username=None,
+            seed_beatmap_ids=(1, 2) if group == "recurring" else (1,),
+            acquisition_group=group,  # type: ignore[arg-type]
+            candidate_play_count=len(plays),
+            raw_shared_beatmap_count=0,
+            raw_jaccard_similarity=0.0,
+            raw_target_coverage=0.0,
+            seed_excluded_shared_beatmap_count=0,
+            seed_excluded_jaccard_similarity=0.0,
+            seed_excluded_target_coverage=0.0,
+            hydrated_top_plays=plays,
+        )
+
+
 class RecoverySummaryTests(unittest.TestCase):
     def test_counts_recovery_and_recall_at_cutoffs(self) -> None:
         ordering = (5, 10, 7, 8, 20) + tuple(range(100, 110))
@@ -210,6 +297,8 @@ class RecoverySummaryTests(unittest.TestCase):
             split_count=5,
             split_index=1,
             split_diagnostics=SplitPositionDiagnostics(((1, 4),), 2, 4),
+            acquisition_diagnostics=(),
+            acquisition_summary=AcquisitionDiagnosticSummary(0, 0, 0, 0, 0, 0, 0),
         )
 
         self.assertEqual(
@@ -248,3 +337,4 @@ def _summary(
 
 if __name__ == "__main__":
     unittest.main()
+    diagnose_held_out_acquisition,

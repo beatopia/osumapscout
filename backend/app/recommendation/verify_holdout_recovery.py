@@ -61,6 +61,93 @@ def print_result(result: HoldoutRecoveryExperimentResult) -> None:
     print(format_split_summary(result))
 
 
+def print_acquisition_diagnostics(result: HoldoutRecoveryExperimentResult) -> None:
+    print("\nHeld-out acquisition diagnostics:")
+    for diagnostic in result.acquisition_diagnostics:
+        play = diagnostic.play
+        identity = f"{play.artist or 'Unknown artist'} - {play.title or 'Unknown title'}"
+        if play.difficulty_name:
+            identity += f" [{play.difficulty_name}]"
+        print(f"\nposition #{play.position}")
+        print(f"{identity}")
+        print(f"beatmap {play.beatmap_id}")
+        print(
+            "present in hydrated candidates: "
+            f"{_yes_no(diagnostic.hydrated_supporter_count > 0)}"
+        )
+        print(f"hydrated supporters: {diagnostic.hydrated_supporter_count}")
+        print(
+            "hydrated supporter user IDs: "
+            f"{_ids(diagnostic.hydrated_supporter_user_ids)}"
+        )
+        best_rank = diagnostic.best_containing_candidate_similarity_rank
+        print(
+            "best containing candidate similarity rank: "
+            f"{f'#{best_rank}' if best_rank is not None else 'unavailable'}"
+        )
+        print(
+            "present in selected similar players: "
+            f"{_yes_no(diagnostic.selected_supporter_count > 0)}"
+        )
+        print(f"selected supporters: {diagnostic.selected_supporter_count}")
+        print(f"selected supporter ranks: {_ranks(diagnostic.selected_supporter_ranks)}")
+        print(
+            "seen among recurring candidates: "
+            f"{_yes_no(diagnostic.seen_among_recurring_candidates)}"
+        )
+        print(
+            "seen only among one-hit candidates: "
+            f"{_yes_no(diagnostic.seen_only_among_one_hit_candidates)}"
+        )
+        print(f"candidate pool rank: {_rank(diagnostic.candidate_pool_rank)}")
+        print(f"preference-aware rank: {_rank(diagnostic.preference_aware_rank)}")
+        print(f"failure stage: {diagnostic.failure_stage}")
+    summary = result.acquisition_summary
+    print("\nAcquisition diagnostic summary:")
+    print(f"Held out total: {summary.held_out_total}")
+    _print_diagnostic_count("Recovered", summary.recovered, summary.held_out_total)
+    _print_diagnostic_count(
+        "Not present in hydrated candidates",
+        summary.not_present_in_hydrated_candidates,
+        summary.held_out_total,
+    )
+    _print_diagnostic_count(
+        "Present only in nonselected candidates",
+        summary.present_only_in_nonselected_candidates,
+        summary.held_out_total,
+    )
+    _print_diagnostic_count(
+        "Extraction or exclusion failures",
+        summary.extraction_or_exclusion_failures,
+        summary.held_out_total,
+    )
+    print(
+        "Held-out maps seen among recurring candidates: "
+        f"{summary.seen_among_recurring_candidates}"
+    )
+    print(
+        "Held-out maps seen only among one-hit candidates: "
+        f"{summary.seen_only_among_one_hit_candidates}"
+    )
+
+
+def _print_diagnostic_count(label: str, count: int, total: int) -> None:
+    percentage = count / total if total else 0.0
+    print(f"{label}: {count} / {total} ({percentage:.2%})")
+
+
+def _yes_no(value: bool) -> str:
+    return "yes" if value else "no"
+
+
+def _ids(values: tuple[int, ...]) -> str:
+    return ", ".join(str(value) for value in values) if values else "none"
+
+
+def _ranks(values: tuple[int, ...]) -> str:
+    return ", ".join(f"#{value}" for value in values) if values else "none"
+
+
 def _positions(positions: tuple[int, ...]) -> str:
     return ", ".join(str(position) for position in positions)
 
@@ -157,6 +244,8 @@ async def _run(arguments: argparse.Namespace) -> int:
         print("Holdout recovery failed. Check PostgreSQL and its schema.", file=sys.stderr)
         return 1
     print_result(result)
+    if arguments.show_acquisition_diagnostics:
+        print_acquisition_diagnostics(result)
     return 0
 
 
@@ -171,6 +260,7 @@ def main() -> int:
     parser.add_argument("--hydration-budget", type=int, default=25)
     parser.add_argument("--candidate-top-plays", type=int, default=100)
     parser.add_argument("--similar-player-limit", type=int, default=10)
+    parser.add_argument("--show-acquisition-diagnostics", action="store_true")
     return asyncio.run(_run(parser.parse_args()))
 
 

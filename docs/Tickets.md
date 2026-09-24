@@ -34,6 +34,7 @@ This is a rough, incremental roadmap. Ticket scope and ordering may change when 
 | T0028 | Candidate-map preference evidence experiment | Complete |
 | T0029 | Held-out top-play recovery experiment | Complete |
 | T0030 | Multi-split held-out recovery evaluation | Complete |
-| T0031 | Preference-aware candidate-map ranking experiment | Current / complete |
+| T0031 | Preference-aware candidate-map ranking experiment | Complete |
+| T0032 | Candidate acquisition coverage analysis | Current / complete |
 
-No detailed tickets beyond T0031 are defined yet. T0032 must be chosen only after manually comparing the preference-aware ordering across the same held-out splits. No production recommendation ranking has been selected.
+No detailed tickets beyond T0032 are defined yet. T0033 must be chosen only after reviewing acquisition failure stages across all five held-out splits. No production recommendation ranking has been selected.

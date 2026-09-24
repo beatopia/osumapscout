@@ -3,6 +3,7 @@
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from statistics import fmean, median
+from typing import Literal
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
@@ -89,6 +90,59 @@ class HeldOutMapRecovery:
     mean_independent_shared_count: float | None
 
 
+AcquisitionFailureStage = Literal[
+    "not_present_in_hydrated_candidates",
+    "present_only_in_nonselected_candidates",
+    "extraction_or_exclusion_failure",
+    "recovered",
+]
+
+
+@dataclass(frozen=True)
+class HeldOutAcquisitionDiagnostic:
+    play: TargetPlayEvidence
+    hydrated_supporter_user_ids: tuple[int, ...]
+    selected_supporter_user_ids: tuple[int, ...]
+    selected_supporter_ranks: tuple[int, ...]
+    best_containing_candidate_similarity_rank: int | None
+    seen_among_recurring_candidates: bool
+    seen_only_among_one_hit_candidates: bool
+    candidate_pool_rank: int | None
+    preference_aware_rank: int | None
+    failure_stage: AcquisitionFailureStage
+
+    @property
+    def hydrated_supporter_count(self) -> int:
+        return len(self.hydrated_supporter_user_ids)
+
+    @property
+    def selected_supporter_count(self) -> int:
+        return len(self.selected_supporter_user_ids)
+
+
+@dataclass(frozen=True)
+class AcquisitionDiagnosticSummary:
+    held_out_total: int
+    recovered: int
+    not_present_in_hydrated_candidates: int
+    present_only_in_nonselected_candidates: int
+    extraction_or_exclusion_failures: int
+    seen_among_recurring_candidates: int
+    seen_only_among_one_hit_candidates: int
+
+
+@dataclass(frozen=True)
+class AcquisitionDiagnosticAggregate:
+    split_count: int
+    held_out_total: int
+    recovered: int
+    not_present_in_hydrated_candidates: int
+    present_only_in_nonselected_candidates: int
+    extraction_or_exclusion_failures: int
+    seen_among_recurring_candidates: int
+    seen_only_among_one_hit_candidates: int
+
+
 @dataclass(frozen=True)
 class RecoveredRankSummary:
     minimum: int
@@ -160,6 +214,8 @@ class HoldoutRecoveryExperimentResult:
     split_count: int
     split_index: int
     split_diagnostics: SplitPositionDiagnostics
+    acquisition_diagnostics: tuple[HeldOutAcquisitionDiagnostic, ...]
+    acquisition_summary: AcquisitionDiagnosticSummary
 
 
 @dataclass(frozen=True)
@@ -283,6 +339,143 @@ def aggregate_split_summaries(
         support_only=_aggregate_orderings(tuple(item[0] for item in summaries)),
         evidence_aware=_aggregate_orderings(tuple(item[1] for item in summaries)),
         preference_aware=_aggregate_orderings(tuple(item[2] for item in summaries)),
+    )
+
+
+def diagnose_held_out_acquisition(
+    held_out: Sequence[TargetPlayEvidence],
+    hydrated_candidates: Sequence[RankedSimilarPlayer],
+    selected_candidates: Sequence[RankedSimilarPlayer],
+    candidate_maps: Sequence[CandidateMap],
+    preference_ordering: Sequence[PreferenceRankedCandidate],
+) -> tuple[HeldOutAcquisitionDiagnostic, ...]:
+    """Classify held-out maps using only already-hydrated in-memory evidence."""
+    hydrated_rank = {
+        candidate.user_id: rank
+        for rank, candidate in enumerate(hydrated_candidates, start=1)
+    }
+    selected_rank = {
+        candidate.user_id: rank
+        for rank, candidate in enumerate(selected_candidates, start=1)
+    }
+    pool_ranks = {
+        candidate.beatmap_id: rank
+        for rank, candidate in enumerate(candidate_maps, start=1)
+    }
+    preference_ranks = {
+        item.preference_evidence.collaborative.candidate_map.beatmap_id:
+            item.preference_rank
+        for item in preference_ordering
+    }
+    diagnostics: list[HeldOutAcquisitionDiagnostic] = []
+    for play in held_out:
+        hydrated_by_id = {
+            candidate.user_id: candidate
+            for candidate in hydrated_candidates
+            if any(
+                candidate_play.beatmap_id == play.beatmap_id
+                for candidate_play in candidate.hydrated_top_plays
+            )
+        }
+        selected_by_id = {
+            candidate.user_id: candidate
+            for candidate in selected_candidates
+            if candidate.user_id in hydrated_by_id
+        }
+        hydrated_supporters = tuple(hydrated_by_id.values())
+        selected_supporters = tuple(selected_by_id.values())
+        pool_rank = pool_ranks.get(play.beatmap_id)
+        if not hydrated_supporters:
+            stage: AcquisitionFailureStage = "not_present_in_hydrated_candidates"
+        elif not selected_supporters:
+            stage = "present_only_in_nonselected_candidates"
+        elif pool_rank is None:
+            stage = "extraction_or_exclusion_failure"
+        else:
+            stage = "recovered"
+        groups = {candidate.acquisition_group for candidate in hydrated_supporters}
+        diagnostics.append(
+            HeldOutAcquisitionDiagnostic(
+                play=play,
+                hydrated_supporter_user_ids=tuple(
+                    sorted({candidate.user_id for candidate in hydrated_supporters})
+                ),
+                selected_supporter_user_ids=tuple(
+                    sorted({candidate.user_id for candidate in selected_supporters})
+                ),
+                selected_supporter_ranks=tuple(
+                    sorted(
+                        selected_rank[candidate.user_id]
+                        for candidate in selected_supporters
+                    )
+                ),
+                best_containing_candidate_similarity_rank=(
+                    min(hydrated_rank[candidate.user_id] for candidate in hydrated_supporters)
+                    if hydrated_supporters
+                    else None
+                ),
+                seen_among_recurring_candidates="recurring" in groups,
+                seen_only_among_one_hit_candidates=groups == {"one_hit"},
+                candidate_pool_rank=pool_rank,
+                preference_aware_rank=preference_ranks.get(play.beatmap_id),
+                failure_stage=stage,
+            )
+        )
+    return tuple(diagnostics)
+
+
+def summarize_acquisition_diagnostics(
+    diagnostics: Sequence[HeldOutAcquisitionDiagnostic],
+) -> AcquisitionDiagnosticSummary:
+    return AcquisitionDiagnosticSummary(
+        held_out_total=len(diagnostics),
+        recovered=sum(item.failure_stage == "recovered" for item in diagnostics),
+        not_present_in_hydrated_candidates=sum(
+            item.failure_stage == "not_present_in_hydrated_candidates"
+            for item in diagnostics
+        ),
+        present_only_in_nonselected_candidates=sum(
+            item.failure_stage == "present_only_in_nonselected_candidates"
+            for item in diagnostics
+        ),
+        extraction_or_exclusion_failures=sum(
+            item.failure_stage == "extraction_or_exclusion_failure"
+            for item in diagnostics
+        ),
+        seen_among_recurring_candidates=sum(
+            item.seen_among_recurring_candidates for item in diagnostics
+        ),
+        seen_only_among_one_hit_candidates=sum(
+            item.seen_only_among_one_hit_candidates for item in diagnostics
+        ),
+    )
+
+
+def aggregate_acquisition_diagnostics(
+    summaries: Sequence[AcquisitionDiagnosticSummary],
+) -> AcquisitionDiagnosticAggregate:
+    """Aggregate explicitly supplied diagnostic summaries without running splits."""
+    if not summaries:
+        raise ValueError("At least one acquisition diagnostic summary is required.")
+    return AcquisitionDiagnosticAggregate(
+        split_count=len(summaries),
+        held_out_total=sum(item.held_out_total for item in summaries),
+        recovered=sum(item.recovered for item in summaries),
+        not_present_in_hydrated_candidates=sum(
+            item.not_present_in_hydrated_candidates for item in summaries
+        ),
+        present_only_in_nonselected_candidates=sum(
+            item.present_only_in_nonselected_candidates for item in summaries
+        ),
+        extraction_or_exclusion_failures=sum(
+            item.extraction_or_exclusion_failures for item in summaries
+        ),
+        seen_among_recurring_candidates=sum(
+            item.seen_among_recurring_candidates for item in summaries
+        ),
+        seen_only_among_one_hit_candidates=sum(
+            item.seen_only_among_one_hit_candidates for item in summaries
+        ),
     )
 
 
@@ -420,6 +613,14 @@ async def evaluate_holdout_recovery(
     recoveries = _build_recoveries(
         split.held_out, extraction.candidate_maps, evidence, preference
     )
+    selected_players = ranked[:similar_player_limit]
+    acquisition_diagnostics = diagnose_held_out_acquisition(
+        split.held_out,
+        ranked,
+        selected_players,
+        extraction.candidate_maps,
+        preference,
+    )
     return HoldoutRecoveryExperimentResult(
         target_user_id=target.user_id,
         target_username=target.username,
@@ -445,6 +646,10 @@ async def evaluate_holdout_recovery(
         split_count=split_count,
         split_index=split_index,
         split_diagnostics=split_diagnostics,
+        acquisition_diagnostics=acquisition_diagnostics,
+        acquisition_summary=summarize_acquisition_diagnostics(
+            acquisition_diagnostics
+        ),
     )
 
 
