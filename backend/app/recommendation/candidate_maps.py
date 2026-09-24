@@ -19,6 +19,8 @@ class CandidateMapSupport:
     username: str | None
     similar_player_rank: int
     independent_shared_count: int
+    seed_excluded_jaccard_similarity: float
+    seed_excluded_target_coverage: float
     mods: tuple[str, ...]
     performance_points: float | None
 
@@ -216,6 +218,10 @@ def _support_from_play(
         username=player.username,
         similar_player_rank=similar_player_rank,
         independent_shared_count=player.seed_excluded_shared_beatmap_count,
+        seed_excluded_jaccard_similarity=(
+            player.seed_excluded_jaccard_similarity
+        ),
+        seed_excluded_target_coverage=player.seed_excluded_target_coverage,
         mods=play.mods,
         performance_points=play.performance_points,
     )

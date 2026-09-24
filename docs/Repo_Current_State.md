@@ -91,11 +91,15 @@ This file records what exists now, not what the project intends to build later.
 - T0026 selects a bounded ranked prefix, excludes every target top-play beatmap, deduplicates remaining maps by numeric beatmap ID, and accumulates distinct supporting-player provenance plus already-available mods, PP, and display metadata.
 - Candidate maps are ordered only by support count, best supporting-player rank, and beatmap ID. Single-support maps remain visible, and extraction adds zero osu! requests.
 - Candidate-map results are ephemeral and developer-only. No candidate-map score, final recommendation claim, persistence, public endpoint, or frontend behavior exists.
+- A real T0026 run for `molerat` produced 553 candidate maps: 172 had support from at least two similar players, 81 from at least three, 22 from at least five, and maximum support was eight. Selected-player contribution counts ranged from 78 through 94, so no single selected player dominated that run.
+- T0027 compares the unchanged T0026 support-only order with an evidence-aware lexicographic order using support count, total and mean supporting-player independent overlap, best supporting-player rank, and beatmap ID.
+- T0027 reports previous rank, new rank, signed movement, and the largest upward and downward movements. Positive rank delta means a candidate map moved upward.
+- T0027 builds the candidate pool once, does not filter candidates, uses no map attributes or weighted score, and adds zero extraction or ranking requests.
 - No crawler or dataset import behavior exists.
 
 ## Ticket position
 
-- Completed through: T0026 — Similar-player candidate-map extraction experiment
-- Expected next ticket: not yet selected; T0027 depends on manually reviewing the live T0026 candidate-map evidence
+- Completed through: T0027 — Candidate-map evidence ranking experiment
+- Expected next ticket: not yet selected; T0028 depends on manually reviewing the live T0027 ordering and movement diagnostics
 
 Future tickets must update this document when the repository's implemented state changes.

@@ -29,6 +29,7 @@ This is a rough, incremental roadmap. Ticket scope and ordering may change when 
 | T0023 | One-hit candidate overlap baseline | Complete |
 | T0024 | Full-pool stratified candidate baseline | Complete |
 | T0025 | Budgeted similar-player candidate ranking experiment | Complete |
-| T0026 | Similar-player candidate-map extraction experiment | Current / complete |
+| T0026 | Similar-player candidate-map extraction experiment | Complete |
+| T0027 | Candidate-map evidence ranking experiment | Current / complete |
 
-No detailed tickets beyond T0026 are defined yet. T0027 must be chosen only after manually reviewing the live candidate-map pool; unit tests do not establish candidate-map quality. Recommendations remain unassigned.
+No detailed tickets beyond T0027 are defined yet. T0028 must be chosen only after manually reviewing how the live evidence-aware ordering changes the candidate-map pool. Recommendations remain unassigned.

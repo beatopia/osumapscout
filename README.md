@@ -6,7 +6,7 @@ The project is motivated by two goals: building a useful recommendation experien
 
 ## Current status
 
-The repository contains a FastAPI backend with normalized top-play and persisted-player analysis endpoints plus a React, TypeScript, and Vite frontend. The frontend has separate actions for live top-play search and displaying persisted descriptive analysis. PostgreSQL stores explicitly persisted current top-play state, from which statistics are calculated on demand. Non-public backend experiments can discover candidates, rank them by exact top-play overlap, and inspect candidate maps supported by highly ranked similar players. No recommendations are generated. Work is complete through T0026.
+The repository contains a FastAPI backend with normalized top-play and persisted-player analysis endpoints plus a React, TypeScript, and Vite frontend. The frontend has separate actions for live top-play search and displaying persisted descriptive analysis. PostgreSQL stores explicitly persisted current top-play state, from which statistics are calculated on demand. Non-public backend experiments can discover candidates, rank them by exact top-play overlap, and compare evidence-based orderings of candidate maps supported by highly ranked similar players. No recommendations are generated. Work is complete through T0027.
 
 ## Run the backend locally
 
@@ -189,6 +189,14 @@ Extract an inspectable candidate-map pool from a bounded prefix of those ranked 
 ```
 
 The extraction reuses T0025's already-hydrated plays, strictly excludes the target's own top-play maps, deduplicates by beatmap ID, and reports distinct supporting-player evidence. It performs no additional osu! requests and does not score or label maps as recommendations.
+
+Compare the T0026 support-only candidate-map order with an evidence-aware order using:
+
+```powershell
+.\.venv\Scripts\python -m backend.app.recommendation.verify_candidate_map_ranking YOUR_USERNAME --seed-count 5 --hydration-budget 25 --top-plays 100 --similar-player-limit 10 --show-maps 30
+```
+
+This experiment builds the candidate-map pool once and applies a lexicographic ordering by support count, total supporting-player independent overlap, mean independent overlap, best supporting-player rank, and beatmap ID. It reports old and new ranks with movement diagnostics, uses no weighted score or map attributes, and makes no additional requests.
 
 ## Run the frontend locally
 
