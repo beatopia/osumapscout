@@ -31,6 +31,9 @@ class CandidateMap:
     artist: str | None
     title: str | None
     difficulty_name: str | None
+    star_rating: float | None
+    approach_rate: float | None
+    bpm: float | None
     supports: tuple[CandidateMapSupport, ...]
 
     @property
@@ -90,6 +93,9 @@ class _CandidateMapAccumulator:
     artist: str | None
     title: str | None
     difficulty_name: str | None
+    star_rating: float | None
+    approach_rate: float | None
+    bpm: float | None
     supports: list[CandidateMapSupport]
 
 
@@ -122,6 +128,9 @@ def extract_candidate_maps(
                     artist=play.artist,
                     title=play.title,
                     difficulty_name=play.difficulty_name,
+                    star_rating=play.star_rating,
+                    approach_rate=play.approach_rate,
+                    bpm=play.bpm,
                     supports=[support],
                 )
             else:
@@ -142,6 +151,9 @@ def extract_candidate_maps(
             artist=item.artist,
             title=item.title,
             difficulty_name=item.difficulty_name,
+            star_rating=item.star_rating,
+            approach_rate=item.approach_rate,
+            bpm=item.bpm,
             supports=tuple(item.supports),
         )
         for item in accumulated.values()
@@ -240,6 +252,12 @@ def _fill_missing_metadata(
         and play.difficulty_name is not None
     ):
         candidate_map.difficulty_name = play.difficulty_name
+    if candidate_map.star_rating is None and play.star_rating is not None:
+        candidate_map.star_rating = play.star_rating
+    if candidate_map.approach_rate is None and play.approach_rate is not None:
+        candidate_map.approach_rate = play.approach_rate
+    if candidate_map.bpm is None and play.bpm is not None:
+        candidate_map.bpm = play.bpm
 
 
 def _validate_bound(value: int, minimum: int, maximum: int, label: str) -> None:

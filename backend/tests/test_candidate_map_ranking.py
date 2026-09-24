@@ -132,6 +132,9 @@ class CandidateMapEvidenceRankingTests(unittest.TestCase):
             artist=None,
             title=None,
             difficulty_name=None,
+            star_rating=None,
+            approach_rate=None,
+            bpm=None,
             supports=supports,
         )
 

@@ -6,7 +6,7 @@ The project is motivated by two goals: building a useful recommendation experien
 
 ## Current status
 
-The repository contains a FastAPI backend with normalized top-play and persisted-player analysis endpoints plus a React, TypeScript, and Vite frontend. The frontend has separate actions for live top-play search and displaying persisted descriptive analysis. PostgreSQL stores explicitly persisted current top-play state, from which statistics are calculated on demand. Non-public backend experiments can discover candidates, rank them by exact top-play overlap, and compare evidence-based orderings of candidate maps supported by highly ranked similar players. No recommendations are generated. Work is complete through T0027.
+The repository contains a FastAPI backend with normalized top-play and persisted-player analysis endpoints plus a React, TypeScript, and Vite frontend. The frontend has separate actions for live top-play search and displaying persisted descriptive analysis. PostgreSQL stores explicitly persisted current top-play state, from which statistics are calculated on demand. Non-public backend experiments can discover candidates, rank them by exact top-play overlap, compare candidate-map orderings, and inspect candidate attributes against persisted target preferences. No recommendations are generated. Work is complete through T0028.
 
 ## Run the backend locally
 
@@ -197,6 +197,14 @@ Compare the T0026 support-only candidate-map order with an evidence-aware order 
 ```
 
 This experiment builds the candidate-map pool once and applies a lexicographic ordering by support count, total supporting-player independent overlap, mean independent overlap, best supporting-player rank, and beatmap ID. It reports old and new ranks with movement diagnostics, uses no weighted score or map attributes, and makes no additional requests.
+
+Inspect descriptive target-preference evidence without changing the T0027 order:
+
+```powershell
+.\.venv\Scripts\python -m backend.app.recommendation.verify_preference_evidence YOUR_USERNAME --seed-count 5 --hydration-budget 25 --top-plays 100 --similar-player-limit 10 --show-maps 30
+```
+
+This experiment calculates persisted target star-rating, AR, BPM, and mod distributions, then annotates the unchanged candidate-map order with median deltas, inclusive-IQR membership, and supporting mod evidence. Missing metadata stays explicit, no attribute becomes a score or filter, and no additional osu! requests are made.
 
 ## Run the frontend locally
 

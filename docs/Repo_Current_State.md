@@ -95,11 +95,16 @@ This file records what exists now, not what the project intends to build later.
 - T0027 compares the unchanged T0026 support-only order with an evidence-aware lexicographic order using support count, total and mean supporting-player independent overlap, best supporting-player rank, and beatmap ID.
 - T0027 reports previous rank, new rank, signed movement, and the largest upward and downward movements. Positive rank delta means a candidate map moved upward.
 - T0027 builds the candidate pool once, does not filter candidates, uses no map attributes or weighted score, and adds zero extraction or ranking requests.
+- The live T0027 run kept the top collaborative maps stable, produced modest movements near the top such as #7 to #5, #15 to #12, and #16 to #13, and produced larger changes deeper in lower-support tiers. Maximum observed movement was +26 upward and -28 downward.
+- T0027's evidence-aware ordering remains experimental and is not a validated recommendation ranking.
+- T0028 reads the target's persisted top plays to calculate null-aware star-rating, AR, and BPM distributions with min, linearly interpolated quartiles, median, max, and mean, plus existing exact-combination and individual-mod summaries.
+- T0028 annotates the unchanged T0027 order with absolute target-median deltas, inclusive-IQR membership, and supporting-player mod evidence. It reports metadata coverage and IQR distributions for the complete pool and displayed prefix.
+- Candidate numeric metadata comes only from already-hydrated play evidence. Missing values remain explicit, no attribute changes ordering or filters candidates, and the preference-evidence stage adds zero osu! requests.
 - No crawler or dataset import behavior exists.
 
 ## Ticket position
 
-- Completed through: T0027 — Candidate-map evidence ranking experiment
-- Expected next ticket: not yet selected; T0028 depends on manually reviewing the live T0027 ordering and movement diagnostics
+- Completed through: T0028 — Candidate-map preference evidence experiment
+- Expected next ticket: not yet selected; T0029 depends on manually reviewing the live T0028 preference evidence
 
 Future tickets must update this document when the repository's implemented state changes.
