@@ -132,11 +132,14 @@ This file records what exists now, not what the project intends to build later.
 - T0035 derives top-10, full-top-15, and hybrid views from one shared 25-user hydration pass. It checks candidate-set equality, exact existing-map evidence stability, ranking displacement, and held-out recovery without changing ranking rules or persisting results.
 - Across five live T0035 splits for `molerat`, hybrid and full-top-15 candidate sets matched in every split, and all 2,629 existing top-10 maps retained exact ranking evidence. Hybrid mean absolute rank movement was 66.61 versus 106.06 for full top-15.
 - Both expanded views recovered 29 of 50 held-out observations versus 25 of 50 for top 10. Among already-recovered observations, full top-15 had five improvements and 20 regressions; hybrid had no improvements, eight regressions, and 17 unchanged ranks. These findings remain limited to `molerat`.
+- T0035 hybrid candidate sets equaled full top-15 candidate sets. Hybrid mean Recall@10/@30/@50/@100 was 6%/24%/26%/36%, mean split median recovered rank was 73.20, and mean recovered rank was 110.38.
+- T0035 hybrid top-10, top-30, and top-50 overlap with the baseline was 100%; top-100 overlap was 98.6%. All four expansion-only held-out positives remained recovered at ranks 108, 329, 461, and 469.
+- T0036 adds a read-only diagnostic over the unchanged T0035 hybrid ordering. It describes discovery-only candidates, known-positive comparisons, neighbors, and the first existing lexicographic key that distinguishes a positive from competitors. It adds no requests or ranking behavior.
 - No crawler or dataset import behavior exists.
 
 ## Ticket position
 
-- Completed through: T0035 — Discovery / ranking evidence separation experiment
-- Expected next ticket: not yet selected; T0036 depends on reviewing T0035's live findings
+- Completed through: T0036 — Discovery-only candidate placement analysis
+- Expected next ticket: not yet selected; T0037 depends on reviewing T0036's live findings
 
 Future tickets must update this document when the repository's implemented state changes.

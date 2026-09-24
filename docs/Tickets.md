@@ -38,6 +38,7 @@ This is a rough, incremental roadmap. Ticket scope and ordering may change when 
 | T0032 | Candidate acquisition coverage analysis | Complete |
 | T0033 | Acquisition budget sensitivity experiment | Complete |
 | T0034 | Selected-player expansion rank-impact analysis | Complete |
-| T0035 | Discovery / ranking evidence separation experiment | Current / complete |
+| T0035 | Discovery / ranking evidence separation experiment | Complete |
+| T0036 | Discovery-only candidate placement analysis | Current / complete |
 
-No detailed tickets beyond T0035 are defined yet. T0036 must be chosen only after reviewing the discovery/ranking separation measurements. No production recommendation ranking has been selected.
+No detailed tickets beyond T0036 are defined yet. T0037 must be chosen only after reviewing the discovery-only placement measurements. No production recommendation ranking has been selected.

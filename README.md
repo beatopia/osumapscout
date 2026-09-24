@@ -240,6 +240,14 @@ Compare expanded discovery with frozen top-10 ranking evidence:
 
 This T0035 diagnostic reuses one 25-user hydration pass for top-10, full-top-15, and hybrid views. The hybrid admits maps discovered by players 11-15 while retaining exact top-10 evidence for existing maps. It reports evidence invariants, rank displacement, and held-out recovery; it does not change production behavior or persist results.
 
+Describe the placement of maps introduced only by discovery players 11-15:
+
+```powershell
+.\.venv\Scripts\python -m backend.app.recommendation.verify_discovery_only_placement YOUR_USERNAME --split-index 0
+```
+
+This T0036 diagnostic reuses the unchanged T0035 hybrid result. It reports discovery-only rank, support, preference-fit, supporter-rank, held-out-positive, neighbor, and lexicographic first-difference evidence without changing ranking or making additional requests.
+
 Compare the evidence-aware order with the experimental preference-aware order:
 
 ```powershell
