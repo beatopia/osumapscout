@@ -23,6 +23,7 @@ from backend.app.osu.client import (
     OsuAuthenticationError,
     OsuCredentials,
     OsuNetworkError,
+    OsuTopPlay,
 )
 from backend.app.similarity.one_hit_baseline import (
     select_stratified_one_hit_candidates,
@@ -79,6 +80,7 @@ class RankedSimilarPlayer:
     seed_excluded_shared_beatmap_count: int
     seed_excluded_jaccard_similarity: float
     seed_excluded_target_coverage: float
+    hydrated_top_plays: tuple[OsuTopPlay, ...]
 
     @property
     def seed_hit_count(self) -> int:
@@ -110,6 +112,7 @@ class RankedCandidateExperimentResult:
     target_user_id: int
     target_username: str
     target_play_count: int
+    target_beatmap_ids: tuple[int, ...]
     selected_seeds: tuple[TargetMapSeed, ...]
     discovered_candidate_count: int
     recurring_candidate_count: int
@@ -266,9 +269,10 @@ async def evaluate_ranked_candidates(
             raise CandidateHydrationError(
                 f"Could not hydrate top plays for candidate user {candidate.user_id}."
             ) from error
+        hydrated_top_plays = tuple(plays[:top_plays])
         metrics = calculate_raw_and_seed_excluded_overlap(
             target_ids,
-            (play.beatmap_id for play in plays[:top_plays]),
+            (play.beatmap_id for play in hydrated_top_plays),
             seed_ids,
         )
         evaluated.append(
@@ -288,6 +292,7 @@ async def evaluate_ranked_candidates(
                     metrics.seed_excluded.jaccard_similarity
                 ),
                 seed_excluded_target_coverage=metrics.seed_excluded.target_coverage,
+                hydrated_top_plays=hydrated_top_plays,
             )
         )
 
@@ -296,6 +301,7 @@ async def evaluate_ranked_candidates(
         target_user_id=target.user_id,
         target_username=target.username,
         target_play_count=len(frozenset(target_ids)),
+        target_beatmap_ids=target_ids,
         selected_seeds=pool.selected_seeds,
         discovered_candidate_count=pool.unique_candidate_count,
         recurring_candidate_count=sum(

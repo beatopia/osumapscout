@@ -86,11 +86,16 @@ This file records what exists now, not what the project intends to build later.
 - T0025 adds a non-public ranking experiment with one hydration budget from 1 through 50. It selects recurring candidates first in deterministic acquisition order and fills unused capacity with the existing full-pool, seed-stratified one-hit sampler.
 - After sequential numeric-ID hydration, T0025 ranks candidates by seed-excluded shared count, Jaccard, target coverage, and numeric user ID. Seed-hit count is acquisition priority and explanatory provenance only; it is not part of similarity ordering.
 - T0025 reports request counts, per-seed one-hit selection, overlap thresholds, median and maximum overlap, and recurring/one-hit composition of the top five and top ten. Rankings and candidate plays remain ephemeral.
-- No candidate-map extraction, crawler, dataset import, or recommendation behavior exists.
+- A real T0025 run for `molerat` hydrated 25 candidates: 21 had at least one independent shared map, 18 had at least two, 11 had at least five, and seven had at least ten. Median independent overlap was 4 and the maximum was 22; the top five contained four recurring and one one-hit candidate, while the top ten contained six recurring and four one-hit candidates.
+- T0025 retains each ranked player's bounded normalized top plays and the target beatmap IDs in its ephemeral result so downstream experiments can reuse evidence without refetching it.
+- T0026 selects a bounded ranked prefix, excludes every target top-play beatmap, deduplicates remaining maps by numeric beatmap ID, and accumulates distinct supporting-player provenance plus already-available mods, PP, and display metadata.
+- Candidate maps are ordered only by support count, best supporting-player rank, and beatmap ID. Single-support maps remain visible, and extraction adds zero osu! requests.
+- Candidate-map results are ephemeral and developer-only. No candidate-map score, final recommendation claim, persistence, public endpoint, or frontend behavior exists.
+- No crawler or dataset import behavior exists.
 
 ## Ticket position
 
-- Completed through: T0025 — Budgeted similar-player candidate ranking experiment
-- Expected next ticket: not yet selected; a possible T0026 candidate-map extraction experiment depends on manually reviewing the live T0025 ranking
+- Completed through: T0026 — Similar-player candidate-map extraction experiment
+- Expected next ticket: not yet selected; T0027 depends on manually reviewing the live T0026 candidate-map evidence
 
 Future tickets must update this document when the repository's implemented state changes.

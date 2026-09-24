@@ -6,7 +6,7 @@ The project is motivated by two goals: building a useful recommendation experien
 
 ## Current status
 
-The repository contains a FastAPI backend with normalized top-play and persisted-player analysis endpoints plus a React, TypeScript, and Vite frontend. The frontend has separate actions for live top-play search and displaying persisted descriptive analysis. PostgreSQL stores explicitly persisted current top-play state, from which statistics are calculated on demand. Non-public backend experiments can discover candidates, hydrate bounded candidate groups, and rank them by exact top-play beatmap overlap. No recommendations are generated. Work is complete through T0025.
+The repository contains a FastAPI backend with normalized top-play and persisted-player analysis endpoints plus a React, TypeScript, and Vite frontend. The frontend has separate actions for live top-play search and displaying persisted descriptive analysis. PostgreSQL stores explicitly persisted current top-play state, from which statistics are calculated on demand. Non-public backend experiments can discover candidates, rank them by exact top-play overlap, and inspect candidate maps supported by highly ranked similar players. No recommendations are generated. Work is complete through T0026.
 
 ## Run the backend locally
 
@@ -181,6 +181,14 @@ Run the budgeted similar-player ranking experiment with:
 ```
 
 This command spends its bounded hydration budget on recurring candidates first, then fills remaining capacity with the existing seed-stratified one-hit sampler. After hydration it ranks every evaluated user only by seed-excluded shared count, Jaccard, target coverage, and numeric user ID. Seed recurrence remains visible acquisition provenance but contributes no similarity points. Results remain ephemeral and are not map recommendations.
+
+Extract an inspectable candidate-map pool from a bounded prefix of those ranked players with:
+
+```powershell
+.\.venv\Scripts\python -m backend.app.recommendation.verify_candidate_maps YOUR_USERNAME --seed-count 5 --hydration-budget 25 --top-plays 100 --similar-player-limit 10 --show-maps 30
+```
+
+The extraction reuses T0025's already-hydrated plays, strictly excludes the target's own top-play maps, deduplicates by beatmap ID, and reports distinct supporting-player evidence. It performs no additional osu! requests and does not score or label maps as recommendations.
 
 ## Run the frontend locally
 

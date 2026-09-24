@@ -175,6 +175,7 @@ class RankingAndSummaryTests(unittest.TestCase):
             seed_excluded_shared_beatmap_count=shared,
             seed_excluded_jaccard_similarity=jaccard,
             seed_excluded_target_coverage=coverage,
+            hydrated_top_plays=(),
         )
 
 
@@ -225,6 +226,11 @@ class RankedCandidateWorkflowTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.one_hit_selected_count, 2)
         self.assertEqual([count for _, count in result.one_hit_sample_by_seed], [1, 1])
         self.assertEqual(result.candidates[-1].candidate_play_count, 0)
+        self.assertEqual(result.target_beatmap_ids, (1, 2, 3, 4))
+        self.assertEqual(
+            [play.beatmap_id for play in result.candidates[0].hydrated_top_plays],
+            [1, 2],
+        )
         client.get_user_by_username.assert_not_awaited()
 
     async def test_empty_target_and_empty_pool_fail_clearly(self) -> None:
