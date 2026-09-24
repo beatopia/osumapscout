@@ -23,6 +23,19 @@ def print_result(result: HoldoutRecoveryExperimentResult) -> None:
     print(f"Original target plays: {result.original_target_play_count}")
     print(f"Training plays: {result.training_play_count}")
     print(f"Held-out plays: {result.held_out_play_count}")
+    print(f"Configured splits: {result.split_count}")
+    print(f"Current split: {result.split_index + 1} / {result.split_count}")
+    current_positions = result.split_diagnostics.split_positions[result.split_index]
+    print("Held-out positions for current split:")
+    print(_positions(current_positions))
+    print("All configured split positions:")
+    for index, positions in enumerate(result.split_diagnostics.split_positions, 1):
+        print(f"split {index}: {_positions(positions)}")
+    print(
+        "Unique positions covered across configured splits: "
+        f"{result.split_diagnostics.unique_positions_covered} / "
+        f"{result.split_diagnostics.target_count}"
+    )
     print(f"Seeds selected from training evidence: {len(result.selected_seeds)}")
     print(f"Candidates hydrated: {result.candidates_hydrated}")
     print(f"Similar players used: {result.similar_players_used}")
@@ -43,6 +56,39 @@ def print_result(result: HoldoutRecoveryExperimentResult) -> None:
         print(f"   support: {recovery.support_count or 0}")
     _print_summary("Support-only recovery", result.support_only_summary)
     _print_summary("Evidence-aware recovery", result.evidence_aware_summary)
+    print(format_split_summary(result))
+
+
+def _positions(positions: tuple[int, ...]) -> str:
+    return ", ".join(str(position) for position in positions)
+
+
+def format_split_summary(result: HoldoutRecoveryExperimentResult) -> str:
+    support = result.support_only_summary
+    evidence = result.evidence_aware_summary
+    support_median = _summary_median(support)
+    evidence_median = _summary_median(evidence)
+    return (
+        f"SPLIT_SUMMARY split={result.split_index} "
+        f"heldout={result.held_out_play_count} "
+        f"recovered={support.recovered_anywhere} "
+        f"support_r10={support.recall_at_10:.4f} "
+        f"support_r30={support.recall_at_30:.4f} "
+        f"support_r50={support.recall_at_50:.4f} "
+        f"support_r100={support.recall_at_100:.4f} "
+        f"support_median={support_median} "
+        f"evidence_recovered={evidence.recovered_anywhere} "
+        f"evidence_r10={evidence.recall_at_10:.4f} "
+        f"evidence_r30={evidence.recall_at_30:.4f} "
+        f"evidence_r50={evidence.recall_at_50:.4f} "
+        f"evidence_r100={evidence.recall_at_100:.4f} "
+        f"evidence_median={evidence_median}"
+    )
+
+
+def _summary_median(summary: OrderingRecoverySummary) -> str:
+    ranks = summary.recovered_rank_summary
+    return "unavailable" if ranks is None else f"{ranks.median:.1f}"
 
 
 def _rank(value: int | None) -> str:
@@ -77,6 +123,8 @@ async def _run(arguments: argparse.Namespace) -> int:
             arguments.username,
             top_plays=arguments.top_plays,
             holdout_count=arguments.holdout_count,
+            split_count=arguments.split_count,
+            split_index=arguments.split_index,
             seed_count=arguments.seed_count,
             hydration_budget=arguments.hydration_budget,
             candidate_top_plays=arguments.candidate_top_plays,
@@ -107,6 +155,8 @@ def main() -> int:
     parser.add_argument("username")
     parser.add_argument("--top-plays", type=int, default=100)
     parser.add_argument("--holdout-count", type=int, default=10)
+    parser.add_argument("--split-count", type=int, default=5)
+    parser.add_argument("--split-index", type=int, default=0)
     parser.add_argument("--seed-count", type=int, default=5)
     parser.add_argument("--hydration-budget", type=int, default=25)
     parser.add_argument("--candidate-top-plays", type=int, default=100)

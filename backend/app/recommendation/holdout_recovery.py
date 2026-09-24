@@ -104,6 +104,32 @@ class OrderingRecoverySummary:
 
 
 @dataclass(frozen=True)
+class SplitPositionDiagnostics:
+    split_positions: tuple[tuple[int, ...], ...]
+    unique_positions_covered: int
+    target_count: int
+
+
+@dataclass(frozen=True)
+class OrderingRecoveryAggregate:
+    total_held_out: int
+    total_recovered_anywhere: int
+    micro_recovery_rate: float
+    mean_recall_at_10: float
+    mean_recall_at_30: float
+    mean_recall_at_50: float
+    mean_recall_at_100: float
+    mean_split_median_recovered_rank: float | None
+
+
+@dataclass(frozen=True)
+class MultiSplitRecoveryAggregate:
+    split_count: int
+    support_only: OrderingRecoveryAggregate
+    evidence_aware: OrderingRecoveryAggregate
+
+
+@dataclass(frozen=True)
 class HoldoutRecoveryExperimentResult:
     target_user_id: int
     target_username: str
@@ -119,6 +145,9 @@ class HoldoutRecoveryExperimentResult:
     held_out_maps: tuple[HeldOutMapRecovery, ...]
     support_only_summary: OrderingRecoverySummary
     evidence_aware_summary: OrderingRecoverySummary
+    split_count: int
+    split_index: int
+    split_diagnostics: SplitPositionDiagnostics
 
 
 @dataclass(frozen=True)
@@ -130,24 +159,68 @@ class _TargetIdentity:
 def split_target_evidence(
     plays: Sequence[TargetPlayEvidence],
     holdout_count: int,
+    split_count: int = 5,
+    split_index: int = 0,
 ) -> HoldoutSplit:
-    """Hold out indexes ``i * (n - 1) // (count - 1)`` across target order."""
-    _validate_bound(holdout_count, 1, 20, "Holdout count")
-    if holdout_count >= len(plays):
-        raise ValueError("Holdout count must be smaller than target evidence count.")
-    if holdout_count == 1:
-        held_indexes = {len(plays) // 2}
-    else:
-        last_index = len(plays) - 1
-        held_indexes = {
-            index * last_index // (holdout_count - 1)
-            for index in range(holdout_count)
-        }
-    if len(held_indexes) != holdout_count:
-        raise ValueError("Holdout selection could not produce unique positions.")
+    """Split by evenly spaced indexes shifted circularly by ``split_index``."""
+    diagnostics = calculate_split_position_sets(
+        len(plays), holdout_count, split_count
+    )
+    _validate_split_index(split_index, split_count)
+    held_indexes = {
+        position - 1 for position in diagnostics.split_positions[split_index]
+    }
     return HoldoutSplit(
         training=tuple(play for index, play in enumerate(plays) if index not in held_indexes),
         held_out=tuple(play for index, play in enumerate(plays) if index in held_indexes),
+    )
+
+
+def calculate_split_position_sets(
+    target_count: int,
+    holdout_count: int,
+    split_count: int = 5,
+) -> SplitPositionDiagnostics:
+    """Return pure 1-based position diagnostics for every configured split.
+
+    Split zero uses T0029's evenly spaced indexes. Later splits add their split
+    index to every base index and wrap at ``target_count``. Sorting restores
+    target order after wrapping and each set remains spread around the range.
+    """
+    if isinstance(target_count, bool) or not isinstance(target_count, int):
+        raise ValueError("Target count must be a positive integer.")
+    if target_count < 1:
+        raise ValueError("Target count must be a positive integer.")
+    _validate_bound(holdout_count, 1, 20, "Holdout count")
+    _validate_bound(split_count, 2, 10, "Split count")
+    if holdout_count >= target_count:
+        raise ValueError("Holdout count must be smaller than target evidence count.")
+
+    if holdout_count == 1:
+        base_indexes = (target_count // 2,)
+    else:
+        last_index = target_count - 1
+        base_indexes = tuple(
+            index * last_index // (holdout_count - 1)
+            for index in range(holdout_count)
+        )
+    split_positions = tuple(
+        tuple(
+            sorted(
+                ((base_index + current_split) % target_count) + 1
+                for base_index in base_indexes
+            )
+        )
+        for current_split in range(split_count)
+    )
+    if any(len(set(positions)) != holdout_count for positions in split_positions):
+        raise ValueError("Holdout selection could not produce unique positions.")
+    return SplitPositionDiagnostics(
+        split_positions=split_positions,
+        unique_positions_covered=len(
+            {position for positions in split_positions for position in positions}
+        ),
+        target_count=target_count,
     )
 
 
@@ -181,11 +254,28 @@ def summarize_recovery(
     )
 
 
+def aggregate_split_summaries(
+    summaries: Sequence[
+        tuple[OrderingRecoverySummary, OrderingRecoverySummary]
+    ],
+) -> MultiSplitRecoveryAggregate:
+    """Aggregate explicitly supplied support/evidence summary pairs in memory."""
+    if not summaries:
+        raise ValueError("At least one split summary is required.")
+    return MultiSplitRecoveryAggregate(
+        split_count=len(summaries),
+        support_only=_aggregate_orderings(tuple(item[0] for item in summaries)),
+        evidence_aware=_aggregate_orderings(tuple(item[1] for item in summaries)),
+    )
+
+
 async def evaluate_holdout_recovery(
     username: str,
     *,
     top_plays: int = 100,
     holdout_count: int = 10,
+    split_count: int = 5,
+    split_index: int = 0,
     seed_count: int = 5,
     hydration_budget: int = 25,
     candidate_top_plays: int = 100,
@@ -198,6 +288,8 @@ async def evaluate_holdout_recovery(
         raise ValueError("Username must not be empty.")
     _validate_bound(top_plays, 2, 100, "Target top-play limit")
     _validate_bound(holdout_count, 1, 20, "Holdout count")
+    _validate_bound(split_count, 2, 10, "Split count")
+    _validate_split_index(split_index, split_count)
     _validate_bound(seed_count, 1, 10, "Seed count")
     _validate_bound(hydration_budget, 1, 50, "Hydration budget")
     _validate_bound(candidate_top_plays, 1, 100, "Candidate top-play limit")
@@ -207,7 +299,12 @@ async def evaluate_holdout_recovery(
         top_plays,
         session_factory or get_session_factory(),
     )
-    split = split_target_evidence(plays, holdout_count)
+    split_diagnostics = calculate_split_position_sets(
+        len(plays), holdout_count, split_count
+    )
+    split = split_target_evidence(
+        plays, holdout_count, split_count, split_index
+    )
     training_seeds = select_evenly_spaced_seeds(
         tuple(TargetMapSeed(play.position, play.beatmap_id) for play in split.training),
         seed_count,
@@ -301,6 +398,9 @@ async def evaluate_holdout_recovery(
         evidence_aware_summary=summarize_recovery(
             tuple(play.beatmap_id for play in split.held_out), evidence_ids
         ),
+        split_count=split_count,
+        split_index=split_index,
+        split_diagnostics=split_diagnostics,
     )
 
 
@@ -422,6 +522,41 @@ def _summarize_ranks(ranks: Sequence[int]) -> RecoveredRankSummary | None:
     if not ranks:
         return None
     return RecoveredRankSummary(min(ranks), float(median(ranks)), fmean(ranks), max(ranks))
+
+
+def _aggregate_orderings(
+    summaries: Sequence[OrderingRecoverySummary],
+) -> OrderingRecoveryAggregate:
+    total_held_out = sum(item.held_out_count for item in summaries)
+    total_recovered = sum(item.recovered_anywhere for item in summaries)
+    medians = tuple(
+        item.recovered_rank_summary.median
+        for item in summaries
+        if item.recovered_rank_summary is not None
+    )
+    return OrderingRecoveryAggregate(
+        total_held_out=total_held_out,
+        total_recovered_anywhere=total_recovered,
+        micro_recovery_rate=(
+            total_recovered / total_held_out if total_held_out else 0.0
+        ),
+        mean_recall_at_10=fmean(item.recall_at_10 for item in summaries),
+        mean_recall_at_30=fmean(item.recall_at_30 for item in summaries),
+        mean_recall_at_50=fmean(item.recall_at_50 for item in summaries),
+        mean_recall_at_100=fmean(item.recall_at_100 for item in summaries),
+        mean_split_median_recovered_rank=fmean(medians) if medians else None,
+    )
+
+
+def _validate_split_index(split_index: int, split_count: int) -> None:
+    if (
+        isinstance(split_index, bool)
+        or not isinstance(split_index, int)
+        or not 0 <= split_index < split_count
+    ):
+        raise ValueError(
+            f"Split index must be an integer from 0 through {split_count - 1}."
+        )
 
 
 def _validate_bound(value: int, minimum: int, maximum: int, label: str) -> None:

@@ -105,11 +105,15 @@ This file records what exists now, not what the project intends to build later.
 - Supporting-player exact mod combinations generally did not match the target's all-HDHR history, so occurrence-level mod combinations remain descriptive only.
 - T0029 creates a deterministic in-memory training/holdout split across persisted target positions. Held-out maps are excluded from seeds and similarity evidence but remain eligible for recovery through other users' hydrated plays.
 - T0029 compares Recall@10, @30, @50, @100 and recovered-rank summaries for the unchanged T0026 support-only and T0027 evidence-aware orders. It does not mutate persistence or add recovery-stage API requests.
+- The first live T0029 split for `molerat` recovered seven of ten held-out maps anywhere. Support-only Recall@30/@50/@100 was 20%/30%/40% with median recovered rank 53; evidence-aware Recall@30/@50/@100 was 20%/30%/50% with median recovered rank 55.
+- That result is mixed: evidence-aware placed one additional held-out map inside the top 100, while support-only had a slightly better median recovered rank. One split is insufficient to choose either ordering.
+- T0030 parameterizes the same leakage-safe experiment with two through ten deterministic split position sets. Split zero preserves T0029's positions; later indexes circularly shift those evenly spaced ordinal positions.
+- Each T0030 invocation executes exactly one selected split. Cross-split position coverage is calculated without API work, and a pure helper can aggregate explicitly supplied summaries without running experiments.
 - No crawler or dataset import behavior exists.
 
 ## Ticket position
 
-- Completed through: T0029 — Held-out top-play recovery experiment
-- Expected next ticket: not yet selected; T0030 depends on manually reviewing the live T0029 recovery comparison
+- Completed through: T0030 — Multi-split held-out recovery evaluation
+- Expected next ticket: not yet selected; T0031 depends on manually reviewing multiple T0030 split results
 
 Future tickets must update this document when the repository's implemented state changes.

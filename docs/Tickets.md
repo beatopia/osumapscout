@@ -32,6 +32,7 @@ This is a rough, incremental roadmap. Ticket scope and ordering may change when 
 | T0026 | Similar-player candidate-map extraction experiment | Complete |
 | T0027 | Candidate-map evidence ranking experiment | Complete |
 | T0028 | Candidate-map preference evidence experiment | Complete |
-| T0029 | Held-out top-play recovery experiment | Current / complete |
+| T0029 | Held-out top-play recovery experiment | Complete |
+| T0030 | Multi-split held-out recovery evaluation | Current / complete |
 
-No detailed tickets beyond T0029 are defined yet. T0030 must be chosen only after manually reviewing held-out recovery from both existing collaborative orderings. No production recommendation ranking has been selected.
+No detailed tickets beyond T0030 are defined yet. T0031 must be chosen only after manually reviewing several explicitly run recovery splits. No production recommendation ranking has been selected.

@@ -6,7 +6,7 @@ The project is motivated by two goals: building a useful recommendation experien
 
 ## Current status
 
-The repository contains a FastAPI backend with normalized top-play and persisted-player analysis endpoints plus a React, TypeScript, and Vite frontend. The frontend has separate actions for live top-play search and displaying persisted descriptive analysis. PostgreSQL stores explicitly persisted current top-play state, from which statistics are calculated on demand. Non-public backend experiments can discover candidates, compare candidate-map orderings and preference evidence, and evaluate known-positive recovery with deterministic held-out target plays. No recommendations are generated. Work is complete through T0029.
+The repository contains a FastAPI backend with normalized top-play and persisted-player analysis endpoints plus a React, TypeScript, and Vite frontend. The frontend has separate actions for live top-play search and displaying persisted descriptive analysis. PostgreSQL stores explicitly persisted current top-play state, from which statistics are calculated on demand. Non-public backend experiments can discover candidates, compare candidate-map orderings and preference evidence, and evaluate known-positive recovery across separately executed deterministic held-out splits. No recommendations are generated. Work is complete through T0030.
 
 ## Run the backend locally
 
@@ -209,10 +209,10 @@ This experiment calculates persisted target star-rating, AR, BPM, and mod distri
 Run the offline held-out recovery experiment with:
 
 ```powershell
-.\.venv\Scripts\python -m backend.app.recommendation.verify_holdout_recovery YOUR_USERNAME --top-plays 100 --holdout-count 10 --seed-count 5 --hydration-budget 25 --candidate-top-plays 100 --similar-player-limit 10
+.\.venv\Scripts\python -m backend.app.recommendation.verify_holdout_recovery YOUR_USERNAME --top-plays 100 --holdout-count 10 --split-count 5 --split-index 0 --seed-count 5 --hydration-budget 25 --candidate-top-plays 100 --similar-player-limit 10
 ```
 
-This command deterministically holds out an approximately even spread of persisted target plays, runs every target-dependent pipeline stage from training evidence only, and compares support-only with evidence-aware recovery. Persistence is not modified, and recovery evaluation adds no requests.
+This command deterministically holds out one approximately even split of persisted target plays, runs every target-dependent pipeline stage from training evidence only, and compares support-only with evidence-aware recovery. Change `--split-index` to run another configured split as a separate, explicitly bounded experiment. The command prints all configured position sets as a pure diagnostic but never executes them automatically. Persistence is not modified, and recovery evaluation adds no requests.
 
 ## Run the frontend locally
 
