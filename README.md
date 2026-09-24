@@ -232,6 +232,14 @@ Analyze top-10 versus top-15 selected-player evidence from one shared 25-user hy
 
 This developer diagnostic makes one 5-leaderboard plus 25-top-play acquisition pass, then constructs both candidate-map pools in memory. It reports pool growth, new-map provenance, support inflation, top-N stability, rank displacement, and held-out gains or regressions without changing any ranking definition.
 
+Compare expanded discovery with frozen top-10 ranking evidence:
+
+```powershell
+.\.venv\Scripts\python -m backend.app.recommendation.verify_discovery_ranking_separation YOUR_USERNAME --split-index 0
+```
+
+This T0035 diagnostic reuses one 25-user hydration pass for top-10, full-top-15, and hybrid views. The hybrid admits maps discovered by players 11-15 while retaining exact top-10 evidence for existing maps. It reports evidence invariants, rank displacement, and held-out recovery; it does not change production behavior or persist results.
+
 Compare the evidence-aware order with the experimental preference-aware order:
 
 ```powershell

@@ -126,11 +126,17 @@ This file records what exists now, not what the project intends to build later.
 - T0033's three configurations share one osu! client. This combines with in-memory token reuse to avoid authenticating per data request while retaining expiry refresh behavior.
 - T0034 adds a non-public rank-impact diagnostic for 25 hydrated users. It acquires and hydrates once, then compares selected-player limits 10 and 15 in memory using the existing extraction, collaborative-evidence, preference-evidence, and ranking definitions.
 - T0034 measures candidate-pool growth, new-map provenance, support changes and tiers, deterministic rank-pressure categories, top-N stability, rank displacement, and held-out gains or regressions. It performs 30 data requests per split and persists nothing.
+- Across five T0034 splits for `molerat`, top-15 selection added 1,354 maps with mean candidate-pool growth of 51.08%. Of the existing maps, 687 gained support, and mean absolute rank movement was 106.06.
+- The same T0034 evaluation newly recovered four held-out observations, while 20 already-recovered observations worsened and five improved. Three of the four newly recovered observations entered below rank 300. These measurements apply only to `molerat`.
+- T0035 adds a non-public, in-memory hybrid view. Players 1-10 provide discovery and ranking evidence; players 11-15 may add new maps but cannot alter evidence for maps already discovered by the first ten players.
+- T0035 derives top-10, full-top-15, and hybrid views from one shared 25-user hydration pass. It checks candidate-set equality, exact existing-map evidence stability, ranking displacement, and held-out recovery without changing ranking rules or persisting results.
+- Across five live T0035 splits for `molerat`, hybrid and full-top-15 candidate sets matched in every split, and all 2,629 existing top-10 maps retained exact ranking evidence. Hybrid mean absolute rank movement was 66.61 versus 106.06 for full top-15.
+- Both expanded views recovered 29 of 50 held-out observations versus 25 of 50 for top 10. Among already-recovered observations, full top-15 had five improvements and 20 regressions; hybrid had no improvements, eight regressions, and 17 unchanged ranks. These findings remain limited to `molerat`.
 - No crawler or dataset import behavior exists.
 
 ## Ticket position
 
-- Completed through: T0034 — Selected-player expansion rank-impact analysis
-- Expected next ticket: not yet selected; T0035 depends on reviewing T0034's rank-impact findings
+- Completed through: T0035 — Discovery / ranking evidence separation experiment
+- Expected next ticket: not yet selected; T0036 depends on reviewing T0035's live findings
 
 Future tickets must update this document when the repository's implemented state changes.
