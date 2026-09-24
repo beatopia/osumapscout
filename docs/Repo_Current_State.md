@@ -135,11 +135,15 @@ This file records what exists now, not what the project intends to build later.
 - T0035 hybrid candidate sets equaled full top-15 candidate sets. Hybrid mean Recall@10/@30/@50/@100 was 6%/24%/26%/36%, mean split median recovered rank was 73.20, and mean recovered rank was 110.38.
 - T0035 hybrid top-10, top-30, and top-50 overlap with the baseline was 100%; top-100 overlap was 98.6%. All four expansion-only held-out positives remained recovered at ranks 108, 329, 461, and 469.
 - T0036 adds a read-only diagnostic over the unchanged T0035 hybrid ordering. It describes discovery-only candidates, known-positive comparisons, neighbors, and the first existing lexicographic key that distinguishes a positive from competitors. It adds no requests or ranking behavior.
+- Across five T0036 splits for `molerat`, there were 1,354 discovery-only observations; 95.49% had support one, 88.55% ranked below 300, and the four known positives ranked 108, 329, 461, and 469.
+- T0036 found that known positives had stronger average preference fit than the remaining discovery-only population. Three of four immediate positive comparisons remained tied through every meaningful ranking key and reached the beatmap-ID tie-break.
+- T0037 adds a read-only analysis of non-singleton groups at each prefix of the existing preference-aware ordering. It measures continuous evidence variation, completeness, dominance, rank spans, and known-positive bounds without changing candidate order.
+- In five live T0037 runs for `molerat`, 1,318 of 1,353 discovery-only observations belonged to non-singleton groups after every meaningful ranking key. All 89 such groups had complete star/AR/BPM evidence and variation in at least one continuous field. These measurements remain target- and run-specific.
 - No crawler or dataset import behavior exists.
 
 ## Ticket position
 
-- Completed through: T0036 — Discovery-only candidate placement analysis
-- Expected next ticket: not yet selected; T0037 depends on reviewing T0036's live findings
+- Completed through: T0037 — Discovery-only tie-group analysis
+- Expected next ticket: not yet selected; T0038 depends on reviewing T0037's live findings
 
 Future tickets must update this document when the repository's implemented state changes.

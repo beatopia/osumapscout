@@ -248,6 +248,14 @@ Describe the placement of maps introduced only by discovery players 11-15:
 
 This T0036 diagnostic reuses the unchanged T0035 hybrid result. It reports discovery-only rank, support, preference-fit, supporter-rank, held-out-positive, neighbor, and lexicographic first-difference evidence without changing ranking or making additional requests.
 
+Measure tie groups in the unchanged discovery-only ordering:
+
+```powershell
+.\.venv\Scripts\python -m backend.app.recommendation.verify_discovery_ties YOUR_USERNAME --split-index 0
+```
+
+This T0037 diagnostic reports how many candidates remain tied after each existing lexicographic key, how much ordering falls through to beatmap ID, and whether already-available star, AR, and BPM deltas vary inside those groups. It does not rerank candidates or add requests.
+
 Compare the evidence-aware order with the experimental preference-aware order:
 
 ```powershell
