@@ -1,4 +1,6 @@
+import asyncio
 import os
+import time
 from dataclasses import dataclass
 from typing import Any
 from urllib.parse import quote
@@ -7,6 +9,7 @@ import httpx
 
 OSU_TOKEN_URL = "https://osu.ppy.sh/oauth/token"
 OSU_API_BASE_URL = "https://osu.ppy.sh/api/v2"
+TOKEN_EXPIRY_MARGIN_SECONDS = 30
 
 
 class OsuAuthenticationError(RuntimeError):
@@ -116,6 +119,9 @@ class OsuApiClient:
 
     def __init__(self, credentials: OsuCredentials) -> None:
         self._credentials = credentials
+        self._access_token: OsuAccessToken | None = None
+        self._access_token_expires_at = 0.0
+        self._token_lock = asyncio.Lock()
 
     async def request_access_token(self) -> OsuAccessToken:
         """Request an application access token using client credentials."""
@@ -140,6 +146,28 @@ class OsuApiClient:
             )
 
         return self._parse_access_token(response)
+
+    async def _get_access_token(self) -> OsuAccessToken:
+        """Reuse the current token while retaining an expiry safety margin."""
+        if self._token_is_current():
+            assert self._access_token is not None
+            return self._access_token
+
+        async with self._token_lock:
+            if self._token_is_current():
+                assert self._access_token is not None
+                return self._access_token
+            token = await self.request_access_token()
+            self._access_token = token
+            usable_seconds = max(0, token.expires_in - TOKEN_EXPIRY_MARGIN_SECONDS)
+            self._access_token_expires_at = time.monotonic() + usable_seconds
+            return token
+
+    def _token_is_current(self) -> bool:
+        return (
+            self._access_token is not None
+            and time.monotonic() < self._access_token_expires_at
+        )
 
     @staticmethod
     def _parse_access_token(response: httpx.Response) -> OsuAccessToken:
@@ -176,7 +204,7 @@ class OsuApiClient:
         if not normalized_username:
             raise ValueError("Username must not be empty.")
 
-        access_token = await self.request_access_token()
+        access_token = await self._get_access_token()
         encoded_username = quote(normalized_username, safe="")
         user_url = f"{OSU_API_BASE_URL}/users/@{encoded_username}/osu"
 
@@ -279,7 +307,7 @@ class OsuApiClient:
         cursor: tuple[tuple[str, str], ...] | None = None,
     ) -> OsuRankingPage:
         """Fetch one osu!standard performance-ranking page."""
-        access_token = await self.request_access_token()
+        access_token = await self._get_access_token()
         ranking_url = f"{OSU_API_BASE_URL}/rankings/osu/performance"
         params = (
             [(f"cursor[{key}]", value) for key, value in cursor]
@@ -326,7 +354,7 @@ class OsuApiClient:
         ):
             raise ValueError("Beatmap ID must be a positive integer.")
 
-        access_token = await self.request_access_token()
+        access_token = await self._get_access_token()
         scores_url = f"{OSU_API_BASE_URL}/beatmaps/{beatmap_id}/scores"
         try:
             async with httpx.AsyncClient(timeout=10.0) as http_client:
@@ -478,7 +506,7 @@ class OsuApiClient:
             raise ValueError("User ID must be a positive integer.")
         self._validate_top_play_limit(limit)
 
-        access_token = await self.request_access_token()
+        access_token = await self._get_access_token()
         scores_url = f"{OSU_API_BASE_URL}/users/{user_id}/scores/best"
 
         try:

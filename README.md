@@ -6,7 +6,7 @@ The project is motivated by two goals: building a useful recommendation experien
 
 ## Current status
 
-The repository contains a FastAPI backend with normalized top-play and persisted-player analysis endpoints plus a React, TypeScript, and Vite frontend. The frontend has separate actions for live top-play search and displaying persisted descriptive analysis. PostgreSQL stores explicitly persisted current top-play state, from which statistics are calculated on demand. Non-public backend experiments can discover candidates, compare collaborative and preference-aware candidate-map orderings, evaluate known-positive recovery, and diagnose where held-out maps leave the bounded acquisition pipeline. No recommendations are generated. Work is complete through T0032.
+The repository contains a FastAPI backend with normalized top-play and persisted-player analysis endpoints plus a React, TypeScript, and Vite frontend. The frontend has separate actions for live top-play search and displaying persisted descriptive analysis. PostgreSQL stores explicitly persisted current top-play state, from which statistics are calculated on demand. Non-public backend experiments can discover candidates, compare collaborative and preference-aware candidate-map orderings, evaluate known-positive recovery, diagnose acquisition failures, and measure sensitivity to bounded hydration and selection budgets. No recommendations are generated. Work is complete through T0033.
 
 ## Run the backend locally
 
@@ -215,6 +215,14 @@ Run the offline held-out recovery experiment with:
 This command deterministically holds out one approximately even split of persisted target plays, runs every target-dependent pipeline stage from training evidence only, and compares support-only, evidence-aware, and preference-aware recovery. Change `--split-index` to run another configured split as a separate, explicitly bounded experiment. The command prints all configured position sets as a pure diagnostic but never executes them automatically. Persistence is not modified, and recovery evaluation adds no requests.
 
 Append `--show-acquisition-diagnostics` to classify every held-out map as absent from all hydrated candidates, present only among nonselected candidates, unexpectedly omitted during extraction, or recovered. These diagnostics reuse the same hydrated evidence and add no osu! requests.
+
+Compare the fixed `25/10`, `25/15`, and `40/15` hydration/selection configurations for one split:
+
+```powershell
+.\.venv\Scripts\python -m backend.app.recommendation.verify_acquisition_budgets YOUR_USERNAME --split-index 0
+```
+
+This developer command runs three explicit experiments sequentially and reports their separate request costs, coverage stages, preference-aware recovery metrics, and per-map transitions. It does not optimize budgets or change acquisition or ranking behavior.
 
 Compare the evidence-aware order with the experimental preference-aware order:
 

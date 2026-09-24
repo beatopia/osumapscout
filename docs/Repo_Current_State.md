@@ -119,11 +119,14 @@ This file records what exists now, not what the project intends to build later.
 - T0032 classifies each held-out map at the earliest failed acquisition stage using already-hydrated candidate evidence, selected-player evidence, and the existing candidate-map pool. It retains no data, changes no ranking, and makes no additional requests.
 - Across five live T0032 splits, 25 of 50 held-out observations were recovered, 21 were absent from all 25 hydrated candidate users, four appeared only in hydrated users outside the selected top 10, and zero reached selected-player evidence but failed extraction.
 - Of the 25 unrecovered observations, 84% were absent from hydrated evidence and 16% were lost at similar-player selection. For recovered observations, hydrated supporter count had min/median/mean/max 1/4/4.12/12; selected supporter and candidate support count had 1/4/3.36/8.
+- All four T0032 nonselected-only observations had a best containing candidate similarity rank of 13 or 14. These findings describe the current `molerat` experiment only.
+- T0033 runs three fixed, independent acquisition-budget configurations—25 hydrated/10 selected, 25/15, and 40/15—while holding the candidate source, seeds, split, hydration depth per user, and all rankings constant.
+- T0033 reports coverage transitions, preference-aware recovery metrics, and explicit request deltas. It does not select an optimal budget, persist results, or change application behavior.
 - No crawler or dataset import behavior exists.
 
 ## Ticket position
 
-- Completed through: T0032 — Candidate acquisition coverage analysis
-- Expected next ticket: not yet selected; T0033 depends on reviewing T0032's five-split acquisition diagnostics
+- Completed through: T0033 — Acquisition budget sensitivity experiment
+- Expected next ticket: not yet selected; T0034 depends on reviewing T0033's five-split cost and coverage results
 
 Future tickets must update this document when the repository's implemented state changes.
