@@ -109,11 +109,15 @@ This file records what exists now, not what the project intends to build later.
 - That result is mixed: evidence-aware placed one additional held-out map inside the top 100, while support-only had a slightly better median recovered rank. One split is insufficient to choose either ordering.
 - T0030 parameterizes the same leakage-safe experiment with two through ten deterministic split position sets. Split zero preserves T0029's positions; later indexes circularly shift those evenly spaced ordinal positions.
 - Each T0030 invocation executes exactly one selected split. Cross-split position coverage is calculated without API work, and a pure helper can aggregate explicitly supplied summaries without running experiments.
+- Across the first three T0030 splits, support-only and evidence-aware each recovered 16 of 30 held-out observations. Mean Recall@30 was 20.0% versus 23.3%, Mean Recall@50 was 26.7% for both, and Mean Recall@100 was 33.3% versus 36.7%, respectively.
+- The two collaborative orderings remain close across those three splits; neither is established as superior.
+- T0031 adds a separate preference-aware ordering: support count descending, attributes within the target IQR descending, total independent shared count descending, best supporting-player rank ascending, then beatmap ID ascending.
+- Preference-aware ranking reuses T0028's star-rating, AR, and BPM profile semantics. It uses no weights, mods, median distances, filtering, persistence, or extra requests. Held-out experiments build this profile only from training plays and now report all three orderings.
 - No crawler or dataset import behavior exists.
 
 ## Ticket position
 
-- Completed through: T0030 — Multi-split held-out recovery evaluation
-- Expected next ticket: not yet selected; T0031 depends on manually reviewing multiple T0030 split results
+- Completed through: T0031 — Preference-aware candidate-map ranking experiment
+- Expected next ticket: not yet selected; T0032 depends on manually reviewing preference-aware recovery across the same splits
 
 Future tickets must update this document when the repository's implemented state changes.

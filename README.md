@@ -6,7 +6,7 @@ The project is motivated by two goals: building a useful recommendation experien
 
 ## Current status
 
-The repository contains a FastAPI backend with normalized top-play and persisted-player analysis endpoints plus a React, TypeScript, and Vite frontend. The frontend has separate actions for live top-play search and displaying persisted descriptive analysis. PostgreSQL stores explicitly persisted current top-play state, from which statistics are calculated on demand. Non-public backend experiments can discover candidates, compare candidate-map orderings and preference evidence, and evaluate known-positive recovery across separately executed deterministic held-out splits. No recommendations are generated. Work is complete through T0030.
+The repository contains a FastAPI backend with normalized top-play and persisted-player analysis endpoints plus a React, TypeScript, and Vite frontend. The frontend has separate actions for live top-play search and displaying persisted descriptive analysis. PostgreSQL stores explicitly persisted current top-play state, from which statistics are calculated on demand. Non-public backend experiments can discover candidates, compare collaborative and preference-aware candidate-map orderings, and evaluate known-positive recovery across separately executed deterministic held-out splits. No recommendations are generated. Work is complete through T0031.
 
 ## Run the backend locally
 
@@ -212,7 +212,15 @@ Run the offline held-out recovery experiment with:
 .\.venv\Scripts\python -m backend.app.recommendation.verify_holdout_recovery YOUR_USERNAME --top-plays 100 --holdout-count 10 --split-count 5 --split-index 0 --seed-count 5 --hydration-budget 25 --candidate-top-plays 100 --similar-player-limit 10
 ```
 
-This command deterministically holds out one approximately even split of persisted target plays, runs every target-dependent pipeline stage from training evidence only, and compares support-only with evidence-aware recovery. Change `--split-index` to run another configured split as a separate, explicitly bounded experiment. The command prints all configured position sets as a pure diagnostic but never executes them automatically. Persistence is not modified, and recovery evaluation adds no requests.
+This command deterministically holds out one approximately even split of persisted target plays, runs every target-dependent pipeline stage from training evidence only, and compares support-only, evidence-aware, and preference-aware recovery. Change `--split-index` to run another configured split as a separate, explicitly bounded experiment. The command prints all configured position sets as a pure diagnostic but never executes them automatically. Persistence is not modified, and recovery evaluation adds no requests.
+
+Compare the evidence-aware order with the experimental preference-aware order:
+
+```powershell
+.\.venv\Scripts\python -m backend.app.recommendation.verify_preference_ranking YOUR_USERNAME --seed-count 5 --hydration-budget 25 --top-plays 100 --similar-player-limit 10 --show-maps 30
+```
+
+This third ordering keeps collaborative support primary, then uses the count of star-rating, AR, and BPM values inside the target's persisted IQRs before later collaborative tie-breaks. It is lexicographic, does not use mods or weighted distances, does not filter maps, and adds no requests. Held-out evaluation builds its preference profile from training plays only.
 
 ## Run the frontend locally
 

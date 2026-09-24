@@ -169,7 +169,10 @@ class RecoverySummaryTests(unittest.TestCase):
         evidence_two = summarize_recovery((3, 4), (8, 3, 4))
 
         aggregate = aggregate_split_summaries(
-            ((support_one, evidence_one), (support_two, evidence_two))
+            (
+                (support_one, evidence_one, support_one),
+                (support_two, evidence_two, evidence_two),
+            )
         )
 
         self.assertEqual(aggregate.split_count, 2)
@@ -182,10 +185,12 @@ class RecoverySummaryTests(unittest.TestCase):
         self.assertEqual(
             aggregate.evidence_aware.mean_split_median_recovered_rank, 2.0
         )
+        self.assertEqual(aggregate.preference_aware.total_recovered_anywhere, 3)
 
     def test_summary_line_is_deterministic(self) -> None:
         support = _summary(recovered=1, recall=0.5, median_rank=3.0)
         evidence = _summary(recovered=2, recall=1.0, median_rank=2.5)
+        preference = _summary(recovered=1, recall=0.5, median_rank=1.0)
         result = HoldoutRecoveryExperimentResult(
             target_user_id=1,
             target_username="target",
@@ -201,6 +206,7 @@ class RecoverySummaryTests(unittest.TestCase):
             held_out_maps=(),
             support_only_summary=support,
             evidence_aware_summary=evidence,
+            preference_aware_summary=preference,
             split_count=5,
             split_index=1,
             split_diagnostics=SplitPositionDiagnostics(((1, 4),), 2, 4),
@@ -212,7 +218,10 @@ class RecoverySummaryTests(unittest.TestCase):
             "support_r10=0.5000 support_r30=0.5000 support_r50=0.5000 "
             "support_r100=0.5000 support_median=3.0 evidence_recovered=2 "
             "evidence_r10=1.0000 evidence_r30=1.0000 evidence_r50=1.0000 "
-            "evidence_r100=1.0000 evidence_median=2.5",
+            "evidence_r100=1.0000 evidence_median=2.5 "
+            "preference_recovered=1 preference_r10=0.5000 "
+            "preference_r30=0.5000 preference_r50=0.5000 "
+            "preference_r100=0.5000 preference_median=1.0",
         )
 
 

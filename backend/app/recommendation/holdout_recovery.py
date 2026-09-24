@@ -7,6 +7,7 @@ from statistics import fmean, median
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
 
+from backend.app.analysis.statistics import TopPlayStatisticsInput
 from backend.app.candidates.hydration import CandidateHydrationError
 from backend.app.candidates.target_maps import (
     TargetMapCandidate,
@@ -29,6 +30,14 @@ from backend.app.recommendation.candidate_map_ranking import (
     rank_candidate_map_evidence,
 )
 from backend.app.recommendation.candidate_maps import CandidateMap, extract_candidate_maps
+from backend.app.recommendation.preference_evidence import (
+    annotate_candidate_evidence,
+    build_target_preference_profile,
+)
+from backend.app.recommendation.preference_ranking import (
+    PreferenceRankedCandidate,
+    rank_candidate_map_preferences,
+)
 from backend.app.similarity.overlap import (
     SimilarityTargetNotFoundError,
     TargetTopPlaysEmptyError,
@@ -73,6 +82,7 @@ class HeldOutMapRecovery:
     play: TargetPlayEvidence
     support_only_rank: int | None
     evidence_aware_rank: int | None
+    preference_aware_rank: int | None
     support_count: int | None
     best_supporting_player_rank: int | None
     total_independent_shared_count: int | None
@@ -127,6 +137,7 @@ class MultiSplitRecoveryAggregate:
     split_count: int
     support_only: OrderingRecoveryAggregate
     evidence_aware: OrderingRecoveryAggregate
+    preference_aware: OrderingRecoveryAggregate
 
 
 @dataclass(frozen=True)
@@ -145,6 +156,7 @@ class HoldoutRecoveryExperimentResult:
     held_out_maps: tuple[HeldOutMapRecovery, ...]
     support_only_summary: OrderingRecoverySummary
     evidence_aware_summary: OrderingRecoverySummary
+    preference_aware_summary: OrderingRecoverySummary
     split_count: int
     split_index: int
     split_diagnostics: SplitPositionDiagnostics
@@ -256,16 +268,21 @@ def summarize_recovery(
 
 def aggregate_split_summaries(
     summaries: Sequence[
-        tuple[OrderingRecoverySummary, OrderingRecoverySummary]
+        tuple[
+            OrderingRecoverySummary,
+            OrderingRecoverySummary,
+            OrderingRecoverySummary,
+        ]
     ],
 ) -> MultiSplitRecoveryAggregate:
-    """Aggregate explicitly supplied support/evidence summary pairs in memory."""
+    """Aggregate explicitly supplied support/evidence/preference summaries."""
     if not summaries:
         raise ValueError("At least one split summary is required.")
     return MultiSplitRecoveryAggregate(
         split_count=len(summaries),
         support_only=_aggregate_orderings(tuple(item[0] for item in summaries)),
         evidence_aware=_aggregate_orderings(tuple(item[1] for item in summaries)),
+        preference_aware=_aggregate_orderings(tuple(item[2] for item in summaries)),
     )
 
 
@@ -376,9 +393,33 @@ async def evaluate_holdout_recovery(
     )
     extraction = extract_candidate_maps(ranking_result, similar_player_limit)
     evidence = rank_candidate_map_evidence(extraction.candidate_maps)
+    training_profile = build_target_preference_profile(
+        target.user_id,
+        target.username,
+        tuple(
+            TopPlayStatisticsInput(
+                performance_points=None,
+                accuracy=None,
+                star_rating=play.star_rating,
+                approach_rate=play.approach_rate,
+                bpm=play.bpm,
+                mods=play.mods,
+            )
+            for play in split.training
+        ),
+    )
+    preference = rank_candidate_map_preferences(
+        annotate_candidate_evidence(evidence, training_profile)
+    )
     support_ids = tuple(item.beatmap_id for item in extraction.candidate_maps)
     evidence_ids = tuple(item.candidate_map.beatmap_id for item in evidence)
-    recoveries = _build_recoveries(split.held_out, extraction.candidate_maps, evidence)
+    preference_ids = tuple(
+        item.preference_evidence.collaborative.candidate_map.beatmap_id
+        for item in preference
+    )
+    recoveries = _build_recoveries(
+        split.held_out, extraction.candidate_maps, evidence, preference
+    )
     return HoldoutRecoveryExperimentResult(
         target_user_id=target.user_id,
         target_username=target.username,
@@ -397,6 +438,9 @@ async def evaluate_holdout_recovery(
         ),
         evidence_aware_summary=summarize_recovery(
             tuple(play.beatmap_id for play in split.held_out), evidence_ids
+        ),
+        preference_aware_summary=summarize_recovery(
+            tuple(play.beatmap_id for play in split.held_out), preference_ids
         ),
         split_count=split_count,
         split_index=split_index,
@@ -481,9 +525,15 @@ def _build_recoveries(
     held_out: Sequence[TargetPlayEvidence],
     support_maps: Sequence[CandidateMap],
     evidence: Sequence[CandidateMapEvidence],
+    preference: Sequence[PreferenceRankedCandidate],
 ) -> tuple[HeldOutMapRecovery, ...]:
     support_ranks = {item.beatmap_id: rank for rank, item in enumerate(support_maps, 1)}
     evidence_by_id = {item.candidate_map.beatmap_id: item for item in evidence}
+    preference_ranks = {
+        item.preference_evidence.collaborative.candidate_map.beatmap_id:
+            item.preference_rank
+        for item in preference
+    }
     return tuple(
         HeldOutMapRecovery(
             play=play,
@@ -493,6 +543,7 @@ def _build_recoveries(
                 if play.beatmap_id in evidence_by_id
                 else None
             ),
+            preference_aware_rank=preference_ranks.get(play.beatmap_id),
             support_count=(
                 evidence_by_id[play.beatmap_id].support_count
                 if play.beatmap_id in evidence_by_id

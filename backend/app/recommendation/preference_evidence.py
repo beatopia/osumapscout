@@ -137,8 +137,18 @@ def annotate_candidate_maps(
     target_profile: TargetPreferenceProfile,
 ) -> tuple[CandidatePreferenceEvidence, ...]:
     """Annotate candidates in the exact existing T0027 order."""
+    return annotate_candidate_evidence(
+        ranking.evidence_aware_ordering, target_profile
+    )
+
+
+def annotate_candidate_evidence(
+    candidates: Sequence[CandidateMapEvidence],
+    target_profile: TargetPreferenceProfile,
+) -> tuple[CandidatePreferenceEvidence, ...]:
+    """Apply existing T0028 evidence semantics to an explicit candidate set."""
     annotated: list[CandidatePreferenceEvidence] = []
-    for collaborative in ranking.evidence_aware_ordering:
+    for collaborative in candidates:
         candidate_map = collaborative.candidate_map
         stars = compare_numeric_evidence(
             candidate_map.star_rating, target_profile.star_rating
@@ -176,6 +186,36 @@ def annotate_candidate_maps(
             )
         )
     return tuple(annotated)
+
+
+def build_target_preference_profile(
+    user_id: int,
+    username: str,
+    plays: Sequence[TopPlayStatisticsInput],
+) -> TargetPreferenceProfile:
+    """Build the existing T0028 profile from explicitly supplied play evidence."""
+    if not plays:
+        raise TargetTopPlaysEmptyError(
+            "The target has no top plays from which to build a preference profile."
+        )
+    existing = calculate_player_statistics(user_id, username, plays)
+    return TargetPreferenceProfile(
+        user_id=user_id,
+        username=username,
+        top_play_count=len(plays),
+        star_rating=calculate_numeric_summary(item.star_rating for item in plays),
+        approach_rate=calculate_numeric_summary(
+            item.approach_rate for item in plays
+        ),
+        bpm=calculate_numeric_summary(item.bpm for item in plays),
+        exact_mod_combinations=existing.exact_mod_combinations,
+        individual_mods=existing.individual_mods,
+        top_exact_mod_combination=(
+            existing.exact_mod_combinations[0].mods
+            if existing.exact_mod_combinations
+            else None
+        ),
+    )
 
 
 def summarize_mods(
@@ -327,23 +367,8 @@ def _load_target_profile(
         )
         for row in rows
     )
-    existing = calculate_player_statistics(target.user_id, target.username, inputs)
-    return TargetPreferenceProfile(
-        user_id=target.user_id,
-        username=target.username,
-        top_play_count=len(inputs),
-        star_rating=calculate_numeric_summary(item.star_rating for item in inputs),
-        approach_rate=calculate_numeric_summary(
-            item.approach_rate for item in inputs
-        ),
-        bpm=calculate_numeric_summary(item.bpm for item in inputs),
-        exact_mod_combinations=existing.exact_mod_combinations,
-        individual_mods=existing.individual_mods,
-        top_exact_mod_combination=(
-            existing.exact_mod_combinations[0].mods
-            if existing.exact_mod_combinations
-            else None
-        ),
+    return build_target_preference_profile(
+        target.user_id, target.username, inputs
     )
 
 

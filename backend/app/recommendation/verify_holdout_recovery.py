@@ -53,9 +53,11 @@ def print_result(result: HoldoutRecoveryExperimentResult) -> None:
         print(f"   beatmap {play.beatmap_id}")
         print(f"   support-only rank: {_rank(recovery.support_only_rank)}")
         print(f"   evidence-aware rank: {_rank(recovery.evidence_aware_rank)}")
+        print(f"   preference-aware rank: {_rank(recovery.preference_aware_rank)}")
         print(f"   support: {recovery.support_count or 0}")
     _print_summary("Support-only recovery", result.support_only_summary)
     _print_summary("Evidence-aware recovery", result.evidence_aware_summary)
+    _print_summary("Preference-aware recovery", result.preference_aware_summary)
     print(format_split_summary(result))
 
 
@@ -66,8 +68,10 @@ def _positions(positions: tuple[int, ...]) -> str:
 def format_split_summary(result: HoldoutRecoveryExperimentResult) -> str:
     support = result.support_only_summary
     evidence = result.evidence_aware_summary
+    preference = result.preference_aware_summary
     support_median = _summary_median(support)
     evidence_median = _summary_median(evidence)
+    preference_median = _summary_median(preference)
     return (
         f"SPLIT_SUMMARY split={result.split_index} "
         f"heldout={result.held_out_play_count} "
@@ -82,7 +86,13 @@ def format_split_summary(result: HoldoutRecoveryExperimentResult) -> str:
         f"evidence_r30={evidence.recall_at_30:.4f} "
         f"evidence_r50={evidence.recall_at_50:.4f} "
         f"evidence_r100={evidence.recall_at_100:.4f} "
-        f"evidence_median={evidence_median}"
+        f"evidence_median={evidence_median} "
+        f"preference_recovered={preference.recovered_anywhere} "
+        f"preference_r10={preference.recall_at_10:.4f} "
+        f"preference_r30={preference.recall_at_30:.4f} "
+        f"preference_r50={preference.recall_at_50:.4f} "
+        f"preference_r100={preference.recall_at_100:.4f} "
+        f"preference_median={preference_median}"
     )
 
 
