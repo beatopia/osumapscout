@@ -175,19 +175,34 @@ async def discover_full_target_map_candidate_pool(
     selected_seeds = select_evenly_spaced_seeds(ordered_plays, seed_count)
 
     client = osu_client or OsuApiClient(OsuCredentials.from_environment())
+    return await acquire_target_map_candidate_pool(
+        target.user_id,
+        target.username,
+        selected_seeds,
+        client,
+    )
+
+
+async def acquire_target_map_candidate_pool(
+    target_user_id: int,
+    target_username: str,
+    selected_seeds: Sequence[TargetMapSeed],
+    osu_client: OsuApiClient,
+) -> TargetMapCandidatePool:
+    """Acquire a complete pool for an explicitly supplied target and seeds."""
     accumulated: dict[int, _CandidateAccumulator] = {}
     leaderboard_requests_made = 0
     next_discovery_order = 0
 
     for seed in selected_seeds:
-        leaderboard_users = await client.get_beatmap_leaderboard_users(
+        leaderboard_users = await osu_client.get_beatmap_leaderboard_users(
             seed.beatmap_id
         )
         leaderboard_requests_made += 1
         seen_on_seed: set[int] = set()
         for leaderboard_user in leaderboard_users:
             if (
-                leaderboard_user.user_id == target.user_id
+                leaderboard_user.user_id == target_user_id
                 or leaderboard_user.user_id in seen_on_seed
             ):
                 continue
@@ -229,9 +244,9 @@ async def discover_full_target_map_candidate_pool(
         hit_counts[hits] = hit_counts.get(hits, 0) + 1
 
     return TargetMapCandidatePool(
-        target_user_id=target.user_id,
-        target_username=target.username,
-        selected_seeds=selected_seeds,
+        target_user_id=target_user_id,
+        target_username=target_username,
+        selected_seeds=tuple(selected_seeds),
         candidates=candidates,
         seed_hit_distribution=tuple(
             sorted(hit_counts.items(), reverse=True)

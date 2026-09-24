@@ -100,11 +100,16 @@ This file records what exists now, not what the project intends to build later.
 - T0028 reads the target's persisted top plays to calculate null-aware star-rating, AR, and BPM distributions with min, linearly interpolated quartiles, median, max, and mean, plus existing exact-combination and individual-mod summaries.
 - T0028 annotates the unchanged T0027 order with absolute target-median deltas, inclusive-IQR membership, and supporting-player mod evidence. It reports metadata coverage and IQR distributions for the complete pool and displayed prefix.
 - Candidate numeric metadata comes only from already-hydrated play evidence. Missing values remain explicit, no attribute changes ordering or filters candidates, and the preference-evidence stage adds zero osu! requests.
+- A real T0028 run for `molerat` analyzed 100 target plays, all using HDHR. Star-rating Q1/median/Q3 was 4.96/5.09/5.31, AR was 9.00/9.20/9.20, and BPM was 178/185/190.
+- The same T0028 run evaluated 552 candidate maps. Forty-four of 552 were within all three target IQRs, compared with six of the top 30. The top-30 maps had higher observed IQR-membership rates for each numeric attribute than the complete pool; this is descriptive evidence for one target, not a causal or population-wide result.
+- Supporting-player exact mod combinations generally did not match the target's all-HDHR history, so occurrence-level mod combinations remain descriptive only.
+- T0029 creates a deterministic in-memory training/holdout split across persisted target positions. Held-out maps are excluded from seeds and similarity evidence but remain eligible for recovery through other users' hydrated plays.
+- T0029 compares Recall@10, @30, @50, @100 and recovered-rank summaries for the unchanged T0026 support-only and T0027 evidence-aware orders. It does not mutate persistence or add recovery-stage API requests.
 - No crawler or dataset import behavior exists.
 
 ## Ticket position
 
-- Completed through: T0028 — Candidate-map preference evidence experiment
-- Expected next ticket: not yet selected; T0029 depends on manually reviewing the live T0028 preference evidence
+- Completed through: T0029 — Held-out top-play recovery experiment
+- Expected next ticket: not yet selected; T0030 depends on manually reviewing the live T0029 recovery comparison
 
 Future tickets must update this document when the repository's implemented state changes.

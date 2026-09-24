@@ -6,7 +6,7 @@ The project is motivated by two goals: building a useful recommendation experien
 
 ## Current status
 
-The repository contains a FastAPI backend with normalized top-play and persisted-player analysis endpoints plus a React, TypeScript, and Vite frontend. The frontend has separate actions for live top-play search and displaying persisted descriptive analysis. PostgreSQL stores explicitly persisted current top-play state, from which statistics are calculated on demand. Non-public backend experiments can discover candidates, rank them by exact top-play overlap, compare candidate-map orderings, and inspect candidate attributes against persisted target preferences. No recommendations are generated. Work is complete through T0028.
+The repository contains a FastAPI backend with normalized top-play and persisted-player analysis endpoints plus a React, TypeScript, and Vite frontend. The frontend has separate actions for live top-play search and displaying persisted descriptive analysis. PostgreSQL stores explicitly persisted current top-play state, from which statistics are calculated on demand. Non-public backend experiments can discover candidates, compare candidate-map orderings and preference evidence, and evaluate known-positive recovery with deterministic held-out target plays. No recommendations are generated. Work is complete through T0029.
 
 ## Run the backend locally
 
@@ -205,6 +205,14 @@ Inspect descriptive target-preference evidence without changing the T0027 order:
 ```
 
 This experiment calculates persisted target star-rating, AR, BPM, and mod distributions, then annotates the unchanged candidate-map order with median deltas, inclusive-IQR membership, and supporting mod evidence. Missing metadata stays explicit, no attribute becomes a score or filter, and no additional osu! requests are made.
+
+Run the offline held-out recovery experiment with:
+
+```powershell
+.\.venv\Scripts\python -m backend.app.recommendation.verify_holdout_recovery YOUR_USERNAME --top-plays 100 --holdout-count 10 --seed-count 5 --hydration-budget 25 --candidate-top-plays 100 --similar-player-limit 10
+```
+
+This command deterministically holds out an approximately even spread of persisted target plays, runs every target-dependent pipeline stage from training evidence only, and compares support-only with evidence-aware recovery. Persistence is not modified, and recovery evaluation adds no requests.
 
 ## Run the frontend locally
 

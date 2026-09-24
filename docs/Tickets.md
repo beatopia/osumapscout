@@ -31,6 +31,7 @@ This is a rough, incremental roadmap. Ticket scope and ordering may change when 
 | T0025 | Budgeted similar-player candidate ranking experiment | Complete |
 | T0026 | Similar-player candidate-map extraction experiment | Complete |
 | T0027 | Candidate-map evidence ranking experiment | Complete |
-| T0028 | Candidate-map preference evidence experiment | Current / complete |
+| T0028 | Candidate-map preference evidence experiment | Complete |
+| T0029 | Held-out top-play recovery experiment | Current / complete |
 
-No detailed tickets beyond T0028 are defined yet. T0029 must be chosen only after manually reviewing the live target-preference evidence. No weights or recommendation-ranking design has been selected.
+No detailed tickets beyond T0029 are defined yet. T0030 must be chosen only after manually reviewing held-out recovery from both existing collaborative orderings. No production recommendation ranking has been selected.
