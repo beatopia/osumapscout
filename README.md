@@ -256,6 +256,14 @@ Measure tie groups in the unchanged discovery-only ordering:
 
 This T0037 diagnostic reports how many candidates remain tied after each existing lexicographic key, how much ordering falls through to beatmap ID, and whether already-available star, AR, and BPM deltas vary inside those groups. It does not rerank candidates or add requests.
 
+Run one inspectable cross-target validation split:
+
+```powershell
+.\.venv\Scripts\python -m backend.app.recommendation.verify_cross_target_ties --target molerat --split-index 0
+```
+
+T0038 fixes a five-target validation list and adds pure per-target and cross-target aggregation. Each invocation emits a compact `TARGET_TIE_SUMMARY` line and retains T0037's unchanged 30-request experiment.
+
 Compare the evidence-aware order with the experimental preference-aware order:
 
 ```powershell

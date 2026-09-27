@@ -139,11 +139,14 @@ This file records what exists now, not what the project intends to build later.
 - T0036 found that known positives had stronger average preference fit than the remaining discovery-only population. Three of four immediate positive comparisons remained tied through every meaningful ranking key and reached the beatmap-ID tie-break.
 - T0037 adds a read-only analysis of non-singleton groups at each prefix of the existing preference-aware ordering. It measures continuous evidence variation, completeness, dominance, rank spans, and known-positive bounds without changing candidate order.
 - In five live T0037 runs for `molerat`, 1,318 of 1,353 discovery-only observations belonged to non-singleton groups after every meaningful ranking key. All 89 such groups had complete star/AR/BPM evidence and variation in at least one continuous field. These measurements remain target- and run-specific.
+- T0037 measured 97.41% Stage-4 tie dependence for `molerat`, with 89 groups and a maximum size of 67. Every group varied in at least one continuous preference field, and all continuous evidence was complete.
+- T0038 fixes the deterministic validation order `molerat`, `peppy`, `mrekk`, `Vaxei`, and `WhiteCat`, supports one inspectable target/split per invocation, emits machine-readable summaries, and provides pure aggregation helpers. It does not change ranking.
+- Across the completed T0038 evidence, 4,285 of 4,404 discovery-only observations (97.30%) depended on beatmap ID within a non-singleton Stage-4 group. All 327 groups varied in at least one continuous field and had complete star/AR/BPM evidence.
 - No crawler or dataset import behavior exists.
 
 ## Ticket position
 
-- Completed through: T0037 — Discovery-only tie-group analysis
-- Expected next ticket: not yet selected; T0038 depends on reviewing T0037's live findings
+- Completed through: T0038 — Cross-target discovery-tie validation
+- Expected next ticket: not yet selected; T0039 depends on reviewing T0038's cross-target findings
 
 Future tickets must update this document when the repository's implemented state changes.

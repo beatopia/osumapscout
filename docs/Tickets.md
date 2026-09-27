@@ -40,6 +40,7 @@ This is a rough, incremental roadmap. Ticket scope and ordering may change when 
 | T0034 | Selected-player expansion rank-impact analysis | Complete |
 | T0035 | Discovery / ranking evidence separation experiment | Complete |
 | T0036 | Discovery-only candidate placement analysis | Complete |
-| T0037 | Discovery-only tie-group analysis | Current / complete |
+| T0037 | Discovery-only tie-group analysis | Complete |
+| T0038 | Cross-target discovery-tie validation | Current / complete |
 
-No detailed tickets beyond T0037 are defined yet. T0038 must be chosen only after reviewing the discovery-only tie measurements. No production recommendation ranking has been selected.
+No detailed tickets beyond T0038 are defined yet. T0039 must be chosen only after reviewing the cross-target validation. No production recommendation ranking has been selected.
