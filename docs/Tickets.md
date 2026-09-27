@@ -41,6 +41,7 @@ This is a rough, incremental roadmap. Ticket scope and ordering may change when 
 | T0035 | Discovery / ranking evidence separation experiment | Complete |
 | T0036 | Discovery-only candidate placement analysis | Complete |
 | T0037 | Discovery-only tie-group analysis | Complete |
-| T0038 | Cross-target discovery-tie validation | Current / complete |
+| T0038 | Cross-target discovery-tie validation | Complete |
+| T0039 | Single-field continuous tie-break experiment | Current / complete |
 
-No detailed tickets beyond T0038 are defined yet. T0039 must be chosen only after reviewing the cross-target validation. No production recommendation ranking has been selected.
+No detailed tickets beyond T0039 are defined yet. T0040 must be chosen only after reviewing the single-field experiment. No production recommendation ranking has been selected.

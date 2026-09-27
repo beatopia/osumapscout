@@ -264,6 +264,14 @@ Run one inspectable cross-target validation split:
 
 T0038 fixes a five-target validation list and adds pure per-target and cross-target aggregation. Each invocation emits a compact `TARGET_TIE_SUMMARY` line and retains T0037's unchanged 30-request experiment.
 
+Compare isolated star-, AR-, and BPM-only tie-breaks inside discovery-only Stage-4 groups:
+
+```powershell
+.\.venv\Scripts\python -m backend.app.recommendation.verify_continuous_tiebreak molerat --split-index 0
+```
+
+T0039 derives baseline and three experimental views from one unchanged evidence pass. Only the selected continuous field may reorder an existing discovery-only Stage-4 group; all other candidates retain their baseline ranks. This is not production ranking behavior.
+
 Compare the evidence-aware order with the experimental preference-aware order:
 
 ```powershell

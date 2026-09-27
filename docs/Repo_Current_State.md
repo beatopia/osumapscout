@@ -142,11 +142,14 @@ This file records what exists now, not what the project intends to build later.
 - T0037 measured 97.41% Stage-4 tie dependence for `molerat`, with 89 groups and a maximum size of 67. Every group varied in at least one continuous preference field, and all continuous evidence was complete.
 - T0038 fixes the deterministic validation order `molerat`, `peppy`, `mrekk`, `Vaxei`, and `WhiteCat`, supports one inspectable target/split per invocation, emits machine-readable summaries, and provides pure aggregation helpers. It does not change ranking.
 - Across the completed T0038 evidence, 4,285 of 4,404 discovery-only observations (97.30%) depended on beatmap ID within a non-singleton Stage-4 group. All 327 groups varied in at least one continuous field and had complete star/AR/BPM evidence.
+- T0038 validated five fixed targets. Per-target Stage-4 dependence ranged from 95.11% to 99.28%; all Stage-4 groups had continuous variation and complete continuous evidence.
+- T0039 adds isolated experimental star-, AR-, and BPM-delta tie-break views. These views can reorder only discovery-only candidates tied on all four existing meaningful keys, retain beatmap ID as the final fallback, and add no requests or production behavior.
+- Across 15 live T0039 target/split runs, all four views retained identical candidate membership and recovered-anywhere counts. Three discovery-only held-out positives produced conflicting movement and no early-cutoff transition; no single continuous field was consistently better.
 - No crawler or dataset import behavior exists.
 
 ## Ticket position
 
-- Completed through: T0038 — Cross-target discovery-tie validation
-- Expected next ticket: not yet selected; T0039 depends on reviewing T0038's cross-target findings
+- Completed through: T0039 — Single-field continuous tie-break experiment
+- Expected next ticket: not yet selected; T0040 depends on reviewing T0039's live findings
 
 Future tickets must update this document when the repository's implemented state changes.
