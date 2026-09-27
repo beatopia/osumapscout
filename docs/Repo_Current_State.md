@@ -145,11 +145,14 @@ This file records what exists now, not what the project intends to build later.
 - T0038 validated five fixed targets. Per-target Stage-4 dependence ranged from 95.11% to 99.28%; all Stage-4 groups had continuous variation and complete continuous evidence.
 - T0039 adds isolated experimental star-, AR-, and BPM-delta tie-break views. These views can reorder only discovery-only candidates tied on all four existing meaningful keys, retain beatmap ID as the final fallback, and add no requests or production behavior.
 - Across 15 live T0039 target/split runs, all four views retained identical candidate membership and recovered-anywhere counts. Three discovery-only held-out positives produced conflicting movement and no early-cutoff transition; no single continuous field was consistently better.
+- In T0039's star-only view, one of three discovery-only positives improved, one worsened, and one was unchanged. Star nearly eliminated beatmap-ID ties but caused no Recall@10/30/50/100 transition, so it was not adopted.
+- T0040 adds a star-only validator for deterministic splits 3-7. The historical split positions remain unchanged, and eight configured splits cover 73 of the target's 100 top-play positions.
+- Across 25 live T0040 target/split runs, 146 of 250 held-out observations were recovered. The 13 discovery-only positives comprised 7 improvements, 4 regressions, and 2 unchanged ranks; none crossed the Recall@10/30/50/100 cutoffs. Five two-candidate ties remained, all for peppy.
 - No crawler or dataset import behavior exists.
 
 ## Ticket position
 
-- Completed through: T0039 — Single-field continuous tie-break experiment
-- Expected next ticket: not yet selected; T0040 depends on reviewing T0039's live findings
+- Completed through: T0040 — Expanded star tie-break validation
+- Expected next ticket: not yet selected; T0041 depends on reviewing T0040's expanded evidence
 
 Future tickets must update this document when the repository's implemented state changes.

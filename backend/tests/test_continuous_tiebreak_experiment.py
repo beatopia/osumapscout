@@ -51,7 +51,10 @@ class ContinuousRankingTests(unittest.TestCase):
         self.assertEqual((summary.groups, summary.candidates), (1, 2))
 
     def test_signed_movement_and_cutoff_crossings(self) -> None:
-        positive = PositiveMovement(1, 1, 105, 95, 110, 105, 3, 100, 110, .1, .1, 1)
+        positive = PositiveMovement(
+            1, 1, 105, 95, 110, 105, 3, 100, 110, .1, .1, 1,
+            1, 2, 3, 11, 3, 1, 100.0, 0, 2,
+        )
         direction = summarize_direction((positive.signed_change("star"), positive.signed_change("ar")))
         self.assertEqual((direction.improved, direction.worsened), (1, 1))
         star = {item.cutoff: item for item in summarize_transitions((positive,), "star")}

@@ -42,6 +42,9 @@ This is a rough, incremental roadmap. Ticket scope and ordering may change when 
 | T0036 | Discovery-only candidate placement analysis | Complete |
 | T0037 | Discovery-only tie-group analysis | Complete |
 | T0038 | Cross-target discovery-tie validation | Complete |
-| T0039 | Single-field continuous tie-break experiment | Current / complete |
+| T0039 | Single-field continuous tie-break experiment | Complete |
+| T0040 | Expanded star tie-break validation | Current / complete |
 
-No detailed tickets beyond T0039 are defined yet. T0040 must be chosen only after reviewing the single-field experiment. No production recommendation ranking has been selected.
+No detailed tickets beyond T0040 are defined yet. T0041 must be chosen only after reviewing the expanded star validation. No production recommendation ranking has been selected.
+
+T0040's 25 new live runs produced 13 discovery-only held-out positives: 7 improved, 4 worsened, and 2 were unchanged under star-only tie-breaking. No positive crossed a measured recall cutoff, so the experimental order remains unadopted.

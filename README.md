@@ -272,6 +272,14 @@ Compare isolated star-, AR-, and BPM-only tie-breaks inside discovery-only Stage
 
 T0039 derives baseline and three experimental views from one unchanged evidence pass. Only the selected continuous field may reorder an existing discovery-only Stage-4 group; all other candidates retain their baseline ranks. This is not production ranking behavior.
 
+Run the expanded star-only validation on a new deterministic split:
+
+```powershell
+.\.venv\Scripts\python -m backend.app.recommendation.verify_star_tiebreak_validation molerat --split-index 3
+```
+
+T0040 extends the unchanged circular split schedule through index 7 and compares only baseline with star-delta ordering inside existing discovery-only Stage-4 groups. Its 25 new live runs found 13 discovery-only held-out positives: 7 improved, 4 worsened, and 2 were unchanged, with no Recall@10/30/50/100 cutoff transitions. It retains full positive diagnostics and does not affect production ranking.
+
 Compare the evidence-aware order with the experimental preference-aware order:
 
 ```powershell

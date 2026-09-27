@@ -55,6 +55,15 @@ class PositiveMovement:
     star_delta: float | None
     ar_delta: float | None
     bpm_delta: float | None
+    support_count: int
+    attributes_within_iqr_count: int
+    total_independent_shared_count: int
+    best_supporting_player_rank: int
+    baseline_group_position: int
+    star_group_position: int
+    star_fit_percentile: float | None
+    peers_with_smaller_star_delta: int
+    peers_with_larger_star_delta: int
 
     def signed_change(self, field: Field) -> int:
         return getattr(self, f"{field}_rank") - self.baseline_rank
@@ -248,12 +257,33 @@ def _positives(separation: DiscoveryRankingSeparationResult, groups: dict[tuple[
         evidence = item.preference_evidence
         group = groups[_discrete_key(item)]
         group_ranks = [member.preference_rank for member in group]
+        baseline_order = sorted(group, key=_id)
+        star_order = sorted(group, key=lambda member: (
+            _missing(_delta(member, "star")), _value(_delta(member, "star")), _id(member)
+        ))
+        star_delta = evidence.star_rating.delta_from_target_median
+        smaller = sum(
+            peer_delta is not None and star_delta is not None and abs(peer_delta) < abs(star_delta)
+            for peer in group if (peer_delta := _delta(peer, "star")) is not None
+        )
+        larger = sum(
+            peer_delta is not None and star_delta is not None and abs(peer_delta) > abs(star_delta)
+            for peer in group if (peer_delta := _delta(peer, "star")) is not None
+        )
+        star_position = star_order.index(item) + 1
         output.append(PositiveMovement(
             impact.position, beatmap_id, ranks["baseline"][beatmap_id], ranks["star"][beatmap_id],
             ranks["ar"][beatmap_id], ranks["bpm"][beatmap_id], len(group), min(group_ranks), max(group_ranks),
             evidence.star_rating.delta_from_target_median,
             evidence.approach_rate.delta_from_target_median,
             evidence.bpm.delta_from_target_median,
+            evidence.collaborative.support_count,
+            evidence.attributes_within_iqr_count,
+            evidence.collaborative.total_independent_shared_count,
+            evidence.collaborative.best_supporting_player_rank,
+            baseline_order.index(item) + 1, star_position,
+            (100 * (len(group) - star_position + 1) / len(group)) if star_delta is not None else None,
+            smaller, larger,
         ))
     return tuple(output)
 

@@ -45,7 +45,14 @@ def print_result(result: ContinuousTiebreakResult) -> None:
             f"ar_change={item.ar_rank-item.baseline_rank} bpm_change={item.bpm_rank-item.baseline_rank} "
             f"group_size={item.group_size} group_min={item.group_minimum_rank} "
             f"group_max={item.group_maximum_rank} star_delta={item.star_delta} "
-            f"ar_delta={item.ar_delta} bpm_delta={item.bpm_delta}"
+            f"ar_delta={item.ar_delta} bpm_delta={item.bpm_delta} "
+            f"support={item.support_count} iqr={item.attributes_within_iqr_count} "
+            f"independent={item.total_independent_shared_count} best_player={item.best_supporting_player_rank} "
+            f"baseline_group_position={item.baseline_group_position} "
+            f"star_group_position={item.star_group_position} "
+            f"star_fit_percentile={item.star_fit_percentile} "
+            f"smaller_star_peers={item.peers_with_smaller_star_delta} "
+            f"larger_star_peers={item.peers_with_larger_star_delta}"
         )
     print(
         f"CONTINUOUS_TIE_SUMMARY target={result.target} split={result.split_index} "
