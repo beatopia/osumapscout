@@ -1,4 +1,4 @@
-#NOTE: Live hosting coming soon. 
+# NOTE: Live hosting coming soon. 
 
 # osu! Map Scout
 
