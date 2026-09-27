@@ -263,7 +263,7 @@ def calculate_split_position_sets(
     if target_count < 1:
         raise ValueError("Target count must be a positive integer.")
     _validate_bound(holdout_count, 1, 20, "Holdout count")
-    _validate_bound(split_count, 2, 10, "Split count")
+    _validate_bound(split_count, 2, 13, "Split count")
     if holdout_count >= target_count:
         raise ValueError("Holdout count must be smaller than target evidence count.")
 
@@ -501,7 +501,7 @@ async def evaluate_holdout_recovery(
         raise ValueError("Username must not be empty.")
     _validate_bound(top_plays, 2, 100, "Target top-play limit")
     _validate_bound(holdout_count, 1, 20, "Holdout count")
-    _validate_bound(split_count, 2, 10, "Split count")
+    _validate_bound(split_count, 2, 13, "Split count")
     _validate_split_index(split_index, split_count)
     _validate_bound(seed_count, 1, 10, "Seed count")
     _validate_bound(hydration_budget, 1, 50, "Hydration budget")

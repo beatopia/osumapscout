@@ -43,8 +43,11 @@ This is a rough, incremental roadmap. Ticket scope and ordering may change when 
 | T0037 | Discovery-only tie-group analysis | Complete |
 | T0038 | Cross-target discovery-tie validation | Complete |
 | T0039 | Single-field continuous tie-break experiment | Complete |
-| T0040 | Expanded star tie-break validation | Current / complete |
+| T0040 | Expanded star tie-break validation | Complete |
+| T0041 | Supporting-player top-play-position experiment | Current / complete |
 
-No detailed tickets beyond T0040 are defined yet. T0041 must be chosen only after reviewing the expanded star validation. No production recommendation ranking has been selected.
+No detailed tickets beyond T0041 are defined yet. T0042 must be chosen only after reviewing the supporting-play-position experiment. No production recommendation ranking has been selected.
 
 T0040's 25 new live runs produced 13 discovery-only held-out positives: 7 improved, 4 worsened, and 2 were unchanged under star-only tie-breaking. No positive crossed a measured recall cutoff, so the experimental order remains unadopted.
+
+T0041 derived supporting-player top-play positions from the existing ordered hydrated evidence without extra requests. Across 25 live splits it found 10 discovery-only positives: 2 improved, 7 worsened, and 1 was unchanged. No positive crossed a measured recall cutoff, so the experimental order remains unadopted.

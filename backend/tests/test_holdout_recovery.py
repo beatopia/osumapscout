@@ -84,7 +84,7 @@ class HoldoutSelectionTests(unittest.TestCase):
 
     def test_split_bounds_are_enforced(self) -> None:
         plays = tuple(self._play(position) for position in range(1, 11))
-        for split_count in (1, 11):
+        for split_count in (1, 14):
             with self.assertRaises(ValueError):
                 split_target_evidence(plays, 2, split_count, 0)
         for split_index in (-1, 5):

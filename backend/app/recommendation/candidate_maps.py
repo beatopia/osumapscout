@@ -23,6 +23,7 @@ class CandidateMapSupport:
     seed_excluded_target_coverage: float
     mods: tuple[str, ...]
     performance_points: float | None
+    supporter_top_play_position: int | None = None
 
 
 @dataclass(frozen=True)
@@ -112,7 +113,9 @@ def extract_candidate_maps(
 
     for similar_player_rank, player in enumerate(selected_players, start=1):
         contributed_ids: set[int] = set()
-        for play in player.hydrated_top_plays:
+        for supporter_top_play_position, play in enumerate(
+            player.hydrated_top_plays, start=1
+        ):
             if play.beatmap_id in target_ids:
                 continue
             existing = accumulated.get(play.beatmap_id)
@@ -121,7 +124,9 @@ def extract_candidate_maps(
                     _fill_missing_metadata(existing, play)
                 continue
             contributed_ids.add(play.beatmap_id)
-            support = _support_from_play(player, similar_player_rank, play)
+            support = _support_from_play(
+                player, similar_player_rank, play, supporter_top_play_position
+            )
             if existing is None:
                 accumulated[play.beatmap_id] = _CandidateMapAccumulator(
                     beatmap_id=play.beatmap_id,
@@ -224,6 +229,7 @@ def _support_from_play(
     player: RankedSimilarPlayer,
     similar_player_rank: int,
     play: OsuTopPlay,
+    supporter_top_play_position: int,
 ) -> CandidateMapSupport:
     return CandidateMapSupport(
         user_id=player.user_id,
@@ -236,6 +242,7 @@ def _support_from_play(
         seed_excluded_target_coverage=player.seed_excluded_target_coverage,
         mods=play.mods,
         performance_points=play.performance_points,
+        supporter_top_play_position=supporter_top_play_position,
     )
 
 

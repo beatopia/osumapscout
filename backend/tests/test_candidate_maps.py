@@ -60,6 +60,12 @@ class CandidateMapExtractionTests(unittest.TestCase):
         self.assertEqual(shared.supports[0].independent_shared_count, 8)
         self.assertEqual(shared.supports[0].mods, ("HD",))
         self.assertEqual(shared.supports[0].performance_points, 100.0)
+        self.assertEqual(
+            [support.supporter_top_play_position for support in shared.supports],
+            [2, 2],
+        )
+        by_id = {item.beatmap_id: item for item in result.candidate_maps}
+        self.assertEqual(by_id[5].supports[0].supporter_top_play_position, 4)
         self.assertNotIn(2, [item.beatmap_id for item in result.candidate_maps])
         self.assertNotIn(3, [item.beatmap_id for item in result.candidate_maps])
         self.assertEqual(
