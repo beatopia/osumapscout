@@ -1,5 +1,3 @@
-# NOTE: Live hosting coming soon. 
-
 # osu! Map Scout
 
 A web app that recommends osu!standard maps based on a player's top plays and the maps played by similar users.
