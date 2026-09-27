@@ -60,6 +60,8 @@ class CandidateMapExtractionTests(unittest.TestCase):
         self.assertEqual(shared.supports[0].independent_shared_count, 8)
         self.assertEqual(shared.supports[0].mods, ("HD",))
         self.assertEqual(shared.supports[0].performance_points, 100.0)
+        self.assertEqual(shared.supports[0].acquisition_group, "one_hit")
+        self.assertEqual(shared.supports[0].seed_hit_count, 1)
         self.assertEqual(
             [support.supporter_top_play_position for support in shared.supports],
             [2, 2],

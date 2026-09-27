@@ -150,11 +150,13 @@ This file records what exists now, not what the project intends to build later.
 - Across 25 live T0040 target/split runs, 146 of 250 held-out observations were recovered. The 13 discovery-only positives comprised 7 improvements, 4 regressions, and 2 unchanged ranks; none crossed the Recall@10/30/50/100 cutoffs. Five two-candidate ties remained, all for peppy.
 - T0041 retains each candidate supporter's 1-based top-play position by enumerating the already ordered hydrated play tuple. It adds no requests and does not persist the value.
 - Across 25 live T0041 target/split runs, 140 of 250 held-out observations were recovered. The 10 discovery-only positives comprised 2 improvements, 7 regressions, and 1 unchanged rank under the isolated supporter-position tie-break; none crossed the Recall@10/30/50/100 cutoffs. Two two-candidate ties remained after the field.
+- T0041's supporter-position tie-break was not adopted: its mean signed positive movement was +8 ranks and no recall cutoff changed.
+- T0042 adds descriptive acquisition-provenance and supporter-structure diagnostics without reranking. Across 6,471 discovery-only candidate observations, 9 of 10 positives were single-support and 9 were recurring-only. All seven T0041 regressions were recurring-only single-support observations; no causal or ranking-quality conclusion is claimed.
 - No crawler or dataset import behavior exists.
 
 ## Ticket position
 
-- Completed through: T0041 — Supporting-player top-play-position experiment
-- Expected next ticket: not yet selected; T0042 depends on reviewing T0041's evidence
+- Completed through: T0042 — Discovery-only provenance and supporter-structure analysis
+- Expected next ticket: not yet selected; T0043 depends on reviewing T0042's evidence
 
 Future tickets must update this document when the repository's implemented state changes.

@@ -24,6 +24,8 @@ class CandidateMapSupport:
     mods: tuple[str, ...]
     performance_points: float | None
     supporter_top_play_position: int | None = None
+    acquisition_group: str | None = None
+    seed_hit_count: int | None = None
 
 
 @dataclass(frozen=True)
@@ -243,6 +245,8 @@ def _support_from_play(
         mods=play.mods,
         performance_points=play.performance_points,
         supporter_top_play_position=supporter_top_play_position,
+        acquisition_group=player.acquisition_group,
+        seed_hit_count=player.seed_hit_count,
     )
 
 

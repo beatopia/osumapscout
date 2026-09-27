@@ -140,6 +140,7 @@ class SelectionExpansionResult:
     already_recovered_worsened: DirectionalRankSummary
     leaderboard_requests: int
     top_play_requests: int
+    ranking_result: RankedCandidateExperimentResult
 
     @property
     def total_data_requests(self) -> int:
@@ -264,6 +265,7 @@ def analyze_selection_expansion(
         already_recovered_worsened=_directional_summary(worsened),
         leaderboard_requests=recovery.leaderboard_requests_made,
         top_play_requests=recovery.top_play_requests_made,
+        ranking_result=ranking,
     )
 
 

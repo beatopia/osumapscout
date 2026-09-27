@@ -22,6 +22,7 @@ from backend.app.recommendation.selection_expansion_analysis import (
     _top_n_stability,
     evaluate_selection_expansion,
 )
+from backend.app.similarity.ranked_candidates import RankedCandidateExperimentResult
 
 SelectionFunction = Callable[..., Awaitable[SelectionExpansionResult]]
 
@@ -88,6 +89,7 @@ class DiscoveryRankingSeparationResult:
     hybrid_regression: RegressionSummary
     leaderboard_requests: int
     top_play_requests: int
+    ranking_result: RankedCandidateExperimentResult
 
     @property
     def total_data_requests(self) -> int:
@@ -213,6 +215,7 @@ def analyze_discovery_ranking_separation(
         hybrid_regression=_regression(held_out, "hybrid_rank"),
         leaderboard_requests=expansion.leaderboard_requests,
         top_play_requests=expansion.top_play_requests,
+        ranking_result=expansion.ranking_result,
     )
 
 
