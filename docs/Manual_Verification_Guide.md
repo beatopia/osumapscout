@@ -2,12 +2,12 @@
 
 ## Purpose
 
-Manual verification confirms that a ticket behaves as required in the actual repository. A completion report is evidence to inspect, not a substitute for verification by the developer.
+Manual verification confirms that a change behaves as required in the actual repository. Written results are evidence to inspect, not a substitute for direct verification.
 
 ## Principles for implementation tickets
 
 - Run every command specified by the ticket and inspect its real output.
-- Exercise the implemented behavior manually rather than relying only on Codex's statement that it works.
+- Exercise the implemented behavior manually rather than relying only on a reported result.
 - Verify relevant failure, empty, and invalid-input cases as well as the successful path.
 - Compare the result directly with the ticket's acceptance criteria and non-goals.
 - Review the repository diff and status to confirm unrelated files and functionality were not changed.
@@ -32,7 +32,7 @@ Exact commands and behavioral checks should be added by the ticket that introduc
 5. Inspect the repository tree and confirm no backend, frontend, database, configuration, dependency, Docker, or CI/CD files were added.
 6. Open each README link and confirm its relative path reaches the intended document.
 7. Confirm planned functionality is consistently described as planned or tentative, not implemented.
-8. Confirm `AGENTS.md` explicitly requires Codex to implement one ticket only.
+8. Confirm the repository contribution rules require each change to stay within its stated scope.
 9. Confirm `Tickets.md` contains T0001 through T0015, marks T0001 as current and complete, and does not add a detailed roadmap beyond T0015.
 10. Confirm `Repo_Current_State.md` says application implementation has not started, identifies T0001 as the current completed ticket, and identifies T0002 as the expected next ticket.
 

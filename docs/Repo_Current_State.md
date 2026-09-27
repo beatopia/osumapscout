@@ -6,7 +6,7 @@ This file records what exists now, not what the project intends to build later.
 
 - The repository documentation foundation exists.
 - `README.md` describes the project and points to its core documents.
-- `AGENTS.md` defines repository-level rules for future Codex work.
+- Repository-level development rules are tracked separately from the public project overview.
 - Long-term design, MVP direction, ticket tracking, and manual verification guidance are documented under `docs/`.
 - A minimal FastAPI backend exists in `backend/app/`.
 - The backend can be started locally with the development command documented in `README.md`.
