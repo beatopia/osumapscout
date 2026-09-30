@@ -45,12 +45,15 @@ This is a rough, incremental roadmap. Ticket scope and ordering may change when 
 | T0039 | Single-field continuous tie-break experiment | Complete |
 | T0040 | Expanded star tie-break validation | Complete |
 | T0041 | Supporting-player top-play-position experiment | Complete |
-| T0042 | Discovery-only provenance and supporter-structure analysis | Current / complete |
+| T0042 | Discovery-only provenance and supporter-structure analysis | Complete |
+| T0043 | Supporter top-play-position prevalence analysis | Current / complete |
 
-No detailed tickets beyond T0042 are defined yet. T0043 must be chosen only after reviewing the provenance diagnostic. No production recommendation ranking has been selected.
+No detailed tickets beyond T0043 are defined yet. T0044 must be chosen only after reviewing the supporter-position prevalence diagnostic. No production recommendation ranking has been selected.
 
 T0040's 25 new live runs produced 13 discovery-only held-out positives: 7 improved, 4 worsened, and 2 were unchanged under star-only tie-breaking. No positive crossed a measured recall cutoff, so the experimental order remains unadopted.
 
 T0041 derived supporting-player top-play positions from the existing ordered hydrated evidence without extra requests. Across 25 live splits it found 10 discovery-only positives: 2 improved, 7 worsened, and 1 was unchanged. No positive crossed a measured recall cutoff, so the experimental order remains unadopted.
 
 T0042 described the same evaluation region without reranking. Nine of ten positives were single-support and nine were recurring-only; the sole one-hit positive was an improving T0041 observation, while all seven T0041 regressions were recurring-only single-support observations. These small descriptive counts do not establish provenance as ranking evidence.
+
+T0043 measured raw positive prevalence by the best supporter's top-play position without reranking. The five fixed buckets were non-monotonic, and the recurring-only single-support stratum was also non-monotonic. The live fallback observed 12 positives among 6,460 eligible candidate observations; this sparse, target-dependent evidence does not establish supporter position as a ranking signal.

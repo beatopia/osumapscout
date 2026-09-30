@@ -152,11 +152,14 @@ This file records what exists now, not what the project intends to build later.
 - Across 25 live T0041 target/split runs, 140 of 250 held-out observations were recovered. The 10 discovery-only positives comprised 2 improvements, 7 regressions, and 1 unchanged rank under the isolated supporter-position tie-break; none crossed the Recall@10/30/50/100 cutoffs. Two two-candidate ties remained after the field.
 - T0041's supporter-position tie-break was not adopted: its mean signed positive movement was +8 ranks and no recall cutoff changed.
 - T0042 adds descriptive acquisition-provenance and supporter-structure diagnostics without reranking. Across 6,471 discovery-only candidate observations, 9 of 10 positives were single-support and 9 were recurring-only. All seven T0041 regressions were recurring-only single-support observations; no causal or ranking-quality conclusion is claimed.
+- T0042 found that 90% of positives were recurring-only versus 91.08% of other candidates, and 90% of positives were single-support versus 93.82% of other candidates. Neither classification separated positives sufficiently for ranking use.
+- T0043 adds pure, read-only prevalence summaries for fixed best-supporter top-play-position buckets, cumulative thresholds, exact positions, the recurring-only single-support stratum, single/multi-support strata, and individual targets. It does not reorder candidates.
+- No reusable candidate-level denominator artifact existed, so T0043 used the bounded 25-run live fallback (750 data requests). It observed 12 positives among 6,460 eligible discovery-only Stage-4 candidate observations. Bucket prevalence was non-monotonic overall and within the recurring-only single-support stratum; no supporter-position ranking rule was adopted.
 - No crawler or dataset import behavior exists.
 
 ## Ticket position
 
-- Completed through: T0042 — Discovery-only provenance and supporter-structure analysis
-- Expected next ticket: not yet selected; T0043 depends on reviewing T0042's evidence
+- Completed through: T0043 — Supporter top-play-position prevalence analysis
+- Expected next ticket: not yet selected; T0044 should be chosen only after reviewing T0043's sparse, target-dependent evidence
 
 Future tickets must update this document when the repository's implemented state changes.
