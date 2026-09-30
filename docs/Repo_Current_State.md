@@ -155,11 +155,14 @@ This file records what exists now, not what the project intends to build later.
 - T0042 found that 90% of positives were recurring-only versus 91.08% of other candidates, and 90% of positives were single-support versus 93.82% of other candidates. Neither classification separated positives sufficiently for ranking use.
 - T0043 adds pure, read-only prevalence summaries for fixed best-supporter top-play-position buckets, cumulative thresholds, exact positions, the recurring-only single-support stratum, single/multi-support strata, and individual targets. It does not reorder candidates.
 - No reusable candidate-level denominator artifact existed, so T0043 used the bounded 25-run live fallback (750 data requests). It observed 12 positives among 6,460 eligible discovery-only Stage-4 candidate observations. Bucket prevalence was non-monotonic overall and within the recurring-only single-support stratum; no supporter-position ranking rule was adopted.
+- T0043's non-monotonic prevalence result means supporter top-play position is not part of the production recommendation policy.
+- T0044 adds an on-demand production recommendation service and `GET /api/recommendations/{username}?limit=20`. It refreshes and transactionally persists the target's authoritative top 100, then applies the fixed five-seed, 25-user hydration, top-10 ranking-evidence, top-15 discovery-only expansion, preference-aware hybrid policy.
+- Recommendation responses expose typed map metadata, collaborative and preference evidence, deterministic explanations, concise generation context, and separate profile, target-top-play, leaderboard, and candidate-top-play request counts. Recommendations themselves are not persisted.
 - No crawler or dataset import behavior exists.
 
 ## Ticket position
 
-- Completed through: T0043 — Supporter top-play-position prevalence analysis
-- Expected next ticket: not yet selected; T0044 should be chosen only after reviewing T0043's sparse, target-dependent evidence
+- Completed through: T0044 — Production recommendation service
+- Expected next ticket: T0045 — connect the existing frontend to the recommendation endpoint
 
 Future tickets must update this document when the repository's implemented state changes.

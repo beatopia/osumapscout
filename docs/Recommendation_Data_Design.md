@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-This document records the evidence and persistence direction established by T0010. T0012 implements the minimum relational schema, T0013 adds explicit current-state ingestion, and T0014 computes basic descriptive statistics on demand. Recommendation behavior does not exist yet.
+This document records the evidence and persistence direction established by T0010. T0012 implements the minimum relational schema, T0013 adds explicit current-state ingestion, and T0014 computes basic descriptive statistics on demand. T0044 now exposes the validated hybrid recommendation policy as an on-demand backend service; recommendation results are not persisted.
 
 The design is intentionally minimal. It should guide the next persistence tickets without locking the project into an untested recommendation formula or an unverified osu! API capability.
 
