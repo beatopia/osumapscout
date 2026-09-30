@@ -38,11 +38,11 @@ The frontend is expected to accept a username, call the application backend, and
 
 PostgreSQL did not block learning from the first live vertical flow. T0011 provides the connection foundation, T0012 adds typed ORM models and migrations, and T0013 transactionally replaces one user's complete current state. T0014 computes descriptive statistics from those rows, and T0015 exposes the same reusable result through a thin read-only HTTP route. Statistics are neither fetched from osu! nor persisted.
 
-The frontend now keeps two explicit flows behind one username input: live top-play search reaches osu! through FastAPI, while persisted analysis reaches PostgreSQL through FastAPI. Neither action automatically triggers the other.
+The frontend now keeps three explicit flows behind one username input: live top-play search reaches osu! through FastAPI, persisted analysis reaches PostgreSQL through FastAPI, and recommendation generation refreshes the target before running the production hybrid recommendation service. Each action remains explicit.
 
-## Deferred recommendation design
+## Implemented recommendation flow
 
-T0017 resolved the first research direction but did not implement it. No documented reverse lookup maps a beatmap to all users who hold it in their best-score list. The next proposed step is a bounded local-plus-ranking candidate acquisition prototype; its ranking cursor assumptions must be verified in practice. Candidate top-play hydration, similarity formulas, and recommendations remain deferred.
+T0044 exposes the validated bounded hybrid recommendation architecture through `GET /api/recommendations/{username}`, and T0045 presents its fixed 20-map result in the React frontend. Ranking controls, recommendation persistence, caching, background work, and historical results remain deferred.
 
 ## MVP boundaries
 

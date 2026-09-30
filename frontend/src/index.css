@@ -99,6 +99,10 @@ input:disabled {
   margin-top: 1.25rem;
 }
 
+.recommendations-status {
+  margin-top: 1.25rem;
+}
+
 .error-message {
   color: #ff9a9a;
 }
@@ -261,6 +265,83 @@ input:disabled {
   background: #2b2b31;
 }
 
+.recommendations {
+  text-align: left;
+}
+
+.recommendations-heading-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.recommendations-heading-row h2 {
+  margin: 0.2rem 0 0;
+  font-size: 1.5rem;
+}
+
+.recommendations-heading-row > p,
+.generation-context,
+.difficulty-name,
+.support-count {
+  color: #9d9daa;
+  font-size: 0.9rem;
+}
+
+.generation-context {
+  margin-top: 0.5rem;
+}
+
+.recommendation-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 25rem), 1fr));
+  gap: 0.75rem;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.recommendation-card {
+  display: grid;
+  grid-template-columns: 3rem 1fr;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid #3f3f48;
+  border-radius: 0.75rem;
+  background: #222226;
+}
+
+.recommendation-rank {
+  color: #b8b8c2;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.recommendation-content {
+  min-width: 0;
+}
+
+.recommendation-content h3 {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 1.125rem;
+}
+
+.difficulty-name {
+  margin-top: 0.25rem;
+}
+
+.recommendation-reason {
+  margin-top: 0.8rem;
+  color: #e8e8ec;
+  font-size: 0.95rem;
+}
+
+.support-count {
+  margin-top: 0.4rem;
+}
+
 @media (max-width: 42rem) {
   .search-controls {
     flex-direction: column;
@@ -272,5 +353,10 @@ input:disabled {
 
   .mod-sections {
     grid-template-columns: 1fr;
+  }
+
+  .recommendations-heading-row {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }

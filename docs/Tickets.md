@@ -47,9 +47,10 @@ This is a rough, incremental roadmap. Ticket scope and ordering may change when 
 | T0041 | Supporting-player top-play-position experiment | Complete |
 | T0042 | Discovery-only provenance and supporter-structure analysis | Complete |
 | T0043 | Supporter top-play-position prevalence analysis | Complete |
-| T0044 | Production recommendation service | Current / complete |
+| T0044 | Production recommendation service | Complete |
+| T0045 | Recommendation UI | Current / complete |
 
-No detailed tickets beyond T0044 are defined yet. T0045 is expected to connect the frontend to the production recommendation endpoint without reopening ranking research.
+No detailed tickets beyond T0045 are defined yet. T0046 must be selected after reviewing the first complete recommendation flow.
 
 T0040's 25 new live runs produced 13 discovery-only held-out positives: 7 improved, 4 worsened, and 2 were unchanged under star-only tie-breaking. No positive crossed a measured recall cutoff, so the experimental order remains unadopted.
 
@@ -60,3 +61,5 @@ T0042 described the same evaluation region without reranking. Nine of ten positi
 T0043 measured raw positive prevalence by the best supporter's top-play position without reranking. The five fixed buckets were non-monotonic, and the recurring-only single-support stratum was also non-monotonic. The live fallback observed 12 positives among 6,460 eligible candidate observations; this sparse, target-dependent evidence does not establish supporter position as a ranking signal.
 
 T0044 freezes the experimentally supported hybrid policy as an application service. The top ten similar players provide discovery and ranking evidence, players 11–15 add discovery-only maps, and the existing preference-aware ordering ranks the hybrid pool. A public endpoint returns bounded typed results, deterministic explanations, context, and external request accounting without persisting recommendations.
+
+T0045 connects the existing shared username flow to the production recommendation endpoint. It displays a bounded 20-map result with map attributes, support, deterministic explanations, responsive loading/empty/error states, and no ranking controls or experimental terminology.

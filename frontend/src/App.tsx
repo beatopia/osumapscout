@@ -4,6 +4,10 @@ import PlayerAnalysis, {
   isPlayerAnalysisResponse,
   PlayerAnalysisResponse,
 } from "./PlayerAnalysis";
+import RecommendationList, {
+  isRecommendationsResponse,
+  RecommendationsResponse,
+} from "./RecommendationList";
 import TopPlayList, {
   isTopPlaysResponse,
   TopPlaysResponse,
@@ -41,7 +45,12 @@ function App() {
     useState<PlayerAnalysisResponse | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [isAnalysisLoading, setIsAnalysisLoading] = useState(false);
-  const isAnyRequestLoading = isTopPlaysLoading || isAnalysisLoading;
+  const [recommendationsResult, setRecommendationsResult] =
+    useState<RecommendationsResponse | null>(null);
+  const [recommendationsError, setRecommendationsError] = useState<string | null>(null);
+  const [isRecommendationsLoading, setIsRecommendationsLoading] = useState(false);
+  const isAnyRequestLoading =
+    isTopPlaysLoading || isAnalysisLoading || isRecommendationsLoading;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -132,6 +141,58 @@ function App() {
     }
   }
 
+  async function handleRecommendationRequest() {
+    if (isAnyRequestLoading) {
+      return;
+    }
+
+    const submittedUsername = username.trim();
+    setRecommendationsResult(null);
+    setRecommendationsError(null);
+
+    if (!submittedUsername) {
+      setRecommendationsError("Enter an osu! username.");
+      return;
+    }
+
+    setIsRecommendationsLoading(true);
+    try {
+      const response = await fetch(
+        `/api/recommendations/${encodeURIComponent(submittedUsername)}?limit=20`,
+      );
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error("Couldn't find that osu! user.");
+        }
+        if (response.status === 422) {
+          throw new Error(
+            "There isn't enough play data to generate recommendations for this user yet.",
+          );
+        }
+        if (response.status === 502 || response.status === 503) {
+          throw new Error("osu! is temporarily unavailable. Try again in a bit.");
+        }
+        throw new Error("Something went wrong while generating recommendations.");
+      }
+
+      const body: unknown = await response.json();
+      if (!isRecommendationsResponse(body)) {
+        throw new Error("The backend returned an unexpected recommendation response.");
+      }
+      setRecommendationsResult(body);
+    } catch (error) {
+      setRecommendationsError(
+        error instanceof TypeError
+          ? "The backend is unavailable. Try again after it is running."
+          : error instanceof Error
+            ? error.message
+            : "Something went wrong while generating recommendations.",
+      );
+    } finally {
+      setIsRecommendationsLoading(false);
+    }
+  }
+
   return (
     <main>
       <h1>osumapscout</h1>
@@ -160,6 +221,14 @@ function App() {
           >
             {isAnalysisLoading ? "Loading analysis..." : "View persisted analysis"}
           </button>
+          <button
+            className="recommendation-button"
+            type="button"
+            disabled={isAnyRequestLoading}
+            onClick={handleRecommendationRequest}
+          >
+            {isRecommendationsLoading ? "Finding maps..." : "Get recommendations"}
+          </button>
         </div>
       </form>
 
@@ -180,6 +249,12 @@ function App() {
         {isAnalysisLoading && <p>Loading persisted analysis...</p>}
         {analysisResult && <PlayerAnalysis analysis={analysisResult} />}
         {analysisError && <p className="error-message">{analysisError}</p>}
+      </div>
+
+      <div className="recommendations-status" aria-live="polite" aria-busy={isRecommendationsLoading}>
+        {isRecommendationsLoading && <p>Finding similar players and maps...</p>}
+        {recommendationsResult && <RecommendationList result={recommendationsResult} />}
+        {recommendationsError && <p className="error-message">{recommendationsError}</p>}
       </div>
     </main>
   );

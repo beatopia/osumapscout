@@ -158,11 +158,13 @@ This file records what exists now, not what the project intends to build later.
 - T0043's non-monotonic prevalence result means supporter top-play position is not part of the production recommendation policy.
 - T0044 adds an on-demand production recommendation service and `GET /api/recommendations/{username}?limit=20`. It refreshes and transactionally persists the target's authoritative top 100, then applies the fixed five-seed, 25-user hydration, top-10 ranking-evidence, top-15 discovery-only expansion, preference-aware hybrid policy.
 - Recommendation responses expose typed map metadata, collaborative and preference evidence, deterministic explanations, concise generation context, and separate profile, target-top-play, leaderboard, and candidate-top-play request counts. Recommendations themselves are not persisted.
+- T0045 adds a third action to the existing frontend username flow for generating 20 recommendations. The responsive result list shows available map metadata, compact support, deterministic explanations, and one subtle candidate-pool context line while keeping request and ranking internals hidden.
+- The recommendation UI provides accessible loading text, disables duplicate requests, omits unavailable star/AR/BPM values, and maps expected HTTP failures to user-facing messages without exposing backend details.
 - No crawler or dataset import behavior exists.
 
 ## Ticket position
 
-- Completed through: T0044 — Production recommendation service
-- Expected next ticket: T0045 — connect the existing frontend to the recommendation endpoint
+- Completed through: T0045 — Recommendation UI
+- Expected next ticket: not yet selected; review the complete recommendation flow before defining T0046
 
 Future tickets must update this document when the repository's implemented state changes.
