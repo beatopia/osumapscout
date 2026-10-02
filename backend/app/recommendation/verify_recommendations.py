@@ -33,6 +33,16 @@ async def _run(username: str, limit: int) -> int:
         + (f"{pp.first_quartile:.2f}/{pp.median:.2f}/{pp.third_quartile:.2f}" if pp else "unavailable")
     )
     print("Target actual-play adjusted star Q1/median/Q3: unavailable")
+    ar = result.preferences.approach_rate
+    bpm = result.preferences.bpm
+    print(
+        "Target effective AR Q1/median/Q3: "
+        + (f"{ar.first_quartile:.2f}/{ar.median:.2f}/{ar.third_quartile:.2f}" if ar else "unavailable")
+    )
+    print(
+        "Target effective BPM Q1/median/Q3: "
+        + (f"{bpm.first_quartile:.2f}/{bpm.median:.2f}/{bpm.third_quartile:.2f}" if bpm else "unavailable")
+    )
     print(f"Candidate maps before limit: {result.context.candidate_map_count}")
     for item in result.recommendations:
         identity = " - ".join(
@@ -47,7 +57,8 @@ async def _run(username: str, limit: int) -> int:
         )
         print(
             f"   Suggested target mods: {mods}; base stars: {item.star_rating}; "
-            f"adjusted stars: {star}"
+            f"adjusted stars: {star}; effective AR: {item.approach_rate}; "
+            f"effective BPM: {item.bpm}"
         )
         print(f"   Cover: {item.cover_url}")
         print(f"   {item.why_recommended}")
@@ -60,6 +71,7 @@ async def _run(username: str, limit: int) -> int:
     print("Similar-player diagnostic:")
     for player in result.similar_players:
         mods = "".join(player.dominant_mods) or "NM"
+        normalized_mods = "".join(player.dominant_normalized_mods) or "NM"
         pp = player.performance_points
         pp_text = (
             f"{pp.first_quartile:.2f}/{pp.median:.2f}/{pp.third_quartile:.2f}"
@@ -68,6 +80,7 @@ async def _run(username: str, limit: int) -> int:
         print(
             f"  #{player.similarity_rank} {player.username or 'unknown'}: "
             f"overlap={player.independent_overlap}; dominant={mods}; "
+            f"normalized={normalized_mods}; "
             f"target-mod-share={player.target_primary_mod_share:.2%}; "
             f"PP Q1/median/Q3={pp_text}"
         )

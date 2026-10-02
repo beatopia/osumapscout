@@ -27,6 +27,7 @@ from backend.app.recommendation.service import (
     generate_recommendations,
     suggested_mod_combination,
     _supporting_players,
+    _rank_effective_preferences,
     _target_recommendation_profile,
 )
 from backend.tests.test_selection_expansion_analysis import _preference, _recovery
@@ -49,6 +50,41 @@ class RecommendationPolicyTests(unittest.TestCase):
         self.assertIn(101, by_id)
         self.assertIn(104, by_id)
         self.assertEqual(by_id[101].preference_evidence.collaborative.support_count, 2)
+
+    def test_effective_fit_uses_actual_target_and_suggested_candidate_mods(self) -> None:
+        target = RefreshedTarget(
+            OsuUserProfile(42, "Target", "US", "avatar", None, None),
+            tuple(replace(_play(index), mods=("HD", "DT"), bpm=180.0) for index in range(3)),
+        )
+        fitting = _preference(501, 1)
+        outside = _preference(502, 2)
+        fitting_map = replace(
+            fitting.preference_evidence.collaborative.candidate_map,
+            bpm=180.0,
+        )
+        outside_map = replace(
+            outside.preference_evidence.collaborative.candidate_map,
+            bpm=270.0,
+        )
+        items = tuple(
+            replace(
+                item,
+                preference_evidence=replace(
+                    item.preference_evidence,
+                    collaborative=replace(
+                        item.preference_evidence.collaborative,
+                        candidate_map=candidate,
+                    ),
+                ),
+            )
+            for item, candidate in ((fitting, fitting_map), (outside, outside_map))
+        )
+
+        ranked = _rank_effective_preferences(items, target, ("HD", "DT"))
+
+        self.assertEqual(_id(ranked[0]), 501)
+        self.assertTrue(ranked[0].preference_evidence.bpm.within_target_iqr)
+        self.assertFalse(ranked[1].preference_evidence.bpm.within_target_iqr)
 
     def test_target_top_plays_are_excluded_and_order_is_deterministic(self) -> None:
         first = build_hybrid_ranking(self.ranking, self.profile)
@@ -213,7 +249,7 @@ class RecommendationServiceTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(ten.recommendations[0].why_recommended,
                          "Recommended by 2 similar players. "
-                         "Base AR and base BPM are within your usual range.")
+                         "Effective BPM is within your usual range.")
 
     async def test_service_validates_limit(self) -> None:
         for limit in (0, 101):
@@ -267,6 +303,10 @@ class RecommendationServiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.target_profile.primary_mods, ("HD", "HR"))
         self.assertEqual(result.recommendations[0].suggested_mods, ("HD", "HR"))
         self.assertEqual(result.recommendations[0].adjusted_star_rating, 5.75)
+        self.assertEqual(result.recommendations[0].approach_rate, 10.0)
+        self.assertEqual(result.recommendations[0].bpm, 180.0)
+        self.assertEqual(result.preferences.approach_rate, _bounds(10.0, 10.0, 10.0))
+        self.assertEqual(result.preferences.bpm, _bounds(180.0, 180.0, 180.0))
         client.get_beatmap_difficulty_attributes.assert_awaited_once_with(
             result.recommendations[0].beatmap_id, ("HD", "HR")
         )

@@ -107,10 +107,10 @@ function PlayerAnalysis({ analysis, recommendationProfile, preferences }: Player
     { label: "Typical PP", value: recommendationProfile?.performance_points
       ? formatRange(recommendationProfile.performance_points.first_quartile, recommendationProfile.performance_points.third_quartile, 0)
       : null },
-    { label: "Typical base AR", value: preferences?.approach_rate
+    { label: "Typical AR", value: preferences?.approach_rate
       ? formatRange(preferences.approach_rate.first_quartile, preferences.approach_rate.third_quartile, 1)
       : null },
-    { label: "Typical base BPM", value: preferences?.bpm
+    { label: "Typical BPM", value: preferences?.bpm
       ? formatRange(preferences.bpm.first_quartile, preferences.bpm.third_quartile, 0)
       : null },
   ].filter((statistic): statistic is { label: string; value: string } => (

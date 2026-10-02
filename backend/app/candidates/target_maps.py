@@ -188,6 +188,7 @@ async def acquire_target_map_candidate_pool(
     target_username: str,
     selected_seeds: Sequence[TargetMapSeed],
     osu_client: OsuApiClient,
+    mods: tuple[str, ...] | None = None,
 ) -> TargetMapCandidatePool:
     """Acquire a complete pool for an explicitly supplied target and seeds."""
     accumulated: dict[int, _CandidateAccumulator] = {}
@@ -195,8 +196,12 @@ async def acquire_target_map_candidate_pool(
     next_discovery_order = 0
 
     for seed in selected_seeds:
-        leaderboard_users = await osu_client.get_beatmap_leaderboard_users(
-            seed.beatmap_id
+        leaderboard_users = (
+            await osu_client.get_beatmap_leaderboard_users(seed.beatmap_id)
+            if mods is None
+            else await osu_client.get_beatmap_leaderboard_users(
+                seed.beatmap_id, mods=mods
+            )
         )
         leaderboard_requests_made += 1
         seen_on_seed: set[int] = set()
@@ -252,6 +257,49 @@ async def acquire_target_map_candidate_pool(
             sorted(hit_counts.items(), reverse=True)
         ),
         leaderboard_requests_made=leaderboard_requests_made,
+    )
+
+
+def merge_target_map_candidate_pools(
+    target_user_id: int,
+    target_username: str,
+    selected_seeds: Sequence[TargetMapSeed],
+    pools: Sequence[TargetMapCandidatePool],
+) -> TargetMapCandidatePool:
+    """Union pools, deduplicating each user's evidence for the same seed."""
+    names: dict[int, str | None] = {}
+    hits: dict[int, set[int]] = {}
+    discovery_order: dict[int, int] = {}
+    for pool in pools:
+        for candidate in pool.candidates:
+            if candidate.user_id not in hits:
+                discovery_order[candidate.user_id] = len(discovery_order)
+                hits[candidate.user_id] = set()
+                names[candidate.user_id] = candidate.username
+            hits[candidate.user_id].update(candidate.seed_beatmap_ids)
+    candidates = tuple(
+        TargetMapCandidate(user_id, names[user_id], tuple(sorted(seed_ids)))
+        for user_id, seed_ids in sorted(
+            hits.items(),
+            key=lambda item: (
+                -len(item[1]),
+                discovery_order[item[0]],
+                item[0],
+            ),
+        )
+    )
+    hit_counts: dict[int, int] = {}
+    for candidate in candidates:
+        hit_counts[candidate.seed_hit_count] = (
+            hit_counts.get(candidate.seed_hit_count, 0) + 1
+        )
+    return TargetMapCandidatePool(
+        target_user_id,
+        target_username,
+        tuple(selected_seeds),
+        candidates,
+        tuple(sorted(hit_counts.items(), reverse=True)),
+        sum(pool.leaderboard_requests_made for pool in pools),
     )
 
 
