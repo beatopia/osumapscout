@@ -160,11 +160,15 @@ This file records what exists now, not what the project intends to build later.
 - Recommendation responses expose typed map metadata, collaborative and preference evidence, deterministic explanations, concise generation context, and separate profile, target-top-play, leaderboard, and candidate-top-play request counts. Recommendations themselves are not persisted.
 - T0045 adds a third action to the existing frontend username flow for generating 20 recommendations. The responsive result list shows available map metadata, compact support, deterministic explanations, and one subtle candidate-pool context line while keeping request and ranking internals hidden.
 - The recommendation UI provides accessible loading text, disables duplicate requests, omits unavailable star/AR/BPM values, and maps expected HTTP failures to user-facing messages without exposing backend details.
+- T0046 makes recommendation generation the primary username action. Top plays are collapsed and lazy-loaded with display depths 10/25/50/100, while persisted statistics are labeled Playstyle Analysis for users.
+- Recommendation cards derive cover artwork from retained beatmapset IDs, link directly to osu! beatmaps, and show deterministic suggested mods from the eligible production support evidence. Top-15 discovery players cannot alter mod evidence for maps already discovered by the top ten.
+- Modded returned maps may make one bounded difficulty-attributes request each (maximum concurrency five); NM reuses its base star rating. Individual non-authentication enrichment failures return null adjusted stars without removing or reordering maps, while authentication failure remains fatal.
+- The recommendation response now includes beatmapset/cover data, suggested mods, optional adjusted stars, target star/AR/BPM quartiles, and beatmap-attribute request accounting. Attribute colors and labels are UI explanations only and do not affect ranking.
 - No crawler or dataset import behavior exists.
 
 ## Ticket position
 
-- Completed through: T0045 — Recommendation UI
-- Expected next ticket: not yet selected; review the complete recommendation flow before defining T0046
+- Completed through: T0046 — Recommendation UX and map enrichment
+- Expected next ticket: not yet selected; review the enriched recommendation flow before defining T0047
 
 Future tickets must update this document when the repository's implemented state changes.

@@ -1,15 +1,26 @@
 """Application-facing recommendation generation using the frozen MVP policy."""
 
+import asyncio
+from collections import Counter
 from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
 
 from backend.app.analysis.statistics import TopPlayStatisticsInput
 from backend.app.database.persistence import persist_user_top_plays
-from backend.app.osu.client import OsuApiClient, OsuCredentials, OsuTopPlay, OsuUserProfile
+from backend.app.osu.client import (
+    OsuApiClient,
+    OsuApiError,
+    OsuAuthenticationError,
+    OsuCredentials,
+    OsuNetworkError,
+    OsuTopPlay,
+    OsuUserProfile,
+)
 from backend.app.recommendation.candidate_map_ranking import rank_candidate_map_evidence
-from backend.app.recommendation.candidate_maps import extract_candidate_maps
+from backend.app.recommendation.candidate_maps import CandidateMapSupport, extract_candidate_maps
 from backend.app.recommendation.preference_evidence import (
     CandidatePreferenceEvidence,
+    NumericPreferenceSummary,
     TargetPreferenceProfile,
     annotate_candidate_evidence,
     build_target_preference_profile,
@@ -46,9 +57,13 @@ class Recommendation:
     artist: str | None
     title: str | None
     difficulty_name: str | None
+    beatmapset_id: int | None
+    cover_url: str | None
     star_rating: float | None
+    adjusted_star_rating: float | None
     approach_rate: float | None
     bpm: float | None
+    suggested_mods: tuple[str, ...]
     support_count: int
     best_supporting_player_rank: int
     attributes_within_iqr_count: int
@@ -61,6 +76,21 @@ class RecommendationRequestAccounting:
     target_top_play_requests: int
     leaderboard_requests: int
     candidate_top_play_requests: int
+    beatmap_attribute_requests: int
+
+
+@dataclass(frozen=True)
+class PreferenceBounds:
+    first_quartile: float
+    median: float
+    third_quartile: float
+
+
+@dataclass(frozen=True)
+class RecommendationPreferences:
+    star_rating: PreferenceBounds | None
+    approach_rate: PreferenceBounds | None
+    bpm: PreferenceBounds | None
 
 
 @dataclass(frozen=True)
@@ -80,6 +110,7 @@ class RecommendationResult:
     recommendations: tuple[Recommendation, ...]
     context: RecommendationContext
     requests: RecommendationRequestAccounting
+    preferences: RecommendationPreferences
 
 
 RefreshFunction = Callable[[str, OsuApiClient], Awaitable[RefreshedTarget]]
@@ -122,8 +153,13 @@ async def generate_recommendations(
         osu_client=client,
     )
     ordered = build_hybrid_ranking(ranking, profile)
+    returned = ordered[:limit]
+    adjusted_stars, attribute_requests = await enrich_adjusted_stars(
+        returned, client
+    )
     recommendations = tuple(
-        _to_recommendation(item) for item in ordered[:limit]
+        _to_recommendation(item, adjusted_stars.get(_beatmap_id(item)))
+        for item in returned
     )
     return RecommendationResult(
         target_username=target.profile.username,
@@ -142,7 +178,9 @@ async def generate_recommendations(
             target_top_play_requests=1,
             leaderboard_requests=ranking.leaderboard_requests_made,
             candidate_top_play_requests=ranking.top_play_requests_made,
+            beatmap_attribute_requests=attribute_requests,
         ),
+        preferences=_preferences(profile),
     )
 
 
@@ -191,7 +229,72 @@ def _preference_profile(target: RefreshedTarget) -> TargetPreferenceProfile:
     )
 
 
-def _to_recommendation(item: PreferenceRankedCandidate) -> Recommendation:
+async def enrich_adjusted_stars(
+    candidates: Sequence[PreferenceRankedCandidate],
+    client: OsuApiClient,
+) -> tuple[dict[int, float | None], int]:
+    """Enrich only returned modded maps, retaining failures as missing display data."""
+    semaphore = asyncio.Semaphore(5)
+    requests: dict[tuple[int, tuple[str, ...]], asyncio.Task[float | None]] = {}
+
+    async def fetch(beatmap_id: int, mods: tuple[str, ...]) -> float | None:
+        async with semaphore:
+            try:
+                result = await client.get_beatmap_difficulty_attributes(
+                    beatmap_id, mods
+                )
+            except OsuAuthenticationError:
+                raise
+            except (OsuNetworkError, OsuApiError):
+                return None
+            return result.star_rating
+
+    suggested_by_id: dict[int, tuple[str, ...]] = {}
+    base_by_id: dict[int, float | None] = {}
+    for item in candidates:
+        candidate = item.preference_evidence.collaborative.candidate_map
+        mods = suggested_mod_combination(candidate.supports)
+        suggested_by_id[candidate.beatmap_id] = mods
+        base_by_id[candidate.beatmap_id] = candidate.star_rating
+        if mods:
+            key = (candidate.beatmap_id, mods)
+            if key not in requests:
+                requests[key] = asyncio.create_task(fetch(*key))
+
+    fetched = await asyncio.gather(*requests.values()) if requests else ()
+    values = dict(zip(requests, fetched, strict=True))
+    adjusted = {
+        beatmap_id: (
+            base_by_id[beatmap_id]
+            if not mods
+            else values.get((beatmap_id, mods))
+        )
+        for beatmap_id, mods in suggested_by_id.items()
+    }
+    return adjusted, len(requests)
+
+
+def suggested_mod_combination(
+    supports: Sequence[CandidateMapSupport],
+) -> tuple[str, ...]:
+    """Select mode, then best supporter rank, then acronym tuple."""
+    typed = tuple(supports)
+    counts = Counter(support.mods for support in typed)
+    best_ranks = {
+        mods: min(
+            support.similar_player_rank
+            for support in typed
+            if support.mods == mods
+        )
+        for mods in counts
+    }
+    return min(counts, key=lambda mods: (-counts[mods], best_ranks[mods], mods))
+
+
+def _to_recommendation(
+    item: PreferenceRankedCandidate,
+    adjusted_star_rating: float | None,
+) -> Recommendation:
     evidence = item.preference_evidence
     candidate = evidence.collaborative.candidate_map
     return Recommendation(
@@ -200,9 +303,17 @@ def _to_recommendation(item: PreferenceRankedCandidate) -> Recommendation:
         artist=candidate.artist,
         title=candidate.title,
         difficulty_name=candidate.difficulty_name,
+        beatmapset_id=candidate.beatmapset_id,
+        cover_url=(
+            f"https://assets.ppy.sh/beatmaps/{candidate.beatmapset_id}/covers/cover.jpg"
+            if candidate.beatmapset_id is not None
+            else None
+        ),
         star_rating=candidate.star_rating,
+        adjusted_star_rating=adjusted_star_rating,
         approach_rate=candidate.approach_rate,
         bpm=candidate.bpm,
+        suggested_mods=suggested_mod_combination(candidate.supports),
         support_count=evidence.collaborative.support_count,
         best_supporting_player_rank=(
             evidence.collaborative.best_supporting_player_rank
@@ -241,6 +352,19 @@ def _join_labels(labels: Sequence[str]) -> str:
 
 def _beatmap_id(item: PreferenceRankedCandidate) -> int:
     return item.preference_evidence.collaborative.candidate_map.beatmap_id
+
+
+def _preferences(profile: TargetPreferenceProfile) -> RecommendationPreferences:
+    def bounds(value: NumericPreferenceSummary | None) -> PreferenceBounds | None:
+        if value is None:
+            return None
+        return PreferenceBounds(
+            value.first_quartile, value.median, value.third_quartile
+        )
+
+    return RecommendationPreferences(
+        bounds(profile.star_rating), bounds(profile.approach_rate), bounds(profile.bpm)
+    )
 
 
 def _validate_limit(limit: int) -> None:

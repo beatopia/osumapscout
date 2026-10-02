@@ -1,12 +1,24 @@
+import { CSSProperties } from "react";
+
+import {
+  compareToPreference,
+  comparisonLabels,
+  PreferenceBounds,
+} from "./statComparison";
+
 export interface Recommendation {
   rank: number;
   beatmap_id: number;
   artist: string | null;
   title: string | null;
   difficulty_name: string | null;
+  beatmapset_id: number | null;
+  cover_url: string | null;
   star_rating: number | null;
+  adjusted_star_rating: number | null;
   approach_rate: number | null;
   bpm: number | null;
+  suggested_mods: string[];
   support_count: number;
   best_supporting_player_rank: number;
   attributes_within_iqr_count: number;
@@ -27,6 +39,13 @@ export interface RecommendationRequests {
   target_top_play_requests: number;
   leaderboard_requests: number;
   candidate_top_play_requests: number;
+  beatmap_attribute_requests: number;
+}
+
+export interface RecommendationPreferences {
+  star_rating: PreferenceBounds | null;
+  approach_rate: PreferenceBounds | null;
+  bpm: PreferenceBounds | null;
 }
 
 export interface RecommendationsResponse {
@@ -35,6 +54,7 @@ export interface RecommendationsResponse {
   recommendations: Recommendation[];
   context: RecommendationContext;
   requests: RecommendationRequests;
+  preferences: RecommendationPreferences;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -71,9 +91,14 @@ function isRecommendation(value: unknown): value is Recommendation {
     isNullableString(value.artist) &&
     isNullableString(value.title) &&
     isNullableString(value.difficulty_name) &&
+    isNullableNumber(value.beatmapset_id) &&
+    isNullableString(value.cover_url) &&
     isNullableNumber(value.star_rating) &&
+    isNullableNumber(value.adjusted_star_rating) &&
     isNullableNumber(value.approach_rate) &&
     isNullableNumber(value.bpm) &&
+    Array.isArray(value.suggested_mods) &&
+    value.suggested_mods.every((mod) => typeof mod === "string") &&
     typeof value.why_recommended === "string"
   );
 }
@@ -81,7 +106,12 @@ function isRecommendation(value: unknown): value is Recommendation {
 export function isRecommendationsResponse(
   value: unknown,
 ): value is RecommendationsResponse {
-  if (!isRecord(value) || !isRecord(value.context) || !isRecord(value.requests)) {
+  if (
+    !isRecord(value) ||
+    !isRecord(value.context) ||
+    !isRecord(value.requests) ||
+    !isRecord(value.preferences)
+  ) {
     return false;
   }
   return (
@@ -102,7 +132,18 @@ export function isRecommendationsResponse(
       "target_top_play_requests",
       "leaderboard_requests",
       "candidate_top_play_requests",
+      "beatmap_attribute_requests",
     ])
+    && isNullableBounds(value.preferences.star_rating)
+    && isNullableBounds(value.preferences.approach_rate)
+    && isNullableBounds(value.preferences.bpm)
+  );
+}
+
+function isNullableBounds(value: unknown): value is PreferenceBounds | null {
+  return value === null || (
+    isRecord(value) &&
+    hasNumericFields(value, ["first_quartile", "median", "third_quartile"])
   );
 }
 
@@ -129,6 +170,15 @@ function RecommendationList({ result }: RecommendationListProps) {
       <p className="generation-context">
         Generated from {result.context.candidate_map_count} candidate maps.
       </p>
+      <div className="comparison-legend" aria-label="Map attribute color key">
+        {(["typical", "outside", "unusually-high", "unusually-low"] as const).map(
+          (category) => (
+            <span key={category} className={`comparison-${category}`}>
+              <span aria-hidden="true">●</span> {comparisonLabels[category]}
+            </span>
+          ),
+        )}
+      </div>
 
       <ol className="recommendation-list">
         {result.recommendations.map((recommendation) => {
@@ -138,25 +188,42 @@ function RecommendationList({ result }: RecommendationListProps) {
             recommendation.star_rating !== null ||
             recommendation.approach_rate !== null ||
             recommendation.bpm !== null;
+          const displayedStar =
+            recommendation.adjusted_star_rating ?? recommendation.star_rating;
+          const mods = recommendation.suggested_mods.length > 0
+            ? recommendation.suggested_mods.join("")
+            : "NM";
+          const cardStyle = recommendation.cover_url
+            ? ({ "--cover-image": `url("${recommendation.cover_url}")` } as CSSProperties)
+            : undefined;
 
           return (
-            <li className="recommendation-card" key={recommendation.beatmap_id}>
+            <li className="recommendation-card" key={recommendation.beatmap_id} style={cardStyle}>
               <span className="recommendation-rank">#{recommendation.rank}</span>
               <div className="recommendation-content">
-                <h3>{artist} - {title}</h3>
+                <h3>
+                  <a
+                    href={`https://osu.ppy.sh/beatmaps/${recommendation.beatmap_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {artist} - {title}
+                  </a>
+                </h3>
                 {recommendation.difficulty_name && (
                   <p className="difficulty-name">[{recommendation.difficulty_name}]</p>
                 )}
+                <p className="suggested-mods">Suggested Mods: <strong>{mods}</strong></p>
                 {hasAttributes && (
                   <div className="map-attributes">
-                    {recommendation.star_rating !== null && (
-                      <span>{recommendation.star_rating.toFixed(2)}★</span>
+                    {displayedStar !== null && (
+                      <ComparedStat label={`${displayedStar.toFixed(2)}★`} value={displayedStar} bounds={result.preferences.star_rating} />
                     )}
                     {recommendation.approach_rate !== null && (
-                      <span>AR {recommendation.approach_rate}</span>
+                      <ComparedStat label={`AR ${recommendation.approach_rate}`} value={recommendation.approach_rate} bounds={result.preferences.approach_rate} />
                     )}
                     {recommendation.bpm !== null && (
-                      <span>{recommendation.bpm} BPM</span>
+                      <ComparedStat label={`${recommendation.bpm} BPM`} value={recommendation.bpm} bounds={result.preferences.bpm} />
                     )}
                   </div>
                 )}
@@ -172,6 +239,24 @@ function RecommendationList({ result }: RecommendationListProps) {
         })}
       </ol>
     </section>
+  );
+}
+
+function ComparedStat({
+  label,
+  value,
+  bounds,
+}: {
+  label: string;
+  value: number;
+  bounds: PreferenceBounds | null;
+}) {
+  const category = compareToPreference(value, bounds);
+  const description = comparisonLabels[category];
+  return (
+    <span className={`compared-stat comparison-${category}`} title={description}>
+      {label}<span className="visually-hidden"> — {description}</span>
+    </span>
   );
 }
 

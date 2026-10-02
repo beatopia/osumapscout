@@ -48,9 +48,10 @@ This is a rough, incremental roadmap. Ticket scope and ordering may change when 
 | T0042 | Discovery-only provenance and supporter-structure analysis | Complete |
 | T0043 | Supporter top-play-position prevalence analysis | Complete |
 | T0044 | Production recommendation service | Complete |
-| T0045 | Recommendation UI | Current / complete |
+| T0045 | Recommendation UI | Complete |
+| T0046 | Recommendation UX and map enrichment | Current / complete |
 
-No detailed tickets beyond T0045 are defined yet. T0046 must be selected after reviewing the first complete recommendation flow.
+No detailed tickets beyond T0046 are defined yet. T0047 must be selected after reviewing the enriched recommendation flow.
 
 T0040's 25 new live runs produced 13 discovery-only held-out positives: 7 improved, 4 worsened, and 2 were unchanged under star-only tie-breaking. No positive crossed a measured recall cutoff, so the experimental order remains unadopted.
 
@@ -63,3 +64,5 @@ T0043 measured raw positive prevalence by the best supporter's top-play position
 T0044 freezes the experimentally supported hybrid policy as an application service. The top ten similar players provide discovery and ranking evidence, players 11–15 add discovery-only maps, and the existing preference-aware ordering ranks the hybrid pool. A public endpoint returns bounded typed results, deterministic explanations, context, and external request accounting without persisting recommendations.
 
 T0045 connects the existing shared username flow to the production recommendation endpoint. It displays a bounded 20-map result with map attributes, support, deterministic explanations, responsive loading/empty/error states, and no ranking controls or experimental terminology.
+
+T0046 reorganizes the player page around recommendations, adds collapsible top plays and playstyle wording, and enriches returned maps with covers, links, deterministic suggested mods, optional mod-adjusted star ratings, and target-IQR comparison labels. Enrichment is display-only and does not change recommendation membership or order.

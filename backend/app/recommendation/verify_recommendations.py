@@ -27,6 +27,10 @@ async def _run(username: str, limit: int) -> int:
             value for value in (item.artist, item.title, item.difficulty_name) if value
         ) or f"beatmap {item.beatmap_id}"
         print(f"{item.rank}. {identity} [{item.beatmap_id}]")
+        mods = "".join(item.suggested_mods) or "NM"
+        star = item.adjusted_star_rating or item.star_rating
+        print(f"   Suggested mods: {mods}; displayed stars: {star}")
+        print(f"   Cover: {item.cover_url}")
         print(f"   {item.why_recommended}")
     requests = result.requests
     print(
@@ -34,7 +38,8 @@ async def _run(username: str, limit: int) -> int:
         f"profile={requests.profile_requests} "
         f"target_top_play={requests.target_top_play_requests} "
         f"leaderboard={requests.leaderboard_requests} "
-        f"candidate_top_play={requests.candidate_top_play_requests}"
+        f"candidate_top_play={requests.candidate_top_play_requests} "
+        f"beatmap_attributes={requests.beatmap_attribute_requests}"
     )
     return 0
 

@@ -114,6 +114,13 @@ class OsuLeaderboardUser:
     username: str | None
 
 
+@dataclass(frozen=True)
+class OsuBeatmapDifficultyAttributes:
+    """Minimal mod-specific difficulty attributes used for display enrichment."""
+
+    star_rating: float
+
+
 class OsuApiClient:
     """Perform the osu! HTTP communication used by the application."""
 
@@ -382,6 +389,49 @@ class OsuApiClient:
             )
 
         return self._parse_beatmap_leaderboard(response)
+
+    async def get_beatmap_difficulty_attributes(
+        self,
+        beatmap_id: int,
+        mods: tuple[str, ...],
+    ) -> OsuBeatmapDifficultyAttributes:
+        """Fetch osu!standard star rating for one exact mod combination."""
+        if isinstance(beatmap_id, bool) or not isinstance(beatmap_id, int) or beatmap_id <= 0:
+            raise ValueError("Beatmap ID must be a positive integer.")
+        if any(not isinstance(mod, str) or not mod for mod in mods):
+            raise ValueError("Mods must contain non-empty acronyms.")
+        access_token = await self._get_access_token()
+        url = f"{OSU_API_BASE_URL}/beatmaps/{beatmap_id}/attributes"
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as http_client:
+                response = await http_client.post(
+                    url,
+                    json={"mods": list(mods), "ruleset": "osu"},
+                    headers={"Authorization": f"Bearer {access_token.access_token}"},
+                )
+        except httpx.RequestError as error:
+            raise OsuNetworkError(
+                "Could not reach osu! to request beatmap difficulty attributes."
+            ) from error
+        if response.status_code in (401, 403):
+            raise OsuAuthenticationError(
+                "osu! rejected the difficulty-attributes request with "
+                f"HTTP {response.status_code}."
+            )
+        if response.is_error:
+            raise OsuApiError(
+                "osu! difficulty-attributes request failed with "
+                f"HTTP {response.status_code}."
+            )
+        try:
+            value = response.json()["attributes"]["difficulty_rating"]
+        except (KeyError, TypeError, ValueError) as error:
+            raise OsuApiError(
+                "osu! returned invalid beatmap difficulty attributes."
+            ) from error
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise OsuApiError("osu! returned invalid beatmap difficulty attributes.")
+        return OsuBeatmapDifficultyAttributes(float(value))
 
     @staticmethod
     def _parse_beatmap_leaderboard(

@@ -7,8 +7,9 @@ from unittest.mock import AsyncMock, patch
 from fastapi.testclient import TestClient
 
 from backend.app.main import app
-from backend.app.osu.client import OsuTopPlay, OsuUserProfile
+from backend.app.osu.client import OsuBeatmapDifficultyAttributes, OsuTopPlay, OsuUserProfile
 from backend.app.osu.client import OsuNetworkError
+from backend.app.recommendation.candidate_maps import CandidateMapSupport
 from backend.app.recommendation.service import (
     CANDIDATE_TOP_PLAYS,
     DISCOVERY_PLAYER_LIMIT,
@@ -17,12 +18,15 @@ from backend.app.recommendation.service import (
     SEED_COUNT,
     RecommendationContext,
     RecommendationRequestAccounting,
+    RecommendationPreferences,
     RecommendationResult,
     RefreshedTarget,
     build_hybrid_ranking,
+    enrich_adjusted_stars,
     generate_recommendations,
+    suggested_mod_combination,
 )
-from backend.tests.test_selection_expansion_analysis import _recovery
+from backend.tests.test_selection_expansion_analysis import _preference, _recovery
 
 
 class RecommendationPolicyTests(unittest.TestCase):
@@ -84,6 +88,38 @@ class RecommendationPolicyTests(unittest.TestCase):
         )
         self.assertEqual([_id(item) for item in first], [_id(item) for item in changed])
 
+    def test_suggested_mod_mode_tie_and_nm(self) -> None:
+        hdhr = _support(("HD", "HR"), 3)
+        hddt = _support(("HD", "DT"), 1)
+        self.assertEqual(
+            suggested_mod_combination((hdhr, hdhr, hddt)), ("HD", "HR")
+        )
+        self.assertEqual(suggested_mod_combination((hdhr, hddt)), ("HD", "DT"))
+        self.assertEqual(suggested_mod_combination((_support((), 1),)), ())
+
+    def test_hybrid_mods_keep_native_evidence_and_allow_discovery_evidence(self) -> None:
+        players = list(self.ranking.candidates)
+        players[0] = replace(
+            players[0],
+            hydrated_top_plays=tuple(
+                replace(play, mods=("HD", "HR")) for play in players[0].hydrated_top_plays
+            ),
+        )
+        players[11] = replace(
+            players[11],
+            hydrated_top_plays=tuple(
+                replace(play, mods=("HD", "DT")) for play in players[11].hydrated_top_plays
+            ),
+        )
+        ordered = build_hybrid_ranking(
+            replace(self.ranking, candidates=tuple(players)), self.profile
+        )
+        by_id = {_id(item): item for item in ordered}
+        native = by_id[101].preference_evidence.collaborative.candidate_map
+        discovery = by_id[105].preference_evidence.collaborative.candidate_map
+        self.assertEqual(suggested_mod_combination(native.supports), ("HD", "HR"))
+        self.assertEqual(suggested_mod_combination(discovery.supports), ("HD", "DT"))
+
 
 class RecommendationServiceTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
@@ -114,6 +150,15 @@ class RecommendationServiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.requests.target_top_play_requests, 1)
         self.assertEqual(result.requests.leaderboard_requests, 5)
         self.assertEqual(result.requests.candidate_top_play_requests, 25)
+        self.assertEqual(result.requests.beatmap_attribute_requests, 0)
+        self.assertEqual(
+            (
+                result.preferences.star_rating.first_quartile,
+                result.preferences.star_rating.median,
+                result.preferences.star_rating.third_quartile,
+            ),
+            (5.0, 5.0, 5.0),
+        )
 
     async def test_limit_is_applied_after_complete_ordering(self) -> None:
         refresh = AsyncMock(return_value=self.target)
@@ -143,6 +188,32 @@ class RecommendationServiceTests(unittest.IsolatedAsyncioTestCase):
             with self.assertRaises(ValueError):
                 await generate_recommendations("Target", limit=limit)
 
+    async def test_adjusted_star_mapping_failure_and_request_count(self) -> None:
+        base = _preference(100, 1)
+        candidate = base.preference_evidence.collaborative.candidate_map
+        modded = replace(candidate, supports=(_support(("HD", "HR"), 1),))
+        nm = replace(candidate, beatmap_id=101, supports=(_support((), 1),))
+        items = (
+            replace(base, preference_evidence=replace(
+                base.preference_evidence,
+                collaborative=replace(base.preference_evidence.collaborative, candidate_map=modded),
+            )),
+            replace(base, preference_evidence=replace(
+                base.preference_evidence,
+                collaborative=replace(base.preference_evidence.collaborative, candidate_map=nm),
+            )),
+        )
+        client = AsyncMock()
+        client.get_beatmap_difficulty_attributes.return_value = (
+            OsuBeatmapDifficultyAttributes(6.25)
+        )
+        values, requests = await enrich_adjusted_stars(items, client)
+        self.assertEqual((values[100], values[101], requests), (6.25, 5.0, 1))
+        self.assertEqual(list(values), [_id(item) for item in items])
+        client.get_beatmap_difficulty_attributes.side_effect = OsuNetworkError("down")
+        values, requests = await enrich_adjusted_stars(items[:1], client)
+        self.assertEqual((values[100], requests), (None, 1))
+
 
 class RecommendationRouteTests(unittest.TestCase):
     def setUp(self) -> None:
@@ -152,7 +223,8 @@ class RecommendationRouteTests(unittest.TestCase):
         result = RecommendationResult(
             "Target", 42, (),
             RecommendationContext(100, 25, 10, 15, 500, 0),
-            RecommendationRequestAccounting(1, 1, 5, 25),
+            RecommendationRequestAccounting(1, 1, 5, 25, 3),
+            RecommendationPreferences(None, None, None),
         )
         with patch(
             "backend.app.recommendations.generate_recommendations",
@@ -168,7 +240,8 @@ class RecommendationRouteTests(unittest.TestCase):
         self.assertEqual(self.client.get("/api/recommendations/x?limit=101").status_code, 422)
         result = RecommendationResult(
             "x", 1, (), RecommendationContext(0, 0, 0, 0, 0, 0),
-            RecommendationRequestAccounting(1, 1, 0, 0),
+            RecommendationRequestAccounting(1, 1, 0, 0, 0),
+            RecommendationPreferences(None, None, None),
         )
         with patch(
             "backend.app.recommendations.generate_recommendations",
@@ -199,6 +272,10 @@ def _play(beatmap_id: int) -> OsuTopPlay:
 
 def _id(item: object) -> int:
     return item.preference_evidence.collaborative.candidate_map.beatmap_id  # type: ignore[attr-defined]
+
+
+def _support(mods: tuple[str, ...], rank: int) -> CandidateMapSupport:
+    return CandidateMapSupport(rank, f"p{rank}", rank, 1, 0.1, 0.1, mods, None)
 
 
 if __name__ == "__main__":

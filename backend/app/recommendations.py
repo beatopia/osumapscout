@@ -30,9 +30,13 @@ class RecommendationResponse(BaseModel):
     artist: str | None
     title: str | None
     difficulty_name: str | None
+    beatmapset_id: int | None
+    cover_url: str | None
     star_rating: float | None
+    adjusted_star_rating: float | None
     approach_rate: float | None
     bpm: float | None
+    suggested_mods: list[str]
     support_count: int
     best_supporting_player_rank: int
     attributes_within_iqr_count: int
@@ -53,6 +57,19 @@ class RecommendationRequestsResponse(BaseModel):
     target_top_play_requests: int
     leaderboard_requests: int
     candidate_top_play_requests: int
+    beatmap_attribute_requests: int
+
+
+class PreferenceBoundsResponse(BaseModel):
+    first_quartile: float
+    median: float
+    third_quartile: float
+
+
+class RecommendationPreferencesResponse(BaseModel):
+    star_rating: PreferenceBoundsResponse | None
+    approach_rate: PreferenceBoundsResponse | None
+    bpm: PreferenceBoundsResponse | None
 
 
 class RecommendationsResponse(BaseModel):
@@ -61,6 +78,7 @@ class RecommendationsResponse(BaseModel):
     recommendations: list[RecommendationResponse]
     context: RecommendationContextResponse
     requests: RecommendationRequestsResponse
+    preferences: RecommendationPreferencesResponse
 
 
 def _to_response(result: RecommendationResult) -> RecommendationsResponse:

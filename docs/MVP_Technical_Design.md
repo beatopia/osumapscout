@@ -42,7 +42,7 @@ The frontend now keeps three explicit flows behind one username input: live top-
 
 ## Implemented recommendation flow
 
-T0044 exposes the validated bounded hybrid recommendation architecture through `GET /api/recommendations/{username}`, and T0045 presents its fixed 20-map result in the React frontend. Ranking controls, recommendation persistence, caching, background work, and historical results remain deferred.
+T0044 exposes the validated bounded hybrid recommendation architecture through `GET /api/recommendations/{username}`, T0045 presents its fixed 20-map result, and T0046 adds display-only enrichment. Suggested mods come from eligible support plays; adjusted stars are fetched only for returned modded maps with bounded concurrency and may safely be absent after an individual transient failure. Ranking controls, recommendation persistence, caching, background work, and historical results remain deferred.
 
 ## MVP boundaries
 

@@ -38,6 +38,7 @@ class CandidateMap:
     approach_rate: float | None
     bpm: float | None
     supports: tuple[CandidateMapSupport, ...]
+    beatmapset_id: int | None = None
 
     @property
     def support_count(self) -> int:
@@ -100,6 +101,7 @@ class _CandidateMapAccumulator:
     approach_rate: float | None
     bpm: float | None
     supports: list[CandidateMapSupport]
+    beatmapset_id: int | None
 
 
 def extract_candidate_maps(
@@ -139,6 +141,7 @@ def extract_candidate_maps(
                     approach_rate=play.approach_rate,
                     bpm=play.bpm,
                     supports=[support],
+                    beatmapset_id=play.beatmapset_id,
                 )
             else:
                 _fill_missing_metadata(existing, play)
@@ -162,6 +165,7 @@ def extract_candidate_maps(
             approach_rate=item.approach_rate,
             bpm=item.bpm,
             supports=tuple(item.supports),
+            beatmapset_id=item.beatmapset_id,
         )
         for item in accumulated.values()
     )
@@ -254,6 +258,8 @@ def _fill_missing_metadata(
     candidate_map: _CandidateMapAccumulator,
     play: OsuTopPlay,
 ) -> None:
+    if candidate_map.beatmapset_id is None and play.beatmapset_id is not None:
+        candidate_map.beatmapset_id = play.beatmapset_id
     if candidate_map.artist is None and play.artist is not None:
         candidate_map.artist = play.artist
     if candidate_map.title is None and play.title is not None:

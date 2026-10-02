@@ -20,6 +20,7 @@ from backend.app.osu.client import (
     OsuApiClient,
     OsuApiError,
     OsuAuthenticationError,
+    OsuBeatmapDifficultyAttributes,
     OsuCredentials,
     OsuLeaderboardUser,
     OsuNetworkError,
@@ -162,6 +163,31 @@ class BeatmapLeaderboardClientTests(unittest.IsolatedAsyncioTestCase):
         context.__aenter__ = AsyncMock(return_value=http_client)
         context.__aexit__ = AsyncMock(return_value=None)
         return client, context
+
+
+class BeatmapDifficultyAttributesClientTests(unittest.IsolatedAsyncioTestCase):
+    async def test_posts_mods_and_maps_difficulty_rating(self) -> None:
+        client = OsuApiClient(OsuCredentials("id", "secret"))
+        client.request_access_token = AsyncMock(
+            return_value=OsuAccessToken("token", "Bearer", 100)
+        )
+        http_client = AsyncMock()
+        http_client.post.return_value = httpx.Response(
+            200, json={"attributes": {"difficulty_rating": 6.25}}
+        )
+        context = MagicMock()
+        context.__aenter__ = AsyncMock(return_value=http_client)
+        context.__aexit__ = AsyncMock(return_value=None)
+        with patch("backend.app.osu.client.httpx.AsyncClient", return_value=context):
+            result = await client.get_beatmap_difficulty_attributes(
+                123, ("HD", "HR")
+            )
+        self.assertEqual(result, OsuBeatmapDifficultyAttributes(6.25))
+        http_client.post.assert_awaited_once_with(
+            "https://osu.ppy.sh/api/v2/beatmaps/123/attributes",
+            json={"mods": ["HD", "HR"], "ruleset": "osu"},
+            headers={"Authorization": "Bearer token"},
+        )
 
 
 class TargetMapCandidateExperimentTests(unittest.IsolatedAsyncioTestCase):

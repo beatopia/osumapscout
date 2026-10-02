@@ -113,7 +113,7 @@ function PlayerAnalysis({ analysis }: PlayerAnalysisProps) {
     <section className="analysis-panel" aria-labelledby="analysis-heading">
       <div className="analysis-heading-row">
         <div>
-          <p className="eyebrow">Persisted analysis</p>
+          <p className="eyebrow">Playstyle analysis</p>
           <h2 id="analysis-heading">{analysis.username}</h2>
         </div>
         <span className="user-id">User ID {analysis.user_id}</span>
