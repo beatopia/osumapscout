@@ -211,6 +211,19 @@ requires `OAuth lazer`, while the project currently uses public client-credentia
 OAuth. User authorization, unofficial raw-file URLs, and third-party mirrors are
 outside the current architecture and were not introduced for a secondary card stat.
 
+### T0053 acquisition-allocation evidence
+
+T0053 remains offline and ephemeral. It combines the existing baseline and target-mod
+leaderboard sources under one fixed 25-user hydration budget, deduplicates candidates
+deterministically, and reuses hydrated top plays in memory. It adds no schema, stored
+recommendation, persistent cache, or production request path.
+
+Across 15 target/split runs, allocations 25/0, 20/5, 15/10, and 10/15 recovered
+81, 84, 85, and 91 of 150 held-out observations anywhere. More target-mod slots
+increased compatible-user supply and overall coverage, but early recall generally
+declined. These measurements justify retaining source provenance for experiments;
+they do not justify persisting an allocation or changing production acquisition.
+
 A smallest transparent recommendation experiment would:
 
 1. Fetch and persist the target user's ordered top 100.

@@ -219,6 +219,21 @@ early held-out recovery. Performance-ranking candidates were useful for elite
 targets but had weak or zero collaborative overlap for lower-ranked targets. No
 production acquisition change was made.
 
+## T0053 fixed-allocation evidence
+
+T0053 tested four budget-neutral mixtures of the existing baseline and target-mod
+leaderboard sources: 25/0, 20/5, 15/10, and 10/15. Each target/split acquired both
+source pools once and shared hydrated evidence across all views; production similarity
+and map ranking were unchanged.
+
+Across five targets and three splits, recovered-anywhere totals rose from 81/150 at
+25/0 to 84/150, 85/150, and 91/150. In contrast, mean Recall@10 changed from 10.0%
+to 8.0%, 7.3%, and 7.3%, and mean Recall@100 changed from 28.7% to 32.7%, 30.7%,
+and 28.0%. Results varied sharply by target: heavier target-mod allocation helped
+`molerat` and WhiteCat coverage, hurt peppy, and traded early placement for broader
+coverage on mrekk. The experiment therefore shows a real coverage/placement tradeoff,
+not a generally superior fixed allocation. Production acquisition remains unchanged.
+
 ## Open questions
 
 - Can a small cursor budget reach a useful neighborhood around an arbitrary rank?
