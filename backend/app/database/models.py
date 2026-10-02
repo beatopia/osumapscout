@@ -9,8 +9,10 @@ from sqlalchemy import (
     Float,
     ForeignKey,
     Integer,
+    Index,
     String,
     UniqueConstraint,
+    func,
 )
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
@@ -24,7 +26,6 @@ class User(Base):
     """An osu! user and the most recently fetched profile metadata."""
 
     __tablename__ = "users"
-
     user_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     username: Mapped[str] = mapped_column(String(255), nullable=False)
     country_code: Mapped[str] = mapped_column(String(2), nullable=False)
@@ -32,6 +33,7 @@ class User(Base):
     global_rank: Mapped[int | None] = mapped_column(BigInteger)
     performance_points: Mapped[float | None] = mapped_column(Float)
     fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    __table_args__ = (Index("ix_users_username_lower", func.lower(username)),)
 
     top_plays: Mapped[list["UserTopPlay"]] = relationship(
         back_populates="user",

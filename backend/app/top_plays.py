@@ -9,6 +9,7 @@ from backend.app.osu.client import (
     OsuAuthenticationError,
     OsuCredentials,
     OsuNetworkError,
+    OsuRateLimitError,
     OsuTopPlay,
     OsuUserNotFoundError,
 )
@@ -86,6 +87,11 @@ async def get_top_plays(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="The username or limit is invalid.",
+        ) from error
+    except OsuRateLimitError as error:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="osu! is temporarily rate limiting requests.",
         ) from error
     except OsuAuthenticationError as error:
         raise HTTPException(

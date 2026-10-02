@@ -4,9 +4,16 @@ import PlayerAnalysis, { isPlayerAnalysisResponse, PlayerAnalysisResponse } from
 import RecommendationList, { isRecommendationsResponse, RecommendationsResponse } from "./RecommendationList";
 
 const loadingMessages = ["Finding similar players...", "Checking their top plays...", "Comparing map attributes...", "Ranking recommendations..."] as const;
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+
+function usernameFromPath(): string {
+  const match = window.location.pathname.match(/^\/player\/([^/]+)\/?$/);
+  if (!match) return "";
+  try { return decodeURIComponent(match[1]); } catch { return ""; }
+}
 
 function App() {
-  const [username, setUsername] = useState("");
+  const [username, setUsername] = useState(usernameFromPath);
   const [searchedUsername, setSearchedUsername] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<PlayerAnalysisResponse | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
@@ -33,6 +40,21 @@ function App() {
 
   useEffect(() => () => activeController.current?.abort(), []);
 
+  useEffect(() => {
+    const updateFromHistory = () => {
+      activeController.current?.abort();
+      setUsername(usernameFromPath());
+      setSearchedUsername(null);
+      setAnalysisResult(null);
+      setRecommendationsResult(null);
+      setPlayerError(null);
+      setAnalysisError(null);
+      setRecommendationsError(null);
+    };
+    window.addEventListener("popstate", updateFromHistory);
+    return () => window.removeEventListener("popstate", updateFromHistory);
+  }, []);
+
   async function searchPlayer(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const submittedUsername = username.trim();
@@ -40,6 +62,8 @@ function App() {
       setPlayerError("Enter an osu! username.");
       return;
     }
+    const playerPath = `/player/${encodeURIComponent(submittedUsername)}`;
+    if (window.location.pathname !== playerPath) window.history.pushState(null, "", playerPath);
     activeController.current?.abort();
     const controller = new AbortController();
     activeController.current = controller;
@@ -55,10 +79,11 @@ function App() {
 
     let playerWasNotFound = false;
     try {
-      const response = await fetch(`/api/recommendations/${encodeURIComponent(submittedUsername)}?limit=20`, { signal: controller.signal });
+      const response = await fetch(`${apiBaseUrl}/api/recommendations/${encodeURIComponent(submittedUsername)}?limit=20`, { signal: controller.signal });
       if (!response.ok) {
         if (response.status === 404) { playerWasNotFound = true; throw new Error("Couldn't find that osu! user."); }
         if (response.status === 422) throw new Error("There isn't enough play data to generate recommendations for this user yet.");
+        if (response.status === 429) throw new Error("osu! is busy right now. Wait a moment and try again.");
         if (response.status === 502 || response.status === 503) throw new Error("osu! is temporarily unavailable. Try again in a bit.");
         throw new Error("Something went wrong while generating recommendations.");
       }
@@ -81,7 +106,7 @@ function App() {
       return;
     }
     try {
-      const response = await fetch(`/api/users/${encodeURIComponent(submittedUsername)}/analysis`, { signal: controller.signal });
+      const response = await fetch(`${apiBaseUrl}/api/users/${encodeURIComponent(submittedUsername)}/analysis`, { signal: controller.signal });
       if (response.status === 404) throw new Error("No playstyle analysis is available for this user yet.");
       if (!response.ok) throw new Error("The backend could not load playstyle analysis.");
       const body: unknown = await response.json();

@@ -1,5 +1,7 @@
 """Budgeted acquisition and overlap ranking for similar-player candidates."""
 
+import asyncio
+
 from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
 from statistics import median
@@ -23,6 +25,7 @@ from backend.app.osu.client import (
     OsuAuthenticationError,
     OsuCredentials,
     OsuNetworkError,
+    OsuRateLimitError,
     OsuTopPlay,
 )
 from backend.app.similarity.one_hit_baseline import (
@@ -257,14 +260,24 @@ async def evaluate_ranked_candidates(
         )
 
     client = osu_client or OsuApiClient(OsuCredentials.from_environment())
-    evaluated: list[RankedSimilarPlayer] = []
-    for selected in selection.ordered:
+    hydration_semaphore = asyncio.Semaphore(5)
+    rate_limited = asyncio.Event()
+
+    async def hydrate(selected: SelectedCandidate) -> RankedSimilarPlayer:
         candidate = selected.candidate
         try:
-            plays = await client.get_top_plays_by_user_id(
-                candidate.user_id,
-                limit=top_plays,
-            )
+            async with hydration_semaphore:
+                if rate_limited.is_set():
+                    raise OsuRateLimitError(
+                        "Candidate hydration stopped after an osu! rate limit."
+                    )
+                plays = await client.get_top_plays_by_user_id(
+                    candidate.user_id,
+                    limit=top_plays,
+                )
+        except OsuRateLimitError:
+            rate_limited.set()
+            raise
         except (OsuAuthenticationError, OsuNetworkError, OsuApiError) as error:
             raise CandidateHydrationError(
                 f"Could not hydrate top plays for candidate user {candidate.user_id}."
@@ -275,26 +288,26 @@ async def evaluate_ranked_candidates(
             (play.beatmap_id for play in hydrated_top_plays),
             seed_ids,
         )
-        evaluated.append(
-            RankedSimilarPlayer(
-                user_id=candidate.user_id,
-                username=candidate.username,
-                seed_beatmap_ids=candidate.seed_beatmap_ids,
-                acquisition_group=selected.acquisition_group,
-                candidate_play_count=metrics.raw.candidate_play_count,
-                raw_shared_beatmap_count=metrics.raw.shared_beatmap_count,
-                raw_jaccard_similarity=metrics.raw.jaccard_similarity,
-                raw_target_coverage=metrics.raw.target_coverage,
-                seed_excluded_shared_beatmap_count=(
-                    metrics.seed_excluded.shared_beatmap_count
-                ),
-                seed_excluded_jaccard_similarity=(
-                    metrics.seed_excluded.jaccard_similarity
-                ),
-                seed_excluded_target_coverage=metrics.seed_excluded.target_coverage,
-                hydrated_top_plays=hydrated_top_plays,
-            )
+        return RankedSimilarPlayer(
+            user_id=candidate.user_id,
+            username=candidate.username,
+            seed_beatmap_ids=candidate.seed_beatmap_ids,
+            acquisition_group=selected.acquisition_group,
+            candidate_play_count=metrics.raw.candidate_play_count,
+            raw_shared_beatmap_count=metrics.raw.shared_beatmap_count,
+            raw_jaccard_similarity=metrics.raw.jaccard_similarity,
+            raw_target_coverage=metrics.raw.target_coverage,
+            seed_excluded_shared_beatmap_count=(
+                metrics.seed_excluded.shared_beatmap_count
+            ),
+            seed_excluded_jaccard_similarity=(
+                metrics.seed_excluded.jaccard_similarity
+            ),
+            seed_excluded_target_coverage=metrics.seed_excluded.target_coverage,
+            hydrated_top_plays=hydrated_top_plays,
         )
+
+    evaluated = list(await asyncio.gather(*(hydrate(item) for item in selection.ordered)))
 
     ranked = rank_similar_players(evaluated)
     return RankedCandidateExperimentResult(

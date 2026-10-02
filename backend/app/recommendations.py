@@ -1,8 +1,11 @@
 """Public HTTP endpoint for on-demand map recommendations."""
 
+import logging
+from dataclasses import replace
+
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, Response, status
 from pydantic import BaseModel
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -11,9 +14,14 @@ from backend.app.osu.client import (
     OsuApiError,
     OsuAuthenticationError,
     OsuNetworkError,
+    OsuRateLimitError,
     OsuUserNotFoundError,
 )
-from backend.app.recommendation.service import RecommendationResult, generate_recommendations
+from backend.app.recommendation.runtime import get_recommendation_runtime
+from backend.app.recommendation.service import (
+    RecommendationRequestAccounting,
+    RecommendationResult,
+)
 from backend.app.similarity.overlap import (
     SimilarityTargetNotFoundError,
     TargetTopPlaysEmptyError,
@@ -22,6 +30,7 @@ from backend.app.similarity.ranked_candidates import RankedCandidatesEmptyError
 from backend.app.similarity.target_map_overlap import SeedExcludedTargetEmptyError
 
 router = APIRouter(prefix="/api/recommendations", tags=["recommendations"])
+logger = logging.getLogger("osumapscout.recommendations")
 
 
 class SupportingPlayerResponse(BaseModel):
@@ -110,11 +119,19 @@ def _to_response(result: RecommendationResult) -> RecommendationsResponse:
 @router.get("/{username}", response_model=RecommendationsResponse)
 async def get_recommendations(
     username: str,
+    response: Response,
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
 ) -> RecommendationsResponse:
     """Refresh a target and return the frozen MVP recommendation ranking."""
     try:
-        result = await generate_recommendations(username, limit=limit)
+        cached = await get_recommendation_runtime().recommendations(username, limit)
+        result = cached.result
+        if cached.cache_status != "miss":
+            result = replace(
+                result,
+                requests=RecommendationRequestAccounting(0, 0, 0, 0, 0),
+            )
+        response.headers["X-Recommendation-Cache"] = cached.cache_status
     except OsuUserNotFoundError as error:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "osu! user was not found.") from error
     except (TargetTopPlaysEmptyError, SeedExcludedTargetEmptyError, RankedCandidatesEmptyError) as error:
@@ -122,6 +139,8 @@ async def get_recommendations(
             status.HTTP_422_UNPROCESSABLE_ENTITY,
             "There is insufficient top-play evidence to generate recommendations.",
         ) from error
+    except OsuRateLimitError as error:
+        raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "osu! is temporarily rate limiting requests.") from error
     except OsuAuthenticationError as error:
         raise HTTPException(status.HTTP_502_BAD_GATEWAY, "osu! API authentication failed.") from error
     except OsuNetworkError as error:
@@ -132,4 +151,11 @@ async def get_recommendations(
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "The refreshed target could not be loaded.") from error
     except (ValueError, SQLAlchemyError) as error:
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Recommendations are currently unavailable.") from error
+    logger.info(
+        "recommendations_complete username=%s count=%s cache=%s external_requests=%s",
+        result.target_username,
+        len(result.recommendations),
+        cached.cache_status,
+        sum(vars(result.requests).values()),
+    )
     return _to_response(result)

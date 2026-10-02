@@ -1,6 +1,8 @@
 import asyncio
 import os
 import time
+from contextlib import asynccontextmanager
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from typing import Any
 from urllib.parse import quote
@@ -10,6 +12,7 @@ import httpx
 OSU_TOKEN_URL = "https://osu.ppy.sh/oauth/token"
 OSU_API_BASE_URL = "https://osu.ppy.sh/api/v2"
 TOKEN_EXPIRY_MARGIN_SECONDS = 30
+HTTP_TIMEOUT = httpx.Timeout(10.0, connect=5.0)
 
 
 class OsuAuthenticationError(RuntimeError):
@@ -22,6 +25,10 @@ class OsuNetworkError(RuntimeError):
 
 class OsuApiError(RuntimeError):
     """Raised when osu! returns an unusable API response."""
+
+
+class OsuRateLimitError(OsuApiError):
+    """Raised when osu! asks the application to reduce request volume."""
 
 
 class OsuUserNotFoundError(OsuApiError):
@@ -126,11 +133,26 @@ class OsuBeatmapDifficultyAttributes:
 class OsuApiClient:
     """Perform the osu! HTTP communication used by the application."""
 
-    def __init__(self, credentials: OsuCredentials) -> None:
+    def __init__(self, credentials: OsuCredentials, *, persistent: bool = False) -> None:
         self._credentials = credentials
         self._access_token: OsuAccessToken | None = None
         self._access_token_expires_at = 0.0
         self._token_lock = asyncio.Lock()
+        self._http_client = (
+            httpx.AsyncClient(timeout=HTTP_TIMEOUT) if persistent else None
+        )
+
+    @asynccontextmanager
+    async def _client(self) -> AsyncIterator[httpx.AsyncClient]:
+        if self._http_client is not None:
+            yield self._http_client
+            return
+        async with httpx.AsyncClient(timeout=HTTP_TIMEOUT) as client:
+            yield client
+
+    async def close(self) -> None:
+        if self._http_client is not None:
+            await self._http_client.aclose()
 
     async def request_access_token(self) -> OsuAccessToken:
         """Request an application access token using client credentials."""
@@ -142,13 +164,15 @@ class OsuApiClient:
         }
 
         try:
-            async with httpx.AsyncClient(timeout=10.0) as http_client:
+            async with self._client() as http_client:
                 response = await http_client.post(OSU_TOKEN_URL, data=request_data)
         except httpx.RequestError as error:
             raise OsuNetworkError(
                 "Could not reach osu! to request an access token."
             ) from error
 
+        if response.status_code == 429:
+            raise OsuRateLimitError("osu! rate limited the access-token request.")
         if response.is_error:
             raise OsuAuthenticationError(
                 f"osu! rejected the access-token request with HTTP {response.status_code}."
@@ -218,7 +242,7 @@ class OsuApiClient:
         user_url = f"{OSU_API_BASE_URL}/users/@{encoded_username}/osu"
 
         try:
-            async with httpx.AsyncClient(timeout=10.0) as http_client:
+            async with self._client() as http_client:
                 response = await http_client.get(
                     user_url,
                     headers={
@@ -234,6 +258,8 @@ class OsuApiClient:
             raise OsuUserNotFoundError(
                 f"osu! user '{normalized_username}' was not found."
             )
+        if response.status_code == 429:
+            raise OsuRateLimitError("osu! rate limited the user-profile request.")
         if response.status_code in (401, 403):
             raise OsuAuthenticationError(
                 f"osu! rejected the user-profile request with HTTP {response.status_code}."
@@ -325,7 +351,7 @@ class OsuApiClient:
         )
 
         try:
-            async with httpx.AsyncClient(timeout=10.0) as http_client:
+            async with self._client() as http_client:
                 response = await http_client.get(
                     ranking_url,
                     params=params,
@@ -338,6 +364,8 @@ class OsuApiClient:
                 "Could not reach osu! to request the performance ranking."
             ) from error
 
+        if response.status_code == 429:
+            raise OsuRateLimitError("osu! rate limited the performance-ranking request.")
         if response.status_code in (401, 403):
             raise OsuAuthenticationError(
                 "osu! rejected the performance-ranking request with "
@@ -372,7 +400,7 @@ class OsuApiClient:
         scores_url = f"{OSU_API_BASE_URL}/beatmaps/{beatmap_id}/scores"
         params = self._beatmap_score_params(mods)
         try:
-            async with httpx.AsyncClient(timeout=10.0) as http_client:
+            async with self._client() as http_client:
                 response = await http_client.get(
                     scores_url,
                     params=params,
@@ -385,6 +413,8 @@ class OsuApiClient:
                 "Could not reach osu! to request beatmap leaderboard scores."
             ) from error
 
+        if response.status_code == 429:
+            raise OsuRateLimitError("osu! rate limited the leaderboard request.")
         if response.status_code in (401, 403):
             raise OsuAuthenticationError(
                 "osu! rejected the beatmap-leaderboard request with "
@@ -422,7 +452,7 @@ class OsuApiClient:
         access_token = await self._get_access_token()
         url = f"{OSU_API_BASE_URL}/beatmaps/{beatmap_id}/attributes"
         try:
-            async with httpx.AsyncClient(timeout=10.0) as http_client:
+            async with self._client() as http_client:
                 response = await http_client.post(
                     url,
                     json={"mods": list(mods), "ruleset": "osu"},
@@ -432,6 +462,8 @@ class OsuApiClient:
             raise OsuNetworkError(
                 "Could not reach osu! to request beatmap difficulty attributes."
             ) from error
+        if response.status_code == 429:
+            raise OsuRateLimitError("osu! rate limited the difficulty-attribute request.")
         if response.status_code in (401, 403):
             raise OsuAuthenticationError(
                 "osu! rejected the difficulty-attributes request with "
@@ -600,7 +632,7 @@ class OsuApiClient:
         scores_url = f"{OSU_API_BASE_URL}/users/{user_id}/scores/best"
 
         try:
-            async with httpx.AsyncClient(timeout=10.0) as http_client:
+            async with self._client() as http_client:
                 response = await http_client.get(
                     scores_url,
                     params={"mode": "osu", "limit": limit},
@@ -613,6 +645,8 @@ class OsuApiClient:
                 "Could not reach osu! to request top plays."
             ) from error
 
+        if response.status_code == 429:
+            raise OsuRateLimitError("osu! rate limited the top-play request.")
         if response.status_code in (401, 403):
             raise OsuAuthenticationError(
                 f"osu! rejected the top-play request with HTTP {response.status_code}."

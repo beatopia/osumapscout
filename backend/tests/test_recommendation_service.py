@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 
 from backend.app.main import app
 from backend.app.osu.client import OsuBeatmapDifficultyAttributes, OsuTopPlay, OsuUserProfile
-from backend.app.osu.client import OsuNetworkError
+from backend.app.osu.client import OsuNetworkError, OsuRateLimitError
 from backend.app.recommendation.candidate_maps import CandidateMapSupport
 from backend.app.recommendation.service import (
     CANDIDATE_TOP_PLAYS,
@@ -30,6 +30,7 @@ from backend.app.recommendation.service import (
     _rank_effective_preferences,
     _target_recommendation_profile,
 )
+from backend.app.recommendation.runtime import CachedRecommendationResult
 from backend.tests.test_selection_expansion_analysis import _preference, _recovery
 
 
@@ -341,14 +342,17 @@ class RecommendationRouteTests(unittest.TestCase):
             RecommendationPreferences(None, None, None),
             TargetRecommendationProfile((), (), None, None), (),
         )
+        runtime = AsyncMock()
+        runtime.recommendations.return_value = CachedRecommendationResult(result, "miss")
         with patch(
-            "backend.app.recommendations.generate_recommendations",
-            new=AsyncMock(return_value=result),
-        ) as service:
+            "backend.app.recommendations.get_recommendation_runtime",
+            return_value=runtime,
+        ):
             response = self.client.get("/api/recommendations/Target?limit=1")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["target_user_id"], 42)
-        service.assert_awaited_once_with("Target", limit=1)
+        self.assertEqual(response.headers["X-Recommendation-Cache"], "miss")
+        runtime.recommendations.assert_awaited_once_with("Target", 1)
 
     def test_http_limit_bounds(self) -> None:
         self.assertEqual(self.client.get("/api/recommendations/x?limit=0").status_code, 422)
@@ -359,22 +363,46 @@ class RecommendationRouteTests(unittest.TestCase):
             RecommendationPreferences(None, None, None),
             TargetRecommendationProfile((), (), None, None), (),
         )
+        runtime = AsyncMock()
+        runtime.recommendations.return_value = CachedRecommendationResult(result, "hit")
         with patch(
-            "backend.app.recommendations.generate_recommendations",
-            new=AsyncMock(return_value=result),
+            "backend.app.recommendations.get_recommendation_runtime",
+            return_value=runtime,
         ):
-            self.assertEqual(self.client.get("/api/recommendations/x?limit=1").status_code, 200)
+            warm = self.client.get("/api/recommendations/x?limit=1")
+            self.assertEqual(warm.status_code, 200)
+            self.assertEqual(
+                sum(warm.json()["requests"].values()),
+                0,
+            )
             self.assertEqual(self.client.get("/api/recommendations/x?limit=100").status_code, 200)
 
     def test_upstream_failure_is_not_an_empty_success(self) -> None:
+        runtime = AsyncMock()
+        runtime.recommendations.side_effect = OsuNetworkError("private detail")
         with patch(
-            "backend.app.recommendations.generate_recommendations",
-            new=AsyncMock(side_effect=OsuNetworkError("private detail")),
+            "backend.app.recommendations.get_recommendation_runtime",
+            return_value=runtime,
         ):
             response = self.client.get("/api/recommendations/Target")
         self.assertEqual(response.status_code, 503)
         self.assertEqual(
             response.json(), {"detail": "The osu! API is currently unreachable."}
+        )
+        self.assertNotIn("private detail", response.text)
+
+    def test_rate_limit_has_distinct_safe_error(self) -> None:
+        runtime = AsyncMock()
+        runtime.recommendations.side_effect = OsuRateLimitError("private detail")
+        with patch(
+            "backend.app.recommendations.get_recommendation_runtime",
+            return_value=runtime,
+        ):
+            response = self.client.get("/api/recommendations/Target")
+        self.assertEqual(response.status_code, 429)
+        self.assertEqual(
+            response.json(),
+            {"detail": "osu! is temporarily rate limiting requests."},
         )
         self.assertNotIn("private detail", response.text)
 

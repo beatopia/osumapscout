@@ -1,5 +1,7 @@
 """Experimental candidate acquisition from target-map leaderboards."""
 
+import asyncio
+
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 
@@ -8,7 +10,12 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from backend.app.database.connection import get_session_factory
 from backend.app.database.models import User, UserTopPlay
-from backend.app.osu.client import OsuApiClient, OsuCredentials
+from backend.app.osu.client import (
+    OsuApiClient,
+    OsuCredentials,
+    OsuLeaderboardUser,
+    OsuRateLimitError,
+)
 
 DEFAULT_SEED_COUNT = 5
 DEFAULT_CANDIDATE_LIMIT = 50
@@ -195,14 +202,29 @@ async def acquire_target_map_candidate_pool(
     leaderboard_requests_made = 0
     next_discovery_order = 0
 
-    for seed in selected_seeds:
-        leaderboard_users = (
-            await osu_client.get_beatmap_leaderboard_users(seed.beatmap_id)
-            if mods is None
-            else await osu_client.get_beatmap_leaderboard_users(
-                seed.beatmap_id, mods=mods
-            )
-        )
+    semaphore = asyncio.Semaphore(5)
+    rate_limited = asyncio.Event()
+
+    async def fetch(seed: TargetMapSeed) -> tuple[OsuLeaderboardUser, ...]:
+        async with semaphore:
+            if rate_limited.is_set():
+                raise OsuRateLimitError(
+                    "Leaderboard acquisition stopped after an osu! rate limit."
+                )
+            try:
+                return (
+                    await osu_client.get_beatmap_leaderboard_users(seed.beatmap_id)
+                    if mods is None
+                    else await osu_client.get_beatmap_leaderboard_users(
+                        seed.beatmap_id, mods=mods
+                    )
+                )
+            except OsuRateLimitError:
+                rate_limited.set()
+                raise
+
+    leaderboards = await asyncio.gather(*(fetch(seed) for seed in selected_seeds))
+    for seed, leaderboard_users in zip(selected_seeds, leaderboards, strict=True):
         leaderboard_requests_made += 1
         seen_on_seed: set[int] = set()
         for leaderboard_user in leaderboard_users:
