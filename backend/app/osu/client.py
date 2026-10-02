@@ -424,7 +424,7 @@ class OsuApiClient:
                 f"HTTP {response.status_code}."
             )
         try:
-            value = response.json()["attributes"]["difficulty_rating"]
+            value = response.json()["attributes"]["star_rating"]
         except (KeyError, TypeError, ValueError) as error:
             raise OsuApiError(
                 "osu! returned invalid beatmap difficulty attributes."

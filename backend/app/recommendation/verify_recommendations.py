@@ -21,6 +21,18 @@ async def _run(username: str, limit: int) -> int:
         print(f"Upstream request failed: {error}", file=sys.stderr)
         return 1
     print(f"Target: {result.target_username} ({result.target_user_id})")
+    primary = "".join(result.target_profile.primary_mods) or "NM"
+    print(f"Primary target mods: {primary}")
+    print("Target mod distribution:")
+    for item in result.target_profile.mod_distribution:
+        mods = "".join(item.mods) or "NM"
+        print(f"  {mods}: {item.count} ({item.share:.2%})")
+    pp = result.target_profile.performance_points
+    print(
+        "Target PP Q1/median/Q3: "
+        + (f"{pp.first_quartile:.2f}/{pp.median:.2f}/{pp.third_quartile:.2f}" if pp else "unavailable")
+    )
+    print("Target actual-play adjusted star Q1/median/Q3: unavailable")
     print(f"Candidate maps before limit: {result.context.candidate_map_count}")
     for item in result.recommendations:
         identity = " - ".join(
@@ -28,10 +40,37 @@ async def _run(username: str, limit: int) -> int:
         ) or f"beatmap {item.beatmap_id}"
         print(f"{item.rank}. {identity} [{item.beatmap_id}]")
         mods = "".join(item.suggested_mods) or "NM"
-        star = item.adjusted_star_rating or item.star_rating
-        print(f"   Suggested mods: {mods}; displayed stars: {star}")
+        star = (
+            item.adjusted_star_rating
+            if item.adjusted_star_rating is not None
+            else item.star_rating
+        )
+        print(
+            f"   Suggested target mods: {mods}; base stars: {item.star_rating}; "
+            f"adjusted stars: {star}"
+        )
         print(f"   Cover: {item.cover_url}")
         print(f"   {item.why_recommended}")
+        for supporter in item.supporting_players:
+            supporter_mods = "".join(supporter.mods) or "NM"
+            print(
+                f"   Supporter #{supporter.similarity_rank}: "
+                f"{supporter.username or supporter.user_id} ({supporter_mods})"
+            )
+    print("Similar-player diagnostic:")
+    for player in result.similar_players:
+        mods = "".join(player.dominant_mods) or "NM"
+        pp = player.performance_points
+        pp_text = (
+            f"{pp.first_quartile:.2f}/{pp.median:.2f}/{pp.third_quartile:.2f}"
+            if pp else "unavailable"
+        )
+        print(
+            f"  #{player.similarity_rank} {player.username or 'unknown'}: "
+            f"overlap={player.independent_overlap}; dominant={mods}; "
+            f"target-mod-share={player.target_primary_mod_share:.2%}; "
+            f"PP Q1/median/Q3={pp_text}"
+        )
     requests = result.requests
     print(
         "Requests: "

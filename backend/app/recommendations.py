@@ -24,6 +24,13 @@ from backend.app.similarity.target_map_overlap import SeedExcludedTargetEmptyErr
 router = APIRouter(prefix="/api/recommendations", tags=["recommendations"])
 
 
+class SupportingPlayerResponse(BaseModel):
+    user_id: int
+    username: str | None
+    similarity_rank: int
+    mods: list[str]
+
+
 class RecommendationResponse(BaseModel):
     rank: int
     beatmap_id: int
@@ -38,6 +45,7 @@ class RecommendationResponse(BaseModel):
     bpm: float | None
     suggested_mods: list[str]
     support_count: int
+    supporting_players: list[SupportingPlayerResponse]
     best_supporting_player_rank: int
     attributes_within_iqr_count: int
     why_recommended: str
@@ -72,6 +80,19 @@ class RecommendationPreferencesResponse(BaseModel):
     bpm: PreferenceBoundsResponse | None
 
 
+class TargetModCombinationResponse(BaseModel):
+    mods: list[str]
+    count: int
+    share: float
+
+
+class TargetRecommendationProfileResponse(BaseModel):
+    primary_mods: list[str]
+    mod_distribution: list[TargetModCombinationResponse]
+    performance_points: PreferenceBoundsResponse | None
+    actual_play_star_rating: PreferenceBoundsResponse | None
+
+
 class RecommendationsResponse(BaseModel):
     target_username: str
     target_user_id: int
@@ -79,6 +100,7 @@ class RecommendationsResponse(BaseModel):
     context: RecommendationContextResponse
     requests: RecommendationRequestsResponse
     preferences: RecommendationPreferencesResponse
+    target_profile: TargetRecommendationProfileResponse
 
 
 def _to_response(result: RecommendationResult) -> RecommendationsResponse:

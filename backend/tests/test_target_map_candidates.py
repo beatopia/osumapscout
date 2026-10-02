@@ -173,7 +173,7 @@ class BeatmapDifficultyAttributesClientTests(unittest.IsolatedAsyncioTestCase):
         )
         http_client = AsyncMock()
         http_client.post.return_value = httpx.Response(
-            200, json={"attributes": {"difficulty_rating": 6.25}}
+            200, json={"attributes": {"star_rating": 6.25}}
         )
         context = MagicMock()
         context.__aenter__ = AsyncMock(return_value=http_client)
@@ -188,6 +188,27 @@ class BeatmapDifficultyAttributesClientTests(unittest.IsolatedAsyncioTestCase):
             json={"mods": ["HD", "HR"], "ruleset": "osu"},
             headers={"Authorization": "Bearer token"},
         )
+
+    async def test_serializes_exact_nm_speed_and_combination_acronyms(self) -> None:
+        for mods in ((), ("HD", "HR"), ("HD", "DT"), ("HD", "HR", "DT"), ("NC",)):
+            with self.subTest(mods=mods):
+                client = OsuApiClient(OsuCredentials("id", "secret"))
+                client.request_access_token = AsyncMock(
+                    return_value=OsuAccessToken("token", "Bearer", 100)
+                )
+                http_client = AsyncMock()
+                http_client.post.return_value = httpx.Response(
+                    200, json={"attributes": {"star_rating": 6.25}}
+                )
+                context = MagicMock()
+                context.__aenter__ = AsyncMock(return_value=http_client)
+                context.__aexit__ = AsyncMock(return_value=None)
+                with patch("backend.app.osu.client.httpx.AsyncClient", return_value=context):
+                    await client.get_beatmap_difficulty_attributes(123, mods)
+                self.assertEqual(
+                    http_client.post.await_args.kwargs["json"],
+                    {"mods": list(mods), "ruleset": "osu"},
+                )
 
 
 class TargetMapCandidateExperimentTests(unittest.IsolatedAsyncioTestCase):

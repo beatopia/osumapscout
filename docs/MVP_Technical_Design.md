@@ -38,11 +38,11 @@ The frontend is expected to accept a username, call the application backend, and
 
 PostgreSQL did not block learning from the first live vertical flow. T0011 provides the connection foundation, T0012 adds typed ORM models and migrations, and T0013 transactionally replaces one user's complete current state. T0014 computes descriptive statistics from those rows, and T0015 exposes the same reusable result through a thin read-only HTTP route. Statistics are neither fetched from osu! nor persisted.
 
-The frontend now keeps three explicit flows behind one username input: live top-play search reaches osu! through FastAPI, persisted analysis reaches PostgreSQL through FastAPI, and recommendation generation refreshes the target before running the production hybrid recommendation service. Each action remains explicit.
+The frontend now presents one player Search action. It requests recommendations first, which refreshes and persists the target's top 100, and then makes a database-only analysis request against that refreshed state. Top plays remain collapsed and are fetched from osu! only when opened. The two application requests avoid duplicate upstream target work while retaining independent section failures.
 
 ## Implemented recommendation flow
 
-T0044 exposes the validated bounded hybrid recommendation architecture through `GET /api/recommendations/{username}`, T0045 presents its fixed 20-map result, and T0046 adds display-only enrichment. Suggested mods come from eligible support plays; adjusted stars are fetched only for returned modded maps with bounded concurrency and may safely be absent after an individual transient failure. Ranking controls, recommendation persistence, caching, background work, and historical results remain deferred.
+T0044 exposes the validated bounded hybrid recommendation architecture through `GET /api/recommendations/{username}`, T0045 presents its fixed 20-map result, and T0046 adds display-only enrichment. T0047 adds eligible supporting-user summaries and unifies the frontend flow. T0048 corrects Suggested Mods to use the target's dominant exact top-play combination; supporter mods remain factual evidence only. Adjusted stars are fetched for returned maps under those target mods with bounded concurrency. The target top-play response contains base beatmap difficulty rather than mod-adjusted played difficulty, so actual-play star quartiles remain unavailable rather than adding up to 100 requests or comparing incompatible values. Ranking controls, recommendation persistence, caching, background work, and historical results remain deferred.
 
 ## MVP boundaries
 

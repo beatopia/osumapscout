@@ -94,6 +94,10 @@ These are candidate signals to test, not implemented or finalized algorithms:
 
 Explanation evidence should initially be produced from the same raw relationships used for ranking. A separate explanation table is not justified yet.
 
+Target-oriented recommendation mods and supporter mods are distinct. Supporter mods describe what another player used on one candidate map. The production MVP's Suggested Mods use the target's most frequent exact normalized top-play combination, with lexical tie-breaking, and returned-map difficulty attributes are requested under that same target combination. The normalized top-play beatmap difficulty remains a base value; it is not treated as actual-play mod-adjusted difficulty.
+
+The osu! difficulty-attributes request sends exact acronym arrays and reads `attributes.star_rating`. T0048 verified NM, HDHR, HDDT, and HDHRDT against one live beatmap. NC remains its own upstream acronym rather than being silently rewritten to DT.
+
 ## Persist versus compute
 
 ### Persist initially

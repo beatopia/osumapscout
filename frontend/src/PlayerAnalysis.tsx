@@ -1,3 +1,5 @@
+import type { RecommendationPreferences, TargetRecommendationProfile } from "./RecommendationList";
+
 export interface ModCombinationCount {
   mods: string[];
   count: number;
@@ -82,38 +84,41 @@ export function isPlayerAnalysisResponse(
   );
 }
 
-function formatNumber(value: number | null, decimals = 2): string {
-  return value === null ? "Unavailable" : value.toFixed(decimals);
-}
-
 interface PlayerAnalysisProps {
   analysis: PlayerAnalysisResponse;
+  recommendationProfile: TargetRecommendationProfile | null;
+  preferences: RecommendationPreferences | null;
 }
 
-function PlayerAnalysis({ analysis }: PlayerAnalysisProps) {
+function formatRange(first: number, third: number, suffix = ""): string {
+  return `${first.toFixed(2)}–${third.toFixed(2)}${suffix}`;
+}
+
+function PlayerAnalysis({ analysis, recommendationProfile, preferences }: PlayerAnalysisProps) {
+  const primaryMods = recommendationProfile
+    ? recommendationProfile.primary_mods.join("") || "NM"
+    : "Unavailable";
   const statistics = [
-    { label: "Top plays", value: analysis.top_play_count.toString() },
-    { label: "Average PP", value: formatNumber(analysis.average_pp) },
-    {
-      label: "Average accuracy",
-      value:
-        analysis.average_accuracy === null
-          ? "Unavailable"
-          : `${(analysis.average_accuracy * 100).toFixed(2)}%`,
-    },
-    {
-      label: "Average stars",
-      value: formatNumber(analysis.average_star_rating),
-    },
-    { label: "Average AR", value: formatNumber(analysis.average_approach_rate) },
-    { label: "Average BPM", value: formatNumber(analysis.average_bpm, 1) },
+    { label: "Primary mods", value: primaryMods },
+    { label: "Typical PP", value: recommendationProfile?.performance_points
+      ? formatRange(recommendationProfile.performance_points.first_quartile, recommendationProfile.performance_points.third_quartile)
+      : "Unavailable" },
+    { label: "Typical stars", value: recommendationProfile?.actual_play_star_rating
+      ? formatRange(recommendationProfile.actual_play_star_rating.first_quartile, recommendationProfile.actual_play_star_rating.third_quartile, "★")
+      : "Unavailable" },
+    { label: "Typical base AR", value: preferences?.approach_rate
+      ? formatRange(preferences.approach_rate.first_quartile, preferences.approach_rate.third_quartile)
+      : "Unavailable" },
+    { label: "Typical base BPM", value: preferences?.bpm
+      ? formatRange(preferences.bpm.first_quartile, preferences.bpm.third_quartile)
+      : "Unavailable" },
   ];
 
   return (
     <section className="analysis-panel" aria-labelledby="analysis-heading">
       <div className="analysis-heading-row">
         <div>
-          <p className="eyebrow">Playstyle analysis</p>
+          <p className="eyebrow">Player overview</p>
           <h2 id="analysis-heading">{analysis.username}</h2>
         </div>
         <span className="user-id">User ID {analysis.user_id}</span>

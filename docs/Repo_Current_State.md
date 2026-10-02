@@ -164,11 +164,19 @@ This file records what exists now, not what the project intends to build later.
 - Recommendation cards derive cover artwork from retained beatmapset IDs, link directly to osu! beatmaps, and show deterministic suggested mods from the eligible production support evidence. Top-15 discovery players cannot alter mod evidence for maps already discovered by the top ten.
 - Modded returned maps may make one bounded difficulty-attributes request each (maximum concurrency five); NM reuses its base star rating. Individual non-authentication enrichment failures return null adjusted stars without removing or reordering maps, while authentication failure remains fatal.
 - The recommendation response now includes beatmapset/cover data, suggested mods, optional adjusted stars, target star/AR/BPM quartiles, and beatmap-attribute request accounting. Attribute colors and labels are UI explanations only and do not affect ranking.
+- T0047 presents one Search action that loads recommendations and then database-only Playstyle Analysis for a unified player view. Top plays remain collapsed and lazy-loaded.
+- Recommendation responses expose deterministically ordered supporting-player summaries from the exact eligible hybrid evidence. The UI shows them in collapsed disclosures and uses a single-column row layout with right-side cover art on desktop.
+- A normal Search makes two frontend application requests. Only recommendation generation performs osu! work; the subsequent analysis request reads the target state just persisted by that generation.
+- T0048 removes Top Plays from the normal player page, renames the user-facing analysis section to Player Overview, and uses one `Map Recommendations for {username}` heading.
+- Suggested Mods now come from the target's dominant exact top-100 mod combination. Supporter disclosures continue to show each supporter's actual mods, and adjusted recommendation stars use the target combination at the existing returned-map request budget.
+- Live verification found that the difficulty-attributes endpoint returns `attributes.star_rating`; the client now parses that authoritative field. Exact acronym-array requests for NM, HDHR, HDDT, and HDHRDT produced distinct expected live values.
+- Target PP quartiles and exact mod shares are derived without additional requests. Actual-play mod-adjusted target star quartiles remain unavailable because the normalized top-play response retains base beatmap difficulty; the UI does not color adjusted recommendation stars against that incompatible base distribution.
+- A developer diagnostic reports selected similar players' independent overlap, dominant mods, target-primary-mod share, and PP quartiles without changing similar-player selection or ranking.
 - No crawler or dataset import behavior exists.
 
 ## Ticket position
 
-- Completed through: T0046 — Recommendation UX and map enrichment
-- Expected next ticket: not yet selected; review the enriched recommendation flow before defining T0047
+- Completed through: T0048 — Target-oriented recommendation mod semantics and peer diagnostic
+- Expected next ticket: not yet selected; use the T0048 diagnostic before defining T0049
 
 Future tickets must update this document when the repository's implemented state changes.

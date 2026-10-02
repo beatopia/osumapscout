@@ -49,9 +49,11 @@ This is a rough, incremental roadmap. Ticket scope and ordering may change when 
 | T0043 | Supporter top-play-position prevalence analysis | Complete |
 | T0044 | Production recommendation service | Complete |
 | T0045 | Recommendation UI | Complete |
-| T0046 | Recommendation UX and map enrichment | Current / complete |
+| T0046 | Recommendation UX and map enrichment | Complete |
+| T0047 | Unified player view and recommendation support details | Complete |
+| T0048 | Target-oriented recommendation mod semantics and peer diagnostic | Current / complete |
 
-No detailed tickets beyond T0046 are defined yet. T0047 must be selected after reviewing the enriched recommendation flow.
+No detailed tickets beyond T0048 are defined yet. T0049 must be selected after reviewing the mod/PP compatibility diagnostic.
 
 T0040's 25 new live runs produced 13 discovery-only held-out positives: 7 improved, 4 worsened, and 2 were unchanged under star-only tie-breaking. No positive crossed a measured recall cutoff, so the experimental order remains unadopted.
 
@@ -66,3 +68,7 @@ T0044 freezes the experimentally supported hybrid policy as an application servi
 T0045 connects the existing shared username flow to the production recommendation endpoint. It displays a bounded 20-map result with map attributes, support, deterministic explanations, responsive loading/empty/error states, and no ranking controls or experimental terminology.
 
 T0046 reorganizes the player page around recommendations, adds collapsible top plays and playstyle wording, and enriches returned maps with covers, links, deterministic suggested mods, optional mod-adjusted star ratings, and target-IQR comparison labels. Enrichment is display-only and does not change recommendation membership or order.
+
+T0047 replaces separate player actions with one Search flow that generates recommendations and then reads the freshly persisted analysis. Recommendation rows expose the exact eligible supporting users, similarity ranks, and map-specific mods without extra osu! requests or ranking changes.
+
+T0048 separates supporter mods from target-oriented Suggested Mods. Suggestions and returned-map difficulty enrichment use the target's dominant exact top-play combination, while supporter disclosures retain factual supporter mods. It also adds descriptive similar-player mod/PP diagnostics without changing selection or ranking.

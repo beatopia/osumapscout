@@ -24,6 +24,7 @@ from backend.app.recommendation.preference_evidence import (
     TargetPreferenceProfile,
     annotate_candidate_evidence,
     build_target_preference_profile,
+    calculate_numeric_summary,
 )
 from backend.app.recommendation.preference_ranking import (
     PreferenceRankedCandidate,
@@ -51,6 +52,14 @@ class RefreshedTarget:
 
 
 @dataclass(frozen=True)
+class SupportingPlayer:
+    user_id: int
+    username: str | None
+    similarity_rank: int
+    mods: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class Recommendation:
     rank: int
     beatmap_id: int
@@ -65,6 +74,7 @@ class Recommendation:
     bpm: float | None
     suggested_mods: tuple[str, ...]
     support_count: int
+    supporting_players: tuple[SupportingPlayer, ...]
     best_supporting_player_rank: int
     attributes_within_iqr_count: int
     why_recommended: str
@@ -94,6 +104,31 @@ class RecommendationPreferences:
 
 
 @dataclass(frozen=True)
+class TargetModCombination:
+    mods: tuple[str, ...]
+    count: int
+    share: float
+
+
+@dataclass(frozen=True)
+class TargetRecommendationProfile:
+    primary_mods: tuple[str, ...]
+    mod_distribution: tuple[TargetModCombination, ...]
+    performance_points: PreferenceBounds | None
+    actual_play_star_rating: PreferenceBounds | None
+
+
+@dataclass(frozen=True)
+class SimilarPlayerDiagnostic:
+    similarity_rank: int
+    username: str | None
+    independent_overlap: int
+    dominant_mods: tuple[str, ...]
+    target_primary_mod_share: float
+    performance_points: PreferenceBounds | None
+
+
+@dataclass(frozen=True)
 class RecommendationContext:
     discovered_candidate_users: int
     hydrated_candidate_users: int
@@ -111,6 +146,8 @@ class RecommendationResult:
     context: RecommendationContext
     requests: RecommendationRequestAccounting
     preferences: RecommendationPreferences
+    target_profile: TargetRecommendationProfile
+    similar_players: tuple[SimilarPlayerDiagnostic, ...]
 
 
 RefreshFunction = Callable[[str, OsuApiClient], Awaitable[RefreshedTarget]]
@@ -145,6 +182,7 @@ async def generate_recommendations(
     client = osu_client or OsuApiClient(OsuCredentials.from_environment())
     target = await refresh_function(requested_username, client)
     profile = _preference_profile(target)
+    target_profile = _target_recommendation_profile(target)
     ranking = await ranking_function(
         target.profile.username,
         seed_count=SEED_COUNT,
@@ -155,10 +193,14 @@ async def generate_recommendations(
     ordered = build_hybrid_ranking(ranking, profile)
     returned = ordered[:limit]
     adjusted_stars, attribute_requests = await enrich_adjusted_stars(
-        returned, client
+        returned, target_profile.primary_mods, client
     )
     recommendations = tuple(
-        _to_recommendation(item, adjusted_stars.get(_beatmap_id(item)))
+        _to_recommendation(
+            item,
+            adjusted_stars.get(_beatmap_id(item)),
+            target_profile.primary_mods,
+        )
         for item in returned
     )
     return RecommendationResult(
@@ -180,7 +222,15 @@ async def generate_recommendations(
             candidate_top_play_requests=ranking.top_play_requests_made,
             beatmap_attribute_requests=attribute_requests,
         ),
-        preferences=_preferences(profile),
+        preferences=RecommendationPreferences(
+            None,
+            _preferences(profile).approach_rate,
+            _preferences(profile).bpm,
+        ),
+        target_profile=target_profile,
+        similar_players=_similar_player_diagnostics(
+            ranking, target_profile.primary_mods
+        ),
     )
 
 
@@ -231,6 +281,7 @@ def _preference_profile(target: RefreshedTarget) -> TargetPreferenceProfile:
 
 async def enrich_adjusted_stars(
     candidates: Sequence[PreferenceRankedCandidate],
+    target_mods: tuple[str, ...],
     client: OsuApiClient,
 ) -> tuple[dict[int, float | None], int]:
     """Enrich only returned modded maps, retaining failures as missing display data."""
@@ -249,15 +300,12 @@ async def enrich_adjusted_stars(
                 return None
             return result.star_rating
 
-    suggested_by_id: dict[int, tuple[str, ...]] = {}
     base_by_id: dict[int, float | None] = {}
     for item in candidates:
         candidate = item.preference_evidence.collaborative.candidate_map
-        mods = suggested_mod_combination(candidate.supports)
-        suggested_by_id[candidate.beatmap_id] = mods
         base_by_id[candidate.beatmap_id] = candidate.star_rating
-        if mods:
-            key = (candidate.beatmap_id, mods)
+        if target_mods:
+            key = (candidate.beatmap_id, target_mods)
             if key not in requests:
                 requests[key] = asyncio.create_task(fetch(*key))
 
@@ -266,10 +314,10 @@ async def enrich_adjusted_stars(
     adjusted = {
         beatmap_id: (
             base_by_id[beatmap_id]
-            if not mods
-            else values.get((beatmap_id, mods))
+            if not target_mods
+            else values.get((beatmap_id, target_mods))
         )
-        for beatmap_id, mods in suggested_by_id.items()
+        for beatmap_id in base_by_id
     }
     return adjusted, len(requests)
 
@@ -294,9 +342,13 @@ def suggested_mod_combination(
 def _to_recommendation(
     item: PreferenceRankedCandidate,
     adjusted_star_rating: float | None,
+    target_mods: tuple[str, ...],
 ) -> Recommendation:
     evidence = item.preference_evidence
     candidate = evidence.collaborative.candidate_map
+    supporting_players = _supporting_players(candidate.supports)
+    if len(supporting_players) != evidence.collaborative.support_count:
+        raise ValueError("Recommendation support evidence contains duplicate users.")
     return Recommendation(
         rank=item.preference_rank,
         beatmap_id=candidate.beatmap_id,
@@ -313,13 +365,37 @@ def _to_recommendation(
         adjusted_star_rating=adjusted_star_rating,
         approach_rate=candidate.approach_rate,
         bpm=candidate.bpm,
-        suggested_mods=suggested_mod_combination(candidate.supports),
+        suggested_mods=target_mods,
         support_count=evidence.collaborative.support_count,
+        supporting_players=supporting_players,
         best_supporting_player_rank=(
             evidence.collaborative.best_supporting_player_rank
         ),
         attributes_within_iqr_count=evidence.attributes_within_iqr_count,
         why_recommended=_explanation(evidence),
+    )
+
+
+def _supporting_players(
+    supports: Sequence[CandidateMapSupport],
+) -> tuple[SupportingPlayer, ...]:
+    """Expose the exact eligible support set in stable similarity order."""
+    by_user: dict[int, CandidateMapSupport] = {}
+    for support in supports:
+        current = by_user.get(support.user_id)
+        if current is None or support.similar_player_rank < current.similar_player_rank:
+            by_user[support.user_id] = support
+    return tuple(
+        SupportingPlayer(
+            user_id=support.user_id,
+            username=support.username,
+            similarity_rank=support.similar_player_rank,
+            mods=support.mods,
+        )
+        for support in sorted(
+            by_user.values(),
+            key=lambda item: (item.similar_player_rank, item.user_id),
+        )
     )
 
 
@@ -330,9 +406,8 @@ def _explanation(evidence: CandidatePreferenceEvidence) -> str:
     matching = [
         label
         for label, item in (
-            ("star rating", evidence.star_rating),
-            ("AR", evidence.approach_rate),
-            ("BPM", evidence.bpm),
+            ("base AR", evidence.approach_rate),
+            ("base BPM", evidence.bpm),
         )
         if item.within_target_iqr is True
     ]
@@ -365,6 +440,56 @@ def _preferences(profile: TargetPreferenceProfile) -> RecommendationPreferences:
     return RecommendationPreferences(
         bounds(profile.star_rating), bounds(profile.approach_rate), bounds(profile.bpm)
     )
+
+
+def _target_recommendation_profile(
+    target: RefreshedTarget,
+) -> TargetRecommendationProfile:
+    counts = Counter(play.mods for play in target.top_plays)
+    total = len(target.top_plays)
+    distribution = tuple(
+        TargetModCombination(mods, count, count / total if total else 0.0)
+        for mods, count in sorted(counts.items(), key=lambda item: (-item[1], item[0]))
+    )
+    primary = distribution[0].mods if distribution else ()
+    pp = calculate_numeric_summary(play.performance_points for play in target.top_plays)
+    return TargetRecommendationProfile(
+        primary_mods=primary,
+        mod_distribution=distribution,
+        performance_points=(
+            None if pp is None else PreferenceBounds(pp.first_quartile, pp.median, pp.third_quartile)
+        ),
+        # The top-play response exposes base beatmap difficulty, not played-mod difficulty.
+        # Avoid up to 100 extra requests and leave the adjusted distribution unavailable.
+        actual_play_star_rating=None,
+    )
+
+
+def _similar_player_diagnostics(
+    ranking: RankedCandidateExperimentResult,
+    target_mods: tuple[str, ...],
+) -> tuple[SimilarPlayerDiagnostic, ...]:
+    diagnostics: list[SimilarPlayerDiagnostic] = []
+    for rank, player in enumerate(ranking.candidates[:RANKING_PLAYER_LIMIT], start=1):
+        counts = Counter(play.mods for play in player.hydrated_top_plays)
+        dominant = min(counts, key=lambda mods: (-counts[mods], mods)) if counts else ()
+        total = len(player.hydrated_top_plays)
+        pp = calculate_numeric_summary(
+            play.performance_points for play in player.hydrated_top_plays
+        )
+        diagnostics.append(
+            SimilarPlayerDiagnostic(
+                similarity_rank=rank,
+                username=player.username,
+                independent_overlap=player.seed_excluded_shared_beatmap_count,
+                dominant_mods=dominant,
+                target_primary_mod_share=(counts[target_mods] / total if total else 0.0),
+                performance_points=(
+                    None if pp is None else PreferenceBounds(pp.first_quartile, pp.median, pp.third_quartile)
+                ),
+            )
+        )
+    return tuple(diagnostics)
 
 
 def _validate_limit(limit: int) -> None:

@@ -1,4 +1,4 @@
-import { CSSProperties } from "react";
+import { useState } from "react";
 
 import {
   compareToPreference,
@@ -20,9 +20,17 @@ export interface Recommendation {
   bpm: number | null;
   suggested_mods: string[];
   support_count: number;
+  supporting_players: SupportingPlayer[];
   best_supporting_player_rank: number;
   attributes_within_iqr_count: number;
   why_recommended: string;
+}
+
+export interface SupportingPlayer {
+  user_id: number;
+  username: string | null;
+  similarity_rank: number;
+  mods: string[];
 }
 
 export interface RecommendationContext {
@@ -48,6 +56,19 @@ export interface RecommendationPreferences {
   bpm: PreferenceBounds | null;
 }
 
+export interface TargetModCombination {
+  mods: string[];
+  count: number;
+  share: number;
+}
+
+export interface TargetRecommendationProfile {
+  primary_mods: string[];
+  mod_distribution: TargetModCombination[];
+  performance_points: PreferenceBounds | null;
+  actual_play_star_rating: PreferenceBounds | null;
+}
+
 export interface RecommendationsResponse {
   target_username: string;
   target_user_id: number;
@@ -55,6 +76,7 @@ export interface RecommendationsResponse {
   context: RecommendationContext;
   requests: RecommendationRequests;
   preferences: RecommendationPreferences;
+  target_profile: TargetRecommendationProfile;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -99,8 +121,20 @@ function isRecommendation(value: unknown): value is Recommendation {
     isNullableNumber(value.bpm) &&
     Array.isArray(value.suggested_mods) &&
     value.suggested_mods.every((mod) => typeof mod === "string") &&
+    Array.isArray(value.supporting_players) &&
+    value.supporting_players.every(isSupportingPlayer) &&
+    value.supporting_players.length === value.support_count &&
     typeof value.why_recommended === "string"
   );
+}
+
+function isSupportingPlayer(value: unknown): value is SupportingPlayer {
+  return isRecord(value) &&
+    typeof value.user_id === "number" &&
+    isNullableString(value.username) &&
+    typeof value.similarity_rank === "number" &&
+    Array.isArray(value.mods) &&
+    value.mods.every((mod) => typeof mod === "string");
 }
 
 export function isRecommendationsResponse(
@@ -110,7 +144,8 @@ export function isRecommendationsResponse(
     !isRecord(value) ||
     !isRecord(value.context) ||
     !isRecord(value.requests) ||
-    !isRecord(value.preferences)
+    !isRecord(value.preferences) ||
+    !isRecord(value.target_profile)
   ) {
     return false;
   }
@@ -137,7 +172,21 @@ export function isRecommendationsResponse(
     && isNullableBounds(value.preferences.star_rating)
     && isNullableBounds(value.preferences.approach_rate)
     && isNullableBounds(value.preferences.bpm)
+    && Array.isArray(value.target_profile.primary_mods)
+    && value.target_profile.primary_mods.every((mod) => typeof mod === "string")
+    && Array.isArray(value.target_profile.mod_distribution)
+    && value.target_profile.mod_distribution.every(isTargetModCombination)
+    && isNullableBounds(value.target_profile.performance_points)
+    && isNullableBounds(value.target_profile.actual_play_star_rating)
   );
+}
+
+function isTargetModCombination(value: unknown): value is TargetModCombination {
+  return isRecord(value) &&
+    Array.isArray(value.mods) &&
+    value.mods.every((mod) => typeof mod === "string") &&
+    typeof value.count === "number" &&
+    typeof value.share === "number";
 }
 
 function isNullableBounds(value: unknown): value is PreferenceBounds | null {
@@ -160,9 +209,8 @@ function RecommendationList({ result }: RecommendationListProps) {
     <section className="recommendations" aria-labelledby="recommendations-heading">
       <div className="recommendations-heading-row">
         <div>
-          <p className="eyebrow">Map recommendations</p>
           <h2 id="recommendations-heading">
-            Recommendations for {result.target_username}
+            Map Recommendations for {result.target_username}
           </h2>
         </div>
         <p>{result.recommendations.length} maps found</p>
@@ -193,12 +241,8 @@ function RecommendationList({ result }: RecommendationListProps) {
           const mods = recommendation.suggested_mods.length > 0
             ? recommendation.suggested_mods.join("")
             : "NM";
-          const cardStyle = recommendation.cover_url
-            ? ({ "--cover-image": `url("${recommendation.cover_url}")` } as CSSProperties)
-            : undefined;
-
           return (
-            <li className="recommendation-card" key={recommendation.beatmap_id} style={cardStyle}>
+            <li className="recommendation-card" key={recommendation.beatmap_id}>
               <span className="recommendation-rank">#{recommendation.rank}</span>
               <div className="recommendation-content">
                 <h3>
@@ -220,25 +264,56 @@ function RecommendationList({ result }: RecommendationListProps) {
                       <ComparedStat label={`${displayedStar.toFixed(2)}★`} value={displayedStar} bounds={result.preferences.star_rating} />
                     )}
                     {recommendation.approach_rate !== null && (
-                      <ComparedStat label={`AR ${recommendation.approach_rate}`} value={recommendation.approach_rate} bounds={result.preferences.approach_rate} />
+                      <ComparedStat label={`Base AR ${recommendation.approach_rate}`} value={recommendation.approach_rate} bounds={result.preferences.approach_rate} />
                     )}
                     {recommendation.bpm !== null && (
-                      <ComparedStat label={`${recommendation.bpm} BPM`} value={recommendation.bpm} bounds={result.preferences.bpm} />
+                      <ComparedStat label={`Base ${recommendation.bpm} BPM`} value={recommendation.bpm} bounds={result.preferences.bpm} />
                     )}
                   </div>
                 )}
                 <p className="recommendation-reason">
                   {recommendation.why_recommended}
                 </p>
-                <p className="support-count">
-                  {recommendation.support_count} similar {recommendation.support_count === 1 ? "player" : "players"}
-                </p>
+                <SupportDisclosure recommendation={recommendation} />
               </div>
+              {recommendation.cover_url && (
+                <img className="recommendation-cover" src={recommendation.cover_url} alt="" loading="lazy" />
+              )}
             </li>
           );
         })}
       </ol>
     </section>
+  );
+}
+
+function SupportDisclosure({ recommendation }: { recommendation: Recommendation }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const panelId = `supporters-${recommendation.beatmap_id}`;
+  const noun = recommendation.support_count === 1 ? "player" : "players";
+  return (
+    <div className="support-disclosure">
+      <button type="button" aria-expanded={isOpen} aria-controls={panelId} onClick={() => setIsOpen((open) => !open)}>
+        Recommended by {recommendation.support_count} similar {noun}
+        <span aria-hidden="true"> {isOpen ? "▾" : "▸"}</span>
+      </button>
+      {isOpen && (
+        <ul id={panelId} className="supporting-player-list">
+          {recommendation.supporting_players.map((player) => {
+            const mods = player.mods.length > 0 ? player.mods.join("") : "NM";
+            return (
+              <li key={player.user_id}>
+                <span>#{player.similarity_rank} similar</span>
+                <a href={`https://osu.ppy.sh/users/${player.user_id}`} target="_blank" rel="noopener noreferrer">
+                  {player.username ?? `User ${player.user_id}`}
+                </a>
+                <span className="mods">{mods}</span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
   );
 }
 
