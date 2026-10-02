@@ -1,6 +1,6 @@
 """Offline held-out top-play recovery experiment with strict anti-leakage."""
 
-from collections.abc import Callable, Sequence
+from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
 from statistics import fmean, median
 from typing import Literal
@@ -221,6 +221,7 @@ class HoldoutRecoveryExperimentResult:
     ranking_result: RankedCandidateExperimentResult | None = None
     target_preference_profile: TargetPreferenceProfile | None = None
     training_plays: tuple[TargetPlayEvidence, ...] = ()
+    candidate_map_count: int = 0
 
 
 @dataclass(frozen=True)
@@ -497,6 +498,9 @@ async def evaluate_holdout_recovery(
     similar_player_limit: int = 10,
     session_factory: Callable[[], Session] | sessionmaker[Session] | None = None,
     osu_client: OsuApiClient | None = None,
+    acquisition_function: Callable[
+        [int, str, Sequence[TargetMapSeed], OsuApiClient], Awaitable[object]
+    ] = acquire_target_map_candidate_pool,
 ) -> HoldoutRecoveryExperimentResult:
     requested_username = username.strip()
     if not requested_username:
@@ -525,7 +529,7 @@ async def evaluate_holdout_recovery(
         seed_count,
     )
     client = osu_client or OsuApiClient(OsuCredentials.from_environment())
-    pool = await acquire_target_map_candidate_pool(
+    pool = await acquisition_function(
         target.user_id,
         target.username,
         training_seeds,
@@ -658,6 +662,7 @@ async def evaluate_holdout_recovery(
         ranking_result=ranking_result,
         target_preference_profile=training_profile,
         training_plays=split.training,
+        candidate_map_count=len(preference),
     )
 
 

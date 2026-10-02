@@ -96,6 +96,8 @@ class OsuRankingUser:
 
     user_id: int
     username: str | None
+    global_rank: int | None = None
+    performance_points: float | None = None
 
 
 @dataclass(frozen=True)
@@ -352,6 +354,7 @@ class OsuApiClient:
     async def get_beatmap_leaderboard_users(
         self,
         beatmap_id: int,
+        mods: tuple[str, ...] | None = None,
     ) -> tuple[OsuLeaderboardUser, ...]:
         """Fetch user identities from one osu!standard beatmap leaderboard."""
         if (
@@ -361,13 +364,18 @@ class OsuApiClient:
         ):
             raise ValueError("Beatmap ID must be a positive integer.")
 
+        if mods is not None and any(
+            not isinstance(mod, str) or not mod for mod in mods
+        ):
+            raise ValueError("Mods must contain non-empty acronyms.")
         access_token = await self._get_access_token()
         scores_url = f"{OSU_API_BASE_URL}/beatmaps/{beatmap_id}/scores"
+        params = self._beatmap_score_params(mods)
         try:
             async with httpx.AsyncClient(timeout=10.0) as http_client:
                 response = await http_client.get(
                     scores_url,
-                    params={"mode": "osu"},
+                    params=params,
                     headers={
                         "Authorization": f"Bearer {access_token.access_token}",
                     },
@@ -389,6 +397,17 @@ class OsuApiClient:
             )
 
         return self._parse_beatmap_leaderboard(response)
+
+    @staticmethod
+    def _beatmap_score_params(
+        mods: tuple[str, ...] | None,
+    ) -> dict[str, str] | list[tuple[str, str]]:
+        if mods is None:
+            return {"mode": "osu"}
+        params = [("mode", "osu")]
+        requested_mods = mods or ("NM",)
+        params.extend(("mods[]", mod) for mod in requested_mods)
+        return params
 
     async def get_beatmap_difficulty_attributes(
         self,
@@ -510,17 +529,38 @@ class OsuApiClient:
                 )
             user_id = raw_user.get("id")
             username = raw_user.get("username")
+            global_rank = raw_entry.get("global_rank")
+            performance_points = raw_entry.get("pp")
             if (
                 isinstance(user_id, bool)
                 or not isinstance(user_id, int)
                 or user_id <= 0
                 or (username is not None and not isinstance(username, str))
+                or (
+                    global_rank is not None
+                    and (isinstance(global_rank, bool) or not isinstance(global_rank, int))
+                )
+                or (
+                    performance_points is not None
+                    and (
+                        isinstance(performance_points, bool)
+                        or not isinstance(performance_points, (int, float))
+                    )
+                )
             ):
                 raise OsuApiError(
                     "osu! returned an invalid performance-ranking entry at "
                     f"position {position}."
                 )
-            users.append(OsuRankingUser(user_id=user_id, username=username))
+            users.append(OsuRankingUser(
+                user_id=user_id,
+                username=username,
+                global_rank=global_rank,
+                performance_points=(
+                    float(performance_points)
+                    if performance_points is not None else None
+                ),
+            ))
 
         cursor = OsuApiClient._parse_ranking_cursor(raw_cursor)
         return OsuRankingPage(users=tuple(users), cursor=cursor)

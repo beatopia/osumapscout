@@ -100,6 +100,13 @@ The osu! difficulty-attributes request sends exact acronym arrays and reads `att
 
 T0049 defines diagnostic player compatibility from exact target-primary-mod share and nullable PP quartiles. PP-IQR overlap uses inclusive interval intersection, and median distance is an unweighted absolute difference. These remain experimental selection descriptors: the live evaluation did not justify changing production selection, and no compatibility score is persisted.
 
+T0050 uses those descriptors to compare transient acquisition sources. Requested
+mod filters are serialized as separate `mods[]` acronyms without NC/DT rewriting;
+NM is represented explicitly as `NM`. Profile global rank and total PP are distinct
+from score PP and do not reveal held-out map identities. The bounded ranking source
+uses at most three 50-entry pages. Live behavior exposed ranks only through roughly
+10,000, so it cannot provide a true performance neighborhood below that boundary.
+
 ## Persist versus compute
 
 ### Persist initially

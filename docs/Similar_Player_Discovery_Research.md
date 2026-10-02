@@ -204,6 +204,21 @@ Minimum success criteria:
 
 This proves bounded acquisition. A later ticket can decide whether to hydrate candidates and evaluate overlap.
 
+## T0050 follow-up evidence
+
+T0050 verified direct performance-ranking pages within the exposed top-10,000
+range. Requests beyond page 200 were clamped to the final page, so lower-ranked
+targets cannot receive a genuine nearby-rank sample from this endpoint. The bounded
+experiment uses pages 199–200 as the closest available boundary in that case and
+labels the limitation explicitly.
+
+Requested-mod leaderboards increased the mean number of hydrated users satisfying
+both at least 50% target-primary-mod share and target PP-IQR overlap from 2.13 to
+4.27 across 15 runs; the mixed view reached 6.60. This did not consistently improve
+early held-out recovery. Performance-ranking candidates were useful for elite
+targets but had weak or zero collaborative overlap for lower-ranked targets. No
+production acquisition change was made.
+
 ## Open questions
 
 - Can a small cursor budget reach a useful neighborhood around an arbitrary rank?
