@@ -172,11 +172,13 @@ This file records what exists now, not what the project intends to build later.
 - Live verification found that the difficulty-attributes endpoint returns `attributes.star_rating`; the client now parses that authoritative field. Exact acronym-array requests for NM, HDHR, HDDT, and HDHRDT produced distinct expected live values.
 - Target PP quartiles and exact mod shares are derived without additional requests. Actual-play mod-adjusted target star quartiles remain unavailable because the normalized top-play response retains base beatmap difficulty; the UI does not color adjusted recommendation stars against that incompatible base distribution.
 - A developer diagnostic reports selected similar players' independent overlap, dominant mods, target-primary-mod share, and PP quartiles without changing similar-player selection or ranking.
+- T0049 adds an offline, leakage-safe player-selection experiment over one shared 25-user hydration pass per target/split. It compares exactly baseline, mod-first, PP-first, and compatibility-first lexicographic views while reusing the production hybrid map architecture and map ranking.
+- Across 15 fixed live runs, baseline recovered 81/150 held-out observations; mod-first recovered 76, PP-first 74, and compatibility-first 73. Compatibility selection often increased mod/PP alignment but reduced independent map overlap, so production selection remains unchanged.
 - No crawler or dataset import behavior exists.
 
 ## Ticket position
 
-- Completed through: T0048 — Target-oriented recommendation mod semantics and peer diagnostic
-- Expected next ticket: not yet selected; use the T0048 diagnostic before defining T0049
+- Completed through: T0049 — Similar-player compatibility selection experiment
+- Expected next ticket: not yet selected; investigate acquisition/compatibility tradeoffs before defining T0050
 
 Future tickets must update this document when the repository's implemented state changes.

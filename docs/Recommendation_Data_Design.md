@@ -98,6 +98,8 @@ Target-oriented recommendation mods and supporter mods are distinct. Supporter m
 
 The osu! difficulty-attributes request sends exact acronym arrays and reads `attributes.star_rating`. T0048 verified NM, HDHR, HDDT, and HDHRDT against one live beatmap. NC remains its own upstream acronym rather than being silently rewritten to DT.
 
+T0049 defines diagnostic player compatibility from exact target-primary-mod share and nullable PP quartiles. PP-IQR overlap uses inclusive interval intersection, and median distance is an unweighted absolute difference. These remain experimental selection descriptors: the live evaluation did not justify changing production selection, and no compatibility score is persisted.
+
 ## Persist versus compute
 
 ### Persist initially

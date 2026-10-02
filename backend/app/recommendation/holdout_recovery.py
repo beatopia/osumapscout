@@ -71,6 +71,7 @@ class TargetPlayEvidence:
     approach_rate: float | None
     bpm: float | None
     mods: tuple[str, ...]
+    performance_points: float | None = None
 
 
 @dataclass(frozen=True)
@@ -219,6 +220,7 @@ class HoldoutRecoveryExperimentResult:
     acquisition_summary: AcquisitionDiagnosticSummary
     ranking_result: RankedCandidateExperimentResult | None = None
     target_preference_profile: TargetPreferenceProfile | None = None
+    training_plays: tuple[TargetPlayEvidence, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -655,6 +657,7 @@ async def evaluate_holdout_recovery(
         ),
         ranking_result=ranking_result,
         target_preference_profile=training_profile,
+        training_plays=split.training,
     )
 
 
@@ -682,6 +685,7 @@ def _load_target_evidence(
                 Beatmap.approach_rate,
                 Beatmap.bpm,
                 UserTopPlay.mods,
+                UserTopPlay.performance_points,
             )
             .join(Beatmap, Beatmap.beatmap_id == UserTopPlay.beatmap_id)
             .where(UserTopPlay.user_id == target.user_id)
@@ -700,6 +704,7 @@ def _load_target_evidence(
             row.approach_rate,
             row.bpm,
             tuple(row.mods),
+            row.performance_points,
         )
         for row in rows
     )

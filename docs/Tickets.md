@@ -51,9 +51,10 @@ This is a rough, incremental roadmap. Ticket scope and ordering may change when 
 | T0045 | Recommendation UI | Complete |
 | T0046 | Recommendation UX and map enrichment | Complete |
 | T0047 | Unified player view and recommendation support details | Complete |
-| T0048 | Target-oriented recommendation mod semantics and peer diagnostic | Current / complete |
+| T0048 | Target-oriented recommendation mod semantics and peer diagnostic | Complete |
+| T0049 | Similar-player compatibility selection experiment | Current / complete |
 
-No detailed tickets beyond T0048 are defined yet. T0049 must be selected after reviewing the mod/PP compatibility diagnostic.
+No detailed tickets beyond T0049 are defined yet. T0050 must be selected from the compatibility experiment evidence.
 
 T0040's 25 new live runs produced 13 discovery-only held-out positives: 7 improved, 4 worsened, and 2 were unchanged under star-only tie-breaking. No positive crossed a measured recall cutoff, so the experimental order remains unadopted.
 
@@ -72,3 +73,5 @@ T0046 reorganizes the player page around recommendations, adds collapsible top p
 T0047 replaces separate player actions with one Search flow that generates recommendations and then reads the freshly persisted analysis. Recommendation rows expose the exact eligible supporting users, similarity ranks, and map-specific mods without extra osu! requests or ranking changes.
 
 T0048 separates supporter mods from target-oriented Suggested Mods. Suggestions and returned-map difficulty enrichment use the target's dominant exact top-play combination, while supporter disclosures retain factual supporter mods. It also adds descriptive similar-player mod/PP diagnostics without changing selection or ranking.
+
+T0049 compares baseline, mod-first, PP-first, and compatibility-first selection over the same hydrated 25-user pool. Across 15 target/split runs, baseline recovered 81/150 held-out observations versus 76, 74, and 73 respectively; compatibility views improved descriptive compatibility but generally reduced collaborative overlap and recovery. No production view was adopted.
