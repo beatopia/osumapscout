@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { CSSProperties, useState } from "react";
 
 import {
   compareToPreference,
@@ -241,8 +241,11 @@ function RecommendationList({ result }: RecommendationListProps) {
           const mods = recommendation.suggested_mods.length > 0
             ? recommendation.suggested_mods.join("")
             : "NM";
+          const cardStyle = recommendation.cover_url
+            ? ({ backgroundImage: `url("${recommendation.cover_url}")` } satisfies CSSProperties)
+            : undefined;
           return (
-            <li className="recommendation-card" key={recommendation.beatmap_id}>
+            <li className="recommendation-card" key={recommendation.beatmap_id} style={cardStyle}>
               <span className="recommendation-rank">#{recommendation.rank}</span>
               <div className="recommendation-content">
                 <h3>
@@ -264,21 +267,15 @@ function RecommendationList({ result }: RecommendationListProps) {
                       <ComparedStat label={`${displayedStar.toFixed(2)}★`} value={displayedStar} bounds={result.preferences.star_rating} />
                     )}
                     {recommendation.approach_rate !== null && (
-                      <ComparedStat label={`Base AR ${recommendation.approach_rate}`} value={recommendation.approach_rate} bounds={result.preferences.approach_rate} />
+                      <ComparedStat label={`AR ${recommendation.approach_rate}`} value={recommendation.approach_rate} bounds={result.preferences.approach_rate} />
                     )}
                     {recommendation.bpm !== null && (
-                      <ComparedStat label={`Base ${recommendation.bpm} BPM`} value={recommendation.bpm} bounds={result.preferences.bpm} />
+                      <ComparedStat label={`${recommendation.bpm} BPM`} value={recommendation.bpm} bounds={result.preferences.bpm} />
                     )}
                   </div>
                 )}
-                <p className="recommendation-reason">
-                  {recommendation.why_recommended}
-                </p>
                 <SupportDisclosure recommendation={recommendation} />
               </div>
-              {recommendation.cover_url && (
-                <img className="recommendation-cover" src={recommendation.cover_url} alt="" loading="lazy" />
-              )}
             </li>
           );
         })}
@@ -291,14 +288,23 @@ function SupportDisclosure({ recommendation }: { recommendation: Recommendation 
   const [isOpen, setIsOpen] = useState(false);
   const panelId = `supporters-${recommendation.beatmap_id}`;
   const noun = recommendation.support_count === 1 ? "player" : "players";
+  const explanation = recommendation.why_recommended.replace(
+    /^Recommended by \d+ similar players?\.\s*/,
+    "",
+  );
   return (
     <div className="support-disclosure">
       <button type="button" aria-expanded={isOpen} aria-controls={panelId} onClick={() => setIsOpen((open) => !open)}>
-        Recommended by {recommendation.support_count} similar {noun}
+        Why this map?
         <span aria-hidden="true"> {isOpen ? "▾" : "▸"}</span>
       </button>
       {isOpen && (
-        <ul id={panelId} className="supporting-player-list">
+        <div id={panelId} className="support-panel">
+          {explanation && <p className="recommendation-reason">{explanation}</p>}
+          <p className="support-summary">
+            Supported by {recommendation.support_count} similar {noun}
+          </p>
+          <ul className="supporting-player-list">
           {recommendation.supporting_players.map((player) => {
             const mods = player.mods.length > 0 ? player.mods.join("") : "NM";
             return (
@@ -311,7 +317,8 @@ function SupportDisclosure({ recommendation }: { recommendation: Recommendation 
               </li>
             );
           })}
-        </ul>
+          </ul>
+        </div>
       )}
     </div>
   );

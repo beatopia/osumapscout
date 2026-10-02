@@ -37,7 +37,7 @@ export function compareToPreference(
 export const comparisonLabels: Record<ComparisonCategory, string> = {
   typical: "Within your usual range",
   outside: "Outside your usual range",
-  "unusually-high": "Higher than what you usually play",
-  "unusually-low": "Lower than what you usually play",
+  "unusually-high": "Higher than usual",
+  "unusually-low": "Lower than usual",
   neutral: "Comparison unavailable",
 };

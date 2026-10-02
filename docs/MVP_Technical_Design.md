@@ -44,6 +44,8 @@ The frontend now presents one player Search action. It requests recommendations 
 
 T0044 exposes the validated bounded hybrid recommendation architecture through `GET /api/recommendations/{username}`, T0045 presents its fixed 20-map result, and T0046 adds display-only enrichment. T0047 adds eligible supporting-user summaries and unifies the frontend flow. T0048 corrects Suggested Mods to use the target's dominant exact top-play combination; supporter mods remain factual evidence only. Adjusted stars are fetched for returned maps under those target mods with bounded concurrency. The target top-play response contains base beatmap difficulty rather than mod-adjusted played difficulty, so actual-play star quartiles remain unavailable rather than adding up to 100 requests or comparing incompatible values. Ranking controls, recommendation persistence, caching, background work, and historical results remain deferred.
 
+T0051 keeps that response and ranking unchanged while presenting cover art as a full-card background beneath layered dark overlays. The compact card keeps adjusted stars, base AR/BPM, target-oriented Suggested Mods, and one collapsed explanation/supporter disclosure. Missing artwork falls back to the card's dark base color without changing layout.
+
 ## MVP boundaries
 
 This design does not specify future HTTP endpoints beyond those already implemented, application-user authentication, recommendation algorithms, deployment architecture, caching, background processing, or production infrastructure. The implemented minimum persistence schema remains documented in `Recommendation_Data_Design.md` and its migration rather than expanded speculatively here.
