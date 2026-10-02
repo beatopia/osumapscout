@@ -224,6 +224,17 @@ increased compatible-user supply and overall coverage, but early recall generall
 declined. These measurements justify retaining source provenance for experiments;
 they do not justify persisting an allocation or changing production acquisition.
 
+### T0054 out-of-sample validation evidence
+
+T0054 evaluates only the previously selected 25/0 and 20/5 views on new splits
+3–7. Source-pool intersection, target-mod recurrence, target profile, compatibility,
+placement, and held-out transitions remain ephemeral diagnostics. The experiment adds
+no schema, persistent cache, recommendation row, or production field.
+
+The new runs recovered 148/250 held-out observations for baseline and 144/250 for
+20/5. Combined with the unchanged T0053 snapshot, totals were 229/400 and 228/400.
+This does not justify storing or adopting a fixed allocation policy.
+
 A smallest transparent recommendation experiment would:
 
 1. Fetch and persist the target user's ordered top 100.

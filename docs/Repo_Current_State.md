@@ -178,12 +178,14 @@ This file records what exists now, not what the project intends to build later.
 - T0052 presents Player Overview as one compact surface without nested stat or mod cards. It omits unavailable summary fields, rounds PP/BPM ranges to whole values and AR to one decimal, and displays playstyle counts as percentages. Estimated recommendation PP remains unimplemented: it requires `.osu` beatmap content, while official beatmapset downloads require `OAuth lazer` and the project currently uses public client credentials.
 - T0053 adds an offline allocation-mixture experiment without changing production acquisition or ranking. It acquires baseline and target-mod candidate pools once per target/split, constructs deterministic 25/0, 20/5, 15/10, and 10/15 views, and shares an in-memory hydration cache across them.
 - Across 15 live T0053 runs, recovered-anywhere totals were 81/150, 84/150, 85/150, and 91/150 as target-mod allocation increased. Mean Recall@10 was 10.0%, 8.0%, 7.3%, and 7.3%, while mean Recall@100 was 28.7%, 32.7%, 30.7%, and 28.0%. The coverage/placement tradeoff is target-dependent and no production allocation was adopted.
+- T0054 adds an offline two-view validator for the fixed 25/0 baseline and 20/5 hybrid. It retains source-level signals, recovery transitions, placement, overlap, and compatibility diagnostics while reusing T0053 allocation and the unchanged production downstream pipeline.
+- Across 25 new live runs, baseline recovered 148/250 observations and 20/5 recovered 144/250. Mean Recall@10/@30/@50 changed from 10.0%/19.6%/24.4% to 12.0%/21.6%/25.6%, while Recall@100 changed from 33.2% to 32.0%. Combined historical and new recovery was 229/400 versus 228/400. No production behavior changed.
 - Across 15 fixed live runs, baseline recovered 81/150 held-out observations; mod-first recovered 76, PP-first 74, and compatibility-first 73. Compatibility selection often increased mod/PP alignment but reduced independent map overlap, so production selection remains unchanged.
 - No crawler or dataset import behavior exists.
 
 ## Ticket position
 
-- Completed through: T0053 — Fixed acquisition-allocation mixture experiment
-- Expected next ticket: T0054, only after architectural review of the measured allocation tradeoffs
+- Completed through: T0054 — Expanded 20/5 hybrid acquisition validation
+- Expected next ticket: T0055, only if scoped to investigate a pre-allocation signal rather than adopt 20/5 directly
 
 Future tickets must update this document when the repository's implemented state changes.

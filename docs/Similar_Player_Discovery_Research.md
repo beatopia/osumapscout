@@ -234,6 +234,21 @@ and 28.0%. Results varied sharply by target: heavier target-mod allocation helpe
 coverage on mrekk. The experiment therefore shows a real coverage/placement tradeoff,
 not a generally superior fixed allocation. Production acquisition remains unchanged.
 
+## T0054 out-of-sample 20/5 validation
+
+T0054 froze the comparison before observing new data: existing 25/0 baseline versus
+20/5 only, across splits 3–7 for the same five targets. On 250 new held-out map
+observations, recovery-anywhere changed from 148 to 144. Mean Recall@10/@30/@50
+changed from 10.0%/19.6%/24.4% to 12.0%/21.6%/25.6%, while Recall@100 changed
+from 33.2% to 32.0%.
+
+Across all eight splits, recovery was 229/400 for baseline and 228/400 for 20/5;
+Recall@10/@30/@50/@100 changed from 10.0%/18.8%/23.8%/31.5% to
+10.5%/20.5%/24.8%/32.3%. New split-level R@100 outcomes were two improvements,
+six regressions, and seventeen ties. Target-mod users frequently survived selection
+(58 of 125 allocated users reached the top ten and 13 reached ranks 11–15), but the
+result was not stable across targets or cutoffs. Production acquisition remains 25/0.
+
 ## Open questions
 
 - Can a small cursor budget reach a useful neighborhood around an arbitrary rank?

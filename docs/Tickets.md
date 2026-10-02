@@ -56,9 +56,10 @@ This is a rough, incremental roadmap. Ticket scope and ordering may change when 
 | T0050 | Candidate-user acquisition experiment | Complete |
 | T0051 | Recommendation card UX polish | Complete |
 | T0052 | Compact Player Overview | Complete |
-| T0053 | Fixed acquisition-allocation mixture experiment | Current / complete |
+| T0053 | Fixed acquisition-allocation mixture experiment | Complete |
+| T0054 | Expanded 20/5 hybrid acquisition validation | Current / complete |
 
-No detailed tickets beyond T0053 are defined yet. A production change requires a separately reviewed ticket.
+No detailed tickets beyond T0054 are defined yet. A production change requires a separately reviewed ticket.
 
 T0040's 25 new live runs produced 13 discovery-only held-out positives: 7 improved, 4 worsened, and 2 were unchanged under star-only tie-breaking. No positive crossed a measured recall cutoff, so the experimental order remains unadopted.
 
@@ -87,3 +88,5 @@ T0051 makes the existing recommendation cards more compact and data-first. Cover
 T0052 replaces the nested Player Overview presentation with one compact surface. Username and user ID share a restrained header, available summary values use rounded display precision, and exact-combination and individual-mod usage appear as compact percentage rows. Estimated recommendation PP was explicitly deferred because reliable calculation needs `.osu` content unavailable through the project's current public client-credentials OAuth flow.
 
 T0053 compares fixed 25-user hydration allocations of baseline and target-mod leaderboard candidates: 25/0, 20/5, 15/10, and 10/15. Across 15 leakage-safe live runs they recovered 81, 84, 85, and 91 of 150 held-out observations, respectively. Increasing target-mod allocation improved recovery anywhere and compatible-user supply but generally reduced early recall, so production acquisition remains unchanged and any adoption requires a separate T0054 review.
+
+T0054 validates only the preselected 25/0 baseline and 20/5 hybrid on five new splits for five targets. On the 250 new held-out observations, baseline recovered 148 and hybrid recovered 144; the hybrid improved Recall@10/@30/@50 but reduced Recall@100. Across historical and new splits combined, recovery was 229/400 versus 228/400. Results remained target-dependent, so no production acquisition change was adopted.
