@@ -54,9 +54,10 @@ This is a rough, incremental roadmap. Ticket scope and ordering may change when 
 | T0048 | Target-oriented recommendation mod semantics and peer diagnostic | Complete |
 | T0049 | Similar-player compatibility selection experiment | Complete |
 | T0050 | Candidate-user acquisition experiment | Complete |
-| T0051 | Recommendation card UX polish | Current / complete |
+| T0051 | Recommendation card UX polish | Complete |
+| T0052 | Compact Player Overview | Current / complete |
 
-No detailed tickets beyond T0051 are defined yet. A production change requires a separately reviewed ticket.
+No detailed tickets beyond T0052 are defined yet. A production change requires a separately reviewed ticket.
 
 T0040's 25 new live runs produced 13 discovery-only held-out positives: 7 improved, 4 worsened, and 2 were unchanged under star-only tie-breaking. No positive crossed a measured recall cutoff, so the experimental order remains unadopted.
 
@@ -81,3 +82,5 @@ T0049 compares baseline, mod-first, PP-first, and compatibility-first selection 
 T0050 compares unchanged baseline acquisition with requested-mod leaderboard, bounded performance-ranking, and fixed mixed sources. Requested-mod acquisition recovered 85/150 observations versus baseline's 81/150, but reduced early recall. The performance endpoint exposed only the top 10,000, preventing a true neighborhood for lower-ranked targets. No production source was adopted.
 
 T0051 makes the existing recommendation cards more compact and data-first. Cover art now fills each card behind a dark readability overlay, long titles clamp to two lines, base AR/BPM labels are simplified without inventing adjusted values, and one collapsed `Why this map?` disclosure contains both the concise reason and supporting-player evidence. Recommendation behavior is unchanged.
+
+T0052 replaces the nested Player Overview presentation with one compact surface. Username and user ID share a restrained header, available summary values use rounded display precision, and exact-combination and individual-mod usage appear as compact percentage rows. Estimated recommendation PP was explicitly deferred because reliable calculation needs `.osu` content unavailable through the project's current public client-credentials OAuth flow.

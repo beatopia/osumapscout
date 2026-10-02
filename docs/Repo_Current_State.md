@@ -175,12 +175,13 @@ This file records what exists now, not what the project intends to build later.
 - T0049 adds an offline, leakage-safe player-selection experiment over one shared 25-user hydration pass per target/split. It compares exactly baseline, mod-first, PP-first, and compatibility-first lexicographic views while reusing the production hybrid map architecture and map ranking.
 - T0050 adds an offline acquisition experiment comparing baseline, requested-mod leaderboard, bounded performance-ranking, and mixed sources. It reuses hydrated users in memory across views. Production acquisition and ranking remain unchanged. Observed ranking API behavior exposes only approximately the top 10,000, so lower-ranked targets use the closest available boundary sample rather than a true rank neighborhood.
 - T0051 presents recommendation cover art across each full card behind layered dark overlays. Cards are denser, titles clamp to two lines, AR/BPM remain authoritative base values, and the single collapsed `Why this map?` disclosure contains the attribute reason and accessible supporter links.
+- T0052 presents Player Overview as one compact surface without nested stat or mod cards. It omits unavailable summary fields, rounds PP/BPM ranges to whole values and AR to one decimal, and displays playstyle counts as percentages. Estimated recommendation PP remains unimplemented: it requires `.osu` beatmap content, while official beatmapset downloads require `OAuth lazer` and the project currently uses public client credentials.
 - Across 15 fixed live runs, baseline recovered 81/150 held-out observations; mod-first recovered 76, PP-first 74, and compatibility-first 73. Compatibility selection often increased mod/PP alignment but reduced independent map overlap, so production selection remains unchanged.
 - No crawler or dataset import behavior exists.
 
 ## Ticket position
 
-- Completed through: T0051 — Recommendation card UX polish
+- Completed through: T0052 — Compact Player Overview
 - Expected next ticket: not yet selected
 
 Future tickets must update this document when the repository's implemented state changes.

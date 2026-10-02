@@ -202,6 +202,15 @@ These metrics are not MVP requirements and must not shape the initial schema bey
 
 ## Initial recommendation MVP boundary
 
+### Estimated recommendation PP deferral
+
+T0052 does not add estimated PP fields or dependencies. Reliable local calculation
+requires the full `.osu` beatmap file. `rosu-pp-py` is an appropriate maintained
+calculator once that input is available, but the official beatmapset download API
+requires `OAuth lazer`, while the project currently uses public client-credentials
+OAuth. User authorization, unofficial raw-file URLs, and third-party mirrors are
+outside the current architecture and were not introduced for a secondary card stat.
+
 A smallest transparent recommendation experiment would:
 
 1. Fetch and persist the target user's ordered top 100.

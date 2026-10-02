@@ -46,6 +46,8 @@ T0044 exposes the validated bounded hybrid recommendation architecture through `
 
 T0051 keeps that response and ranking unchanged while presenting cover art as a full-card background beneath layered dark overlays. The compact card keeps adjusted stars, base AR/BPM, target-oriented Suggested Mods, and one collapsed explanation/supporter disclosure. Missing artwork falls back to the card's dark base color without changing layout.
 
+T0052 simplifies Player Overview using only existing response data. One surface contains the username, quiet user ID, available rounded summary ranges, and compact percentage-based mod analytics. Estimated recommendation PP is deferred: `rosu-pp-py` is suitable for local calculation once `.osu` content exists, but official beatmapset download requires `OAuth lazer`; the application currently uses client-credentials/public OAuth, and adding user OAuth for a secondary display statistic is outside this ticket.
+
 ## MVP boundaries
 
 This design does not specify future HTTP endpoints beyond those already implemented, application-user authentication, recommendation algorithms, deployment architecture, caching, background processing, or production infrastructure. The implemented minimum persistence schema remains documented in `Recommendation_Data_Design.md` and its migration rather than expanded speculatively here.

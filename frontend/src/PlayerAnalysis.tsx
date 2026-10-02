@@ -90,38 +90,38 @@ interface PlayerAnalysisProps {
   preferences: RecommendationPreferences | null;
 }
 
-function formatRange(first: number, third: number, suffix = ""): string {
-  return `${first.toFixed(2)}–${third.toFixed(2)}${suffix}`;
+function formatRange(first: number, third: number, precision: number): string {
+  return `${first.toFixed(precision)}–${third.toFixed(precision)}`;
+}
+
+function formatPercentage(count: number, total: number): string {
+  return total > 0 ? `${Math.round((count / total) * 100)}%` : "0%";
 }
 
 function PlayerAnalysis({ analysis, recommendationProfile, preferences }: PlayerAnalysisProps) {
   const primaryMods = recommendationProfile
     ? recommendationProfile.primary_mods.join("") || "NM"
-    : "Unavailable";
+    : null;
   const statistics = [
     { label: "Primary mods", value: primaryMods },
     { label: "Typical PP", value: recommendationProfile?.performance_points
-      ? formatRange(recommendationProfile.performance_points.first_quartile, recommendationProfile.performance_points.third_quartile)
-      : "Unavailable" },
-    { label: "Typical stars", value: recommendationProfile?.actual_play_star_rating
-      ? formatRange(recommendationProfile.actual_play_star_rating.first_quartile, recommendationProfile.actual_play_star_rating.third_quartile, "★")
-      : "Unavailable" },
+      ? formatRange(recommendationProfile.performance_points.first_quartile, recommendationProfile.performance_points.third_quartile, 0)
+      : null },
     { label: "Typical base AR", value: preferences?.approach_rate
-      ? formatRange(preferences.approach_rate.first_quartile, preferences.approach_rate.third_quartile)
-      : "Unavailable" },
+      ? formatRange(preferences.approach_rate.first_quartile, preferences.approach_rate.third_quartile, 1)
+      : null },
     { label: "Typical base BPM", value: preferences?.bpm
-      ? formatRange(preferences.bpm.first_quartile, preferences.bpm.third_quartile)
-      : "Unavailable" },
-  ];
+      ? formatRange(preferences.bpm.first_quartile, preferences.bpm.third_quartile, 0)
+      : null },
+  ].filter((statistic): statistic is { label: string; value: string } => (
+    statistic.value !== null
+  ));
 
   return (
     <section className="analysis-panel" aria-labelledby="analysis-heading">
       <div className="analysis-heading-row">
-        <div>
-          <p className="eyebrow">Player overview</p>
-          <h2 id="analysis-heading">{analysis.username}</h2>
-        </div>
-        <span className="user-id">User ID {analysis.user_id}</span>
+        <h2 id="analysis-heading">{analysis.username}</h2>
+        <span className="user-id">#{analysis.user_id}</span>
       </div>
 
       <dl className="statistics-grid">
@@ -134,17 +134,15 @@ function PlayerAnalysis({ analysis, recommendationProfile, preferences }: Player
       </dl>
 
       <div className="mod-sections">
+        <p className="playstyle-label">Playstyle</p>
         <section aria-labelledby="combinations-heading">
-          <h3 id="combinations-heading">Exact mod combinations</h3>
-          <p className="section-description">
-            Each row counts a complete combination used on a top play.
-          </p>
+          <h3 id="combinations-heading">Exact combinations</h3>
           {analysis.exact_mod_combinations.length > 0 ? (
             <ul className="mod-count-list">
               {analysis.exact_mod_combinations.map((combination, index) => (
                 <li key={`${combination.mods.join("-") || "NM"}-${index}`}>
-                  <span>{combination.mods.length > 0 ? combination.mods.join(" ") : "NM"}</span>
-                  <strong>{combination.count}</strong>
+                  <span>{combination.mods.length > 0 ? combination.mods.join("") : "NM"}</span>
+                  <strong>{formatPercentage(combination.count, analysis.top_play_count)}</strong>
                 </li>
               ))}
             </ul>
@@ -154,16 +152,13 @@ function PlayerAnalysis({ analysis, recommendationProfile, preferences }: Player
         </section>
 
         <section aria-labelledby="individual-mods-heading">
-          <h3 id="individual-mods-heading">Individual mod usage</h3>
-          <p className="section-description">
-            Each acronym is counted separately when it appears in a combination.
-          </p>
+          <h3 id="individual-mods-heading">Individual mods</h3>
           {analysis.individual_mods.length > 0 ? (
             <ul className="mod-count-list">
               {analysis.individual_mods.map((mod) => (
                 <li key={mod.mod}>
                   <span>{mod.mod}</span>
-                  <strong>{mod.count}</strong>
+                  <strong>{formatPercentage(mod.count, analysis.top_play_count)}</strong>
                 </li>
               ))}
             </ul>

@@ -111,9 +111,7 @@ function App() {
       </form>
       {playerError && <p className="error-message search-status">{playerError}</p>}
       {playerName && <div className="player-view">
-        <header className="player-header"><p className="eyebrow">Player</p><h2>{playerName}</h2></header>
-        <section className="player-section analysis-section" aria-labelledby="overview-heading">
-          <h2 id="overview-heading">Player Overview</h2>
+        <section className="analysis-section" aria-label="Player Overview">
           <div aria-live="polite" aria-busy={isAnalysisLoading}>{isAnalysisLoading && <p>Loading player overview...</p>}{analysisResult && <PlayerAnalysis analysis={analysisResult} recommendationProfile={recommendationsResult?.target_profile ?? null} preferences={recommendationsResult?.preferences ?? null} />}{analysisError && <p className="error-message">{analysisError}</p>}</div>
         </section>
         <section className="player-section recommendation-section">
