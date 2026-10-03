@@ -3,7 +3,7 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import PlayerAnalysis, { isPlayerAnalysisResponse, PlayerAnalysisResponse } from "./PlayerAnalysis";
 import RecommendationList, { isRecommendationsResponse, RecommendationsResponse } from "./RecommendationList";
 
-const loadingMessages = ["Finding similar players...", "Checking their top plays...", "Comparing map attributes...", "Ranking recommendations..."] as const;
+const loadingMessages = ["Finding neighbors...", "Checking their top plays...", "Comparing map attributes...", "Ranking recommendations..."] as const;
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
 
 function usernameFromPath(): string {
@@ -125,8 +125,8 @@ function App() {
   const playerName = recommendationsResult?.target_username ?? analysisResult?.username ?? searchedUsername;
   return (
     <main>
-      <h1>osumapscout</h1>
-      <p>Find osu!standard maps that fit the way you play.</p>
+      <h1>osu!ditto</h1>
+      <p>Find maps your osu!std neighbors are playing.</p>
       <form onSubmit={searchPlayer}>
         <label htmlFor="username">osu! username</label>
         <div className="search-controls">
@@ -136,9 +136,9 @@ function App() {
       </form>
       {playerError && <p className="error-message search-status">{playerError}</p>}
       {playerName && <div className="player-view">
-        <section className="analysis-section" aria-label="Player Overview">
-          <div aria-live="polite" aria-busy={isAnalysisLoading}>{isAnalysisLoading && <p>Loading player overview...</p>}{analysisResult && <PlayerAnalysis analysis={analysisResult} recommendationProfile={recommendationsResult?.target_profile ?? null} preferences={recommendationsResult?.preferences ?? null} />}{analysisError && <p className="error-message">{analysisError}</p>}</div>
-        </section>
+        {(analysisResult || analysisError) && <section className="analysis-section" aria-label="Player Overview">
+          <div aria-live="polite">{analysisResult && <PlayerAnalysis analysis={analysisResult} recommendationProfile={recommendationsResult?.target_profile ?? null} preferences={recommendationsResult?.preferences ?? null} />}{analysisError && <p className="error-message">{analysisError}</p>}</div>
+        </section>}
         <section className="player-section recommendation-section">
           <div className="recommendations-status" aria-live="polite" aria-busy={isRecommendationsLoading}>
             {isRecommendationsLoading && <div className="recommendation-loader" role="status"><span className="loading-orbit" aria-hidden="true"><span /></span><p>{loadingMessages[loadingMessageIndex]}</p></div>}

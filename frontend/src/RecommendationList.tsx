@@ -1,5 +1,6 @@
 import { CSSProperties, useState } from "react";
 
+import ModBadges from "./ModBadges";
 import {
   compareToPreference,
   comparisonLabels,
@@ -238,9 +239,6 @@ function RecommendationList({ result }: RecommendationListProps) {
             recommendation.bpm !== null;
           const displayedStar =
             recommendation.adjusted_star_rating ?? recommendation.star_rating;
-          const mods = recommendation.suggested_mods.length > 0
-            ? recommendation.suggested_mods.join("")
-            : "NM";
           const cardStyle = recommendation.cover_url
             ? ({ backgroundImage: `url("${recommendation.cover_url}")` } satisfies CSSProperties)
             : undefined;
@@ -260,7 +258,7 @@ function RecommendationList({ result }: RecommendationListProps) {
                 {recommendation.difficulty_name && (
                   <p className="difficulty-name">[{recommendation.difficulty_name}]</p>
                 )}
-                <p className="suggested-mods">Suggested Mods: <strong>{mods}</strong></p>
+                <p className="suggested-mods">Suggested Mods: <ModBadges mods={recommendation.suggested_mods} /></p>
                 {hasAttributes && (
                   <div className="map-attributes">
                     {displayedStar !== null && (
@@ -287,9 +285,9 @@ function RecommendationList({ result }: RecommendationListProps) {
 function SupportDisclosure({ recommendation }: { recommendation: Recommendation }) {
   const [isOpen, setIsOpen] = useState(false);
   const panelId = `supporters-${recommendation.beatmap_id}`;
-  const noun = recommendation.support_count === 1 ? "player" : "players";
+  const noun = recommendation.support_count === 1 ? "neighbor" : "neighbors";
   const explanation = recommendation.why_recommended.replace(
-    /^Recommended by \d+ similar players?\.\s*/,
+    /^Recommended by \d+ (?:similar players?|neighbors?)\.\s*/,
     "",
   );
   return (
@@ -302,18 +300,17 @@ function SupportDisclosure({ recommendation }: { recommendation: Recommendation 
         <div id={panelId} className="support-panel">
           {explanation && <p className="recommendation-reason">{explanation}</p>}
           <p className="support-summary">
-            Supported by {recommendation.support_count} similar {noun}
+            Recommended by {recommendation.support_count} {noun}
           </p>
           <ul className="supporting-player-list">
           {recommendation.supporting_players.map((player) => {
-            const mods = player.mods.length > 0 ? player.mods.join("") : "NM";
             return (
               <li key={player.user_id}>
-                <span>#{player.similarity_rank} similar</span>
+                <span>#{player.similarity_rank}</span>
                 <a href={`https://osu.ppy.sh/users/${player.user_id}`} target="_blank" rel="noopener noreferrer">
                   {player.username ?? `User ${player.user_id}`}
                 </a>
-                <span className="mods">{mods}</span>
+                <ModBadges mods={player.mods} />
               </li>
             );
           })}

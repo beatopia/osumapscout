@@ -466,8 +466,8 @@ def _explanation(
     preferences: RecommendationPreferences,
 ) -> str:
     count = evidence.collaborative.support_count
-    noun = "player" if count == 1 else "players"
-    parts = [f"Recommended by {count} similar {noun}."]
+    noun = "neighbor" if count == 1 else "neighbors"
+    parts = [f"Recommended by {count} {noun}."]
     matching = [
         label
         for label, value, bounds in (

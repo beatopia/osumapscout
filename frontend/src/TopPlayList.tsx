@@ -1,3 +1,5 @@
+import ModBadges from "./ModBadges";
+
 export interface TopPlay {
   score_id: number | null;
   beatmap_id: number;
@@ -87,8 +89,6 @@ function TopPlayList({ result }: TopPlayListProps) {
         const difficulty = play.difficulty_name
           ? ` [${play.difficulty_name}]`
           : "";
-        const mods = play.mods.length > 0 ? play.mods.join(" ") : "NM";
-
         return (
           <li
             className="top-play"
@@ -107,7 +107,7 @@ function TopPlayList({ result }: TopPlayListProps) {
                     ? `${play.performance_points.toFixed(2)}pp`
                     : "PP unavailable"}
                 </strong>
-                <span className="mods">{mods}</span>
+                <ModBadges mods={play.mods} />
                 <span>
                   {play.accuracy !== null
                     ? `${(play.accuracy * 100).toFixed(2)}%`

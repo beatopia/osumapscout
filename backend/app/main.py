@@ -33,7 +33,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         await close_recommendation_runtime()
 
 
-app = FastAPI(title="osumapscout API", lifespan=lifespan)
+app = FastAPI(title="osu!ditto API", lifespan=lifespan)
 config = AppConfig.from_environment()
 app.add_middleware(
     CORSMiddleware,

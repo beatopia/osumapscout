@@ -249,7 +249,7 @@ class RecommendationServiceTests(unittest.IsolatedAsyncioTestCase):
             ten.recommendations[0].support_count,
         )
         self.assertEqual(ten.recommendations[0].why_recommended,
-                         "Recommended by 2 similar players. "
+                         "Recommended by 2 neighbors. "
                          "Effective BPM is within your usual range.")
 
     async def test_service_validates_limit(self) -> None:

@@ -1,6 +1,8 @@
-# osu! Map Scout
+# osu!ditto
 
-A web app that recommends osu!standard maps based on a player's top plays and the maps played by similar users.
+Find maps your osu!std neighbors are playing.
+
+osu!ditto recommends osu!standard maps based on a player's top plays and maps played by their neighbors.
 
 ## How It Works
 
@@ -8,8 +10,8 @@ Given an osu! username, the app:
 
 1. Fetches the player's profile and top plays.
 2. Analyzes things like mods, star rating, AR, and BPM.
-3. Finds similar players using overlap between top plays.
-4. Looks at maps those players perform well on.
+3. Finds neighbors using overlap between top plays.
+4. Looks at maps those neighbors perform well on.
 5. Filters out maps already in the target player's top plays.
 6. Ranks the remaining maps using collaborative and playstyle evidence.
 

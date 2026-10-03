@@ -1,3 +1,6 @@
+import type { ReactNode } from "react";
+
+import ModBadges from "./ModBadges";
 import type { RecommendationPreferences, TargetRecommendationProfile } from "./RecommendationList";
 
 export interface ModCombinationCount {
@@ -99,10 +102,10 @@ function formatPercentage(count: number, total: number): string {
 }
 
 function PlayerAnalysis({ analysis, recommendationProfile, preferences }: PlayerAnalysisProps) {
-  const primaryMods = recommendationProfile
-    ? recommendationProfile.primary_mods.join("") || "NM"
+  const primaryMods: ReactNode | null = recommendationProfile
+    ? <ModBadges mods={recommendationProfile.primary_mods} />
     : null;
-  const statistics = [
+  const statistics: { label: string; value: ReactNode | null }[] = [
     { label: "Primary mods", value: primaryMods },
     { label: "Typical PP", value: recommendationProfile?.performance_points
       ? formatRange(recommendationProfile.performance_points.first_quartile, recommendationProfile.performance_points.third_quartile, 0)
@@ -113,14 +116,16 @@ function PlayerAnalysis({ analysis, recommendationProfile, preferences }: Player
     { label: "Typical BPM", value: preferences?.bpm
       ? formatRange(preferences.bpm.first_quartile, preferences.bpm.third_quartile, 0)
       : null },
-  ].filter((statistic): statistic is { label: string; value: string } => (
-    statistic.value !== null
-  ));
+  ].filter((statistic) => statistic.value !== null);
 
   return (
     <section className="analysis-panel" aria-labelledby="analysis-heading">
       <div className="analysis-heading-row">
-        <h2 id="analysis-heading">{analysis.username}</h2>
+        <h2 id="analysis-heading">
+          <a href={`https://osu.ppy.sh/users/${analysis.user_id}`} target="_blank" rel="noopener noreferrer">
+            {analysis.username}
+          </a>
+        </h2>
         <span className="user-id">#{analysis.user_id}</span>
       </div>
 
@@ -141,7 +146,7 @@ function PlayerAnalysis({ analysis, recommendationProfile, preferences }: Player
             <ul className="mod-count-list">
               {analysis.exact_mod_combinations.map((combination, index) => (
                 <li key={`${combination.mods.join("-") || "NM"}-${index}`}>
-                  <span>{combination.mods.length > 0 ? combination.mods.join("") : "NM"}</span>
+                  <ModBadges mods={combination.mods} />
                   <strong>{formatPercentage(combination.count, analysis.top_play_count)}</strong>
                 </li>
               ))}
@@ -157,7 +162,7 @@ function PlayerAnalysis({ analysis, recommendationProfile, preferences }: Player
             <ul className="mod-count-list">
               {analysis.individual_mods.map((mod) => (
                 <li key={mod.mod}>
-                  <span>{mod.mod}</span>
+                  <ModBadges mods={[mod.mod]} />
                   <strong>{formatPercentage(mod.count, analysis.top_play_count)}</strong>
                 </li>
               ))}
